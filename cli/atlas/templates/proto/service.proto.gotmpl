@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package service;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "{{ .Root }}/{{ .Name }}/pb;pb";
+
+// Echo, EchoRequest, and EchoResponse make up a "starter" example that
+// stands in place for the application protobuf definitions. It allows the Atlas
+// CLI to generate an end-to-end example for the sake of demonstration. The Echo
+// example should be replaced with an application-specific protobuf schema.
+
+// Here are some helpful resources to aid you in your protobuf quest:
+// https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.proto
+// https://developers.google.com/protocol-buffers/docs/proto
+// https://github.com/grpc-ecosystem/grpc-gateway
+// https://developers.google.com/protocol-buffers/docs/style
+
+// Happy protobuffing!
+
+// TODO: Follow instructions to build your own protobuf schema.
+
+// TODO: Stucture your own messages to suit your application. Each protocol 
+// buffer message is a small logical record of information, containing a 
+// series of name-value pairs.
+message Echo {
+  string message = 1;
+}
+
+message EchoRequest {
+  repeated Echo echos = 1;
+}
+
+message EchoResponse {
+  repeated Echo echos = 1;
+  string time = 2;
+}
+
+// TODO: Define the {{ .Name | Service }} service and its methods. Feel free
+// to change the name of {{ .Name | Service }} to better-suit your naming
+// conventions. Remember, Echo is a simple example that should eventually 
+// get removed.
+service {{ .Name | Service }} {
+  rpc Echo (EchoRequest) returns (EchoResponse) {
+    {{ if .WithGateway }}// TODO: Provide mappings between REST endpoints and service methods.
+    option (google.api.http) = {
+      post: "/echo"
+      body: "*"
+    };{{ end }}
+  }
+}

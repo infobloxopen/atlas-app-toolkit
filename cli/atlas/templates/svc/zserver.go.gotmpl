@@ -1,0 +1,22 @@
+package svc
+
+func NewBasicServer() (pb.{{ .Name | Service }}Server, error) {
+	return &echoServer{}, nil
+}
+
+// TODO: Come up with your own implementation of the {{ .Name | Service }}
+// service. Echo and echoServer make up simple implementation of the "starter" 
+// example in service.proto. It is for demonstration purposes only and should
+// eventually be removed.
+type echoServer struct{}
+
+// TODO: Replace Echo with the application service definitions that have been
+// defined inside service.proto.
+func (echoServer) Echo(ctx context.Context, req *pb.EchoRequest) (*pb.EchoResponse, error) {
+	echos := []*pb.Echo{}
+	for _, e := range req.GetEchos() {
+		response := fmt.Sprintf("Echoing %s from server!", e.Message)
+		echos = append(echos, &pb.Echo{response})
+	}
+	return &pb.EchoResponse{echos, time.Now().String()}, nil
+}

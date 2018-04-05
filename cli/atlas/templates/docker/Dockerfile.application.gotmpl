@@ -1,0 +1,7 @@
+FROM alpine:3.5
+
+WORKDIR /usr/local
+
+COPY bin/server bin/server
+
+ENTRYPOINT ["bin/server"]
