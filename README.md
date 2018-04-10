@@ -9,7 +9,7 @@
         5. [Documentation](#documentation)
         6. [Swagger](#swagger)
     2. [Build image](#build-image)
-    3. [Kubernetes](#kubernetes)
+    3. [Example](#example)
 2. [REST API Syntax Specification](#rest-api-syntax-specification)
     1. [Resources and Collections](#resources-and-collections)
     2. [HTTP Headers](#http-headers)
@@ -190,8 +190,8 @@ message MyMessage {
 
 For more Swagger options see [this scheme](https://github.com/grpc-ecosystem/grpc-gateway/blob/master/protoc-gen-swagger/options/openapiv2.proto)
 
-See examples [addressbook](example/addressbook.proto) and [dnsconfig](example/dnsconfig.proto).
-Here are generated Swagger schemes [addressbook](example/addressbook.swagger.json) and [dnsconfig](example/dnsconfig.swagger.json).
+See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.proto).
+Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.swagger.json).
 
 **NOTE** [Well Known Types](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf) are
 generated in a bit unusual way:
@@ -206,37 +206,12 @@ generated in a bit unusual way:
 
 ### Build Image
 
-See [README](gentool/README.md)
+For convenience purposes there is an atlas-gentool image available which contains a pre-installed set of often used plugins.
+For more details see [infobloxopen/atlas-gentool](https://github.com/infobloxopen/atlas-gentool) repository.
 
-## Kubernetes
+## Example
 
-To make this example work in minikube you have to run the following command first:
-```sh
-make example-build
-minikube start
-eval $(minikube docker-env)
-```
-
-In case you do not have nginx already running on your minikube you can start it by running:
-```sh
-make nginx-up
-```
-
-After that:
-```sh
-make example-image
-make example-up
-```
-
-Query addressbook application:
-```sh
-curl -k https://minikube/addressbook/v1/persons
-```
-
-Stop example application:
-```sh
-make example-down
-```
+An example app that is based on api-toolkit can be found [here](https://github.com/infobloxopen/atlas-contacts-app)
 
 ## REST API Syntax Specification
 
@@ -351,7 +326,7 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 
 If you do not use any custom outgoing header matcher you would see something like that:
 ```sh
-> curl -i http://localhost:8080/addressbook/v1/persons
+> curl -i http://localhost:8080/contacts/v1/contacts
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -376,7 +351,15 @@ See [this article](https://github.com/grpc-ecosystem/grpc-gateway/wiki/How-to-cu
 
 #### How can I overwrite default Forwarders?
 
-See [example](example/addressbook/addressbook.overwrite.gw.pb.go).
+```
+import (
+	"github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+)
+
+func init() {
+	forward_App_ListObjects_0 = gw.ForwardResponseMessage
+}
+```
 
 #### Which forwarders I need to use to comply our REST API?
 
@@ -410,8 +393,6 @@ func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
     return &MyResponse{Result: []*Item{item}}, err
 }
 ```
-
-See [example](example/addressbook/service.go#L64)
 
 ### Response format
 Services render resources in responses in JSON format by default unless another format is specified in the request Accept header that the service supports.
@@ -542,8 +523,6 @@ With `gw.DefaultProtoErrorHandler` enabled JSON response will look like:
 }
 ```
 
-You can find sample in example folder. See [code](example/addressbook/service.go:L72)
-
 ### Collection Operators
 
 For methods that return collections, operations may be implemented using the following conventions.
@@ -652,8 +631,6 @@ appropriate metadata keys that will be handled by `grpc-gateway`. See example be
 
 ```
 
-You can find sample in example folder. See ListPersons implementation in the [code](example/addressbook/service.go:L33)
-
 ##### How to define field selection in my request?
 
 ```proto
@@ -740,7 +717,7 @@ Literal values include numbers (integer and floating-point), and quoted (both si
 | not          | Logical NOT              | not price <= 3.5                                         |
 | ()           | Grouping                 | (priority == 1 or city == ‘Santa Clara’) and price > 100 |
 
-Usage of filtering features of the toolkit is similar to [sorting](#sorting). Check out [example](example/addressbook/service.go).
+Usage of filtering features from the toolkit is similar to [sorting](#sorting).
 
 Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use swagger schema generation, since it's plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
 
