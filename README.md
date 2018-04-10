@@ -24,11 +24,12 @@
 
 ## Getting Started
 
-Before you get started please have a look at [this presentation](https://docs.google.com/presentation/d/1LuHrYp7E3KBVF4PcmNRLPrgsYtodsR3-R9odeQ2CJH0/edit#slide=id.p) and read through
-[REST API Syntax Specification](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit).
+Toolkit provides a means to have a generated code that supports a certain common functionality that 
+is typicall requesred for any service.
+Toolkit declares its own format for Resposes, Errors, Long Running operations, Collection operators.
+More details on this can be found in appropriate section on this page.
 
-TL;DR
-
+Tollkit approach provides following features:
 - Application may be composed from one or more independent services (micro-service architecture)
 - Service is supposed to be a gRPC service
 - REST API is presented by a separate service (gRPC Gateway) that serves as a reverse-proxy and
@@ -57,7 +58,29 @@ We recommend to use gRPC server interceptor as middleware. See [examples](https:
 
 ##### GetTenantID
 
-We offer a convenient way to extract the TenantID field from an incoming authorization token. See the full description [here](https://docs.google.com/document/d/1kdCwdWoSfUbowkR6Ob2kW9a1a8PPWDPbMz69VXsigkM/edit#heading=h.1xm8o6fjrh57).
+We offer a convenient way to extract the TenantID field from an incoming authorization token.
+For this purpose `mw.GetTenantID(ctx)` function can be used:
+```
+func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
+	input := req.GetContact()
+
+	tenantID, err := mw.GetTenantID(ctx)
+	if err == nil {
+		input.TenantId = tenantID
+	} else if input.GetTenantId() == "" {
+		return nil, err
+	}
+
+	c, err := DefaultReadContact(ctx, input, s.db)
+	if err != nil {
+		return nil, err
+	}
+	return &ReadResponse{Contact: c}, nil
+}
+```
+
+When bootstrapping a gRPC server, add middleware that will extract the tenant_id token from the request context and set it in the request struct. The middleware will have to navigate the request struct via reflection, in the case that the tenant_id field is nested within the request (like if it's in a request wrapper as per our example above)
+
 
 #### Validation
 We recommend to use [this validation plugin](https://github.com/lyft/protoc-gen-validate) to generate
@@ -217,7 +240,8 @@ make example-down
 
 ## REST API Syntax Specification
 
-All public REST API endpoints must follow [REST API Syntax Specification](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/)
+Toolkit enforces some of the API syntax requirements that are common for
+applications that are written by Infoblox. All public REST API endpoints must follow the same guidelines mentioned below.
 
 ### Resources and Collections
 
@@ -225,8 +249,6 @@ All public REST API endpoints must follow [REST API Syntax Specification](https:
 
 You can map your gRPC service methods to one or more REST API endpoints.
 See [this reference](https://cloud.google.com/service-management/reference/rpc/google.api#http) how to do it.
-
-TL;DR
 
 ```proto
 // It is possible to define multiple HTTP methods for one RPC by using
@@ -391,7 +413,48 @@ func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
 
 See [example](example/addressbook/service.go#L64)
 
+### Response format
+Services render resources in responses in JSON format by default unless another format is specified in the request Accept header that the service supports.
+
+Services must embed their response in a Success JSON structure.
+
+The Success JSON structure provides a uniform structure for expressing normal responses using a structure similar to the Error JSON structure used to render errors. The structure provides an enumerated set of codes and associated HTTP statuses (see Errors below) along with a message.
+
+The Success JSON structure has the following format. The results tag is optional and appears when the response contains one or more resources.
+```
+{
+  "success": {
+    "status": <http-status-code>,
+    "code": <enumerated-error-code>,
+    "message": <message-text>
+  },
+  "results": <service-response>
+}
+```
+
 ### Errors
+
+#### Format
+Method error responses are rendered in the Error JSON format. The Error JSON format is similar to the Success JSON format for error responses using a structure similar to the Success JSON structure for consistency.
+
+The Error JSON structure has the following format. The details tag is optional and appears when the service provides more details about the error.
+```
+{
+  "error": {
+    "status": <http-status-code>,
+    "code": <enumerated-error-code>,
+    "message": <message-text>
+  },
+  "details": [
+    {
+      "message": <message-text>,
+      "code": <enumerated-error-code>,
+      "target": <resource-name>,
+    },
+    ...
+  ]
+}
+```
 
 #### How can I convert a gRPC error to a HTTP error response in accordance with REST API Syntax Specification?
 
@@ -483,8 +546,10 @@ You can find sample in example folder. See [code](example/addressbook/service.go
 
 ### Collection Operators
 
-[REST API Syntax Specification](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit#heading=h.jif2quft4mjc)
-introduces a set of common request parameters that can be used to control
+For methods that return collections, operations may be implemented using the following conventions.
+The operations are implied by request parameters in query strings.
+ In some cases, stateful operational information may be passed in responses.
+Toolkit introduces a set of common request parameters that can be used to control
 the way collections are returned. API toolkit provides some convenience methods
 to support these parameters in your application.
 
@@ -566,10 +631,13 @@ Check out [example](example/tagging/service.go) and [implementation](op/gorm/col
 
 #### Field Selection
 
-A service may support field selection of collection data to reduce the volume of data in the result.
-A collection of response resources can transformed by specifying a set of JSON tags to be returned.
-[REST API Syntax Specification](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit#heading=h.y734pt487r2u)
-specifies that `_fields` request parameter that contains a comma-separated list of JSON tag names can be used for this purpose.
+
+A service may implement field selection of collection data to reduce the volume of data in the result. A collection of response resources can be transformed by specifying a set of JSON tags to be returned. For a “flat” resource, the tag name is straightforward. If field selection is allowed on non-flat hierarchical resources, the service should implement a qualified naming scheme such as dot-qualification to reference data down the hierarchy. If a resource does not have the specified tag, the tag does not appear in the output resource.
+
+| Request Parameter | Description                              |
+| ----------------- |------------------------------------------|
+| _fields           | A comma-separated list of JSON tag names.|
+
 API toolkit provides a default support to strip fields in response. As it is not possible to completely remove all the fields
 (such as primitives) from `proto.Message`. Because of this fields are additionally truncated on `grpc-gateway`. From gRPC it is also possible
 to access `_fields` from request, use them to perform data fetch operations and control output. This can be done by setting
@@ -598,8 +666,11 @@ message MyRequest {
 
 #### Sorting
 
-See [section](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit#heading=h.usvz3nakezcg)
-from REST API Syntax Specification.
+A service may implement collection sorting. A collection of response resources can be sorted by their JSON tags. For a “flat” resource, the tag name is straightforward. If sorting is allowed on non-flat hierarchical resources, the service should implement a qualified naming scheme such as dot-qualification to reference data down the hierarchy. If a resource does not have the specified tag, its value is assumed to be null.
+
+| Request Parameter | Description                              |
+| ----------------- |------------------------------------------|
+| _order_by         | A comma-separated list of JSON tag names. The sort direction can be specified by a suffix separated by whitespace before the tag name. The suffix “asc” sorts the data in ascending order. The suffix “desc” sorts the data in descending order. If no suffix is specified the data is sorted in ascending order. |
 
 ##### How to define sorting in my request?
 
@@ -645,8 +716,29 @@ See documentation in [op package](op/sorting.go)
 
 #### Filtering
 
-See [section](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit#heading=h.lvxuni8pwk58)
-from REST API Syntax Specification.
+A service may implement filtering. A collection of response resources can be filtered by a logical expression string that includes JSON tag references to values in each resource, literal values, and logical operators. If a resource does not have the specified tag, its value is assumed to be null.
+
+
+| Request Parameter | Description                              |
+| ----------------- |------------------------------------------|
+| _filter           | A string expression containing JSON tags, literal values, and logical operators. |
+
+Literal values include numbers (integer and floating-point), and quoted (both single- or double-quoted) literal strings, and “null”. The following operators are commonly used in filter expressions.
+
+| Operator     | Description              | Example                                                  |
+| ------------ |--------------------------|----------------------------------------------------------|
+| == | eq      | Equal                    | city == ‘Santa Clara’                                    |
+| != | ne      | Not Equal                | city != null                                             |
+| > | gt       | Greater Than             | price > 20                                               |
+| >= | ge      | Greater Than or Equal To | price >= 10                                              |
+| < | lt       | Less Than                | price < 20                                               |
+| <= | le      | Less Than or Equal To    | price <= 100                                             |
+| and          | Logical AND              | price <= 200 and price > 3.5                             |
+| ~ | match    | Matches Regex            | name ~ “john .*”                                         |
+| !~ | nomatch | Does Not Match Regex     | name !~ “john .*”                                        |
+| or           | Logical OR               | price <= 3.5 or price > 200                              |
+| not          | Logical NOT              | not price <= 3.5                                         |
+| ()           | Grouping                 | (priority == 1 or city == ‘Santa Clara’) and price > 100 |
 
 Usage of filtering features of the toolkit is similar to [sorting](#sorting). Check out [example](example/addressbook/service.go).
 
@@ -664,10 +756,38 @@ message MyRequest {
 
 #### Pagination
 
-See [section](https://docs.google.com/document/d/1gi4npvvaY_M1uP2i9LCmX8tOyvF6E5E7HAg1c9uAp_E/edit#heading=h.u2ngqo8vu585)
-from REST API Syntax Specification.
+A service may implement pagination of collections. Pagination of response resources can be client-driven, server-driven, or both. 
 
-See [doc](op/pagination.go) for more details.
+Client-driven pagination is a model in which rows are addressable by offset and page size. This scheme is similar to SQL query pagination where row offset and page size determine the rows in the query response. 
+
+Server-driven pagination is a model in which the server returns some amount of data along with a token indicating there is more data and where subsequent queries can get the next page of data. This scheme is used by AWS Dynamo where, depending on the individual resource size, pages can run into thousands of resources. 
+
+Some data sources can provide the number of resources a query will generate, while others cannot.
+
+The paging model provided by the service is influenced by the expectations of the client. GUI clients prefer moderate page sizes, say no more than 1,000 resources per page. A “streaming” client may be able to consume tens of thousands of resources per page.
+
+Consider the service behavior when no paging parameters are in the request. Some services may provide all the resources unpaged, while other services may have a default page size and provide the first page of data. In either case, the service should document its paging behavior in the absence of paging parameters.
+
+Consider the service behavior when the query sorts or filters the data, and the underlying data is changing over time. A service may cache some amount of sorted and filtered data to be paged using client-driven paging, particularly in a GUI context. There is a trade-off between paged data coherence and changes to the data. The cache expiration time attempts to balance these competing factors.
+
+
+| Paging Mode            | Request Parameters | Response Parameters | Description                                                  |
+| ---------------------- |--------------------|---------------------|--------------------------------------------------------------|
+| Client-driven paging   | _offset            |                     | The integer index (zero-origin) of the offset into a collection of resources. If omitted or null the value is assumed to be “0”. |
+|                        | _limit             |                     | The integer number of resources to be returned in the response. The service may impose maximum value. If omitted the service may impose a default value. |
+|                        |                    | _offset             | The service may optionally* include the offset of the next page of resources. A null value indicates no more pages. |
+|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
+| Server-driven paging   | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page. |
+|                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages. |
+|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
+| Composite paging       | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page. |
+|                        | _offset            |                     | The integer index (zero-origin) of the offset into a collection of resources in the page defined by the page token. If omitted or null the value is assumed to be “0”. |
+|                        | _limit             |                     | The integer number of resources to be returned in the response. The service may impose maximum value. If omitted the service may impose a default value. |
+|                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages. |
+|                        |                    | _offset             | The service should include the offset of the next page of resources in the page defined by the page token. A null value indicates no more pages, at which point the client should request the page token in the response to get the next page. |
+|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
+
+Note: Response offsets are optional since the client can often keep state on the last offset/limit request.
 
 ##### How to define pagination in my request/response?
 
