@@ -26,8 +26,9 @@ func TestGetTenantID(t *testing.T) {
 		},
 	}
 	for _, test := range tenantIDTests {
-		ctx, err := contextWithToken(test.claims)
-		tenantID, err := GetTenantID(ctx)
+		token := makeToken(test.claims, t)
+		ctx, err := contextWithToken(token)
+		tenantID, err := GetTenantID(ctx, nil)
 		if err != test.err {
 			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
 		}
