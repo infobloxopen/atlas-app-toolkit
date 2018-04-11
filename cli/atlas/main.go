@@ -188,10 +188,10 @@ func initializeApplication() {
 	if err := generateProtobuf(); err != nil {
 		printErr(err)
 	}
-	if err := resolveImports(app.directories()); err != nil {
+	if err := initDep(); err != nil {
 		printErr(err)
 	}
-	if err := initDep(); err != nil {
+	if err := resolveImports(app.directories()); err != nil {
 		printErr(err)
 	}
 }
