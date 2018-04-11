@@ -1,0 +1,47 @@
+package main
+
+import (
+	{{/* these imports are hard-coded because goimports can't resolve them */}}
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
+)
+
+var (
+	Address string
+)
+
+func main() {
+	logger := logrus.New()
+	// create new tcp listenerf
+	ln, err := net.Listen("tcp", Address)
+	if err != nil {
+		logger.Fatalln(err)
+	}
+	// create new gRPC server with middleware chain
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpc_middleware.ChainUnaryServer(
+				// validation middleware
+				grpc_validator.UnaryServerInterceptor(),
+				// logging middleware
+				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
+			),
+		),
+	)
+	// register service implementation with the grpc server
+	s, err := svc.NewBasicServer()
+	if err != nil {
+		logger.Fatalln(err)
+	}
+	pb.Register{{ .Name | Service }}Server(server, s)
+	if err := server.Serve(ln); err != nil {
+		logger.Fatalln(err)
+	}
+}
+
+func init() {
+	// default server address; optionally set via command-line flags
+	flag.StringVar(&Address, "address", config.SERVER_ADDRESS, "the gRPC server address")
+	flag.Parse()
+}
