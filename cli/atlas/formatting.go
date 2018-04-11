@@ -9,7 +9,8 @@ import (
 var (
 	errEmptyServiceName   = formatError{"empty service name"}
 	errInvalidFirstRune   = formatError{"leading non-letter in service name"}
-	errInvalidProjectRoot = formatError{"project must be initialized inside $GOPATH/src directory"}
+	errInvalidProjectRoot = formatError{"project must be initialized inside $GOPATH/src directory or below"}
+	errMissingGOPATH      = formatError{"$GOPATH environment variable not set"}
 )
 
 // ServiceName takes a string and formats it into a valid gRPC service name
@@ -40,17 +41,23 @@ func ServerURL(str string) (string, error) {
 }
 
 // ProjectRoot determines the root directory of an application. The project
-// root is considered to be anything after go/src/...
-func ProjectRoot(dirString string) (string, error) {
-	dirs := strings.Split(dirString, "/")
-	for i, dir := range dirs {
-		if strings.ToLower(dir) == "go" && i+1 < len(dirs) {
-			if i+2 < len(dirs) && strings.ToLower(dirs[i+1]) == "src" {
-				return strings.Join(dirs[i+2:], "/"), nil
-			}
-		}
+// root is considered to be anything in $GOPATH/src or below
+func ProjectRoot(gopath, workdir string) (string, error) {
+	if gopath == "" {
+		return "", errMissingGOPATH
 	}
-	return "", errInvalidProjectRoot
+	if len(workdir) < len(gopath) {
+		return "", errInvalidProjectRoot
+	}
+	if workdir[:len(gopath)] != gopath {
+		return "", errInvalidProjectRoot
+	}
+	projectpath := workdir[len(gopath):]
+	dirs := strings.Split(projectpath, "/")
+	if len(dirs) < 2 {
+		return "", errInvalidProjectRoot
+	}
+	return strings.Join(dirs[2:], "/"), nil
 }
 
 // isSpecial checks if rune is non-alphanumeric

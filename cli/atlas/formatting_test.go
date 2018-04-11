@@ -57,38 +57,68 @@ func TestServerURL(t *testing.T) {
 
 func TestProjectRoot(t *testing.T) {
 	var tests = []struct {
-		path     string
+		gopath   string
+		workdir  string
 		expected string
 		err      error
 	}{
 		{
-			"go/src/ProjectRoot",
-			"ProjectRoot",
-			nil,
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/person/go/src",
+			expected: "",
+			err:      nil,
 		},
 		{
-			"go/src/github.com/secret_project",
-			"github.com/secret_project",
-			nil,
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/person/go/src/SomeProject",
+			expected: "SomeProject",
+			err:      nil,
 		},
 		{
-			"/Users/john/go/src/github.com/infobloxopen/helloWorld",
-			"github.com/infobloxopen/helloWorld",
-			nil,
+			gopath:   "/Users/person/go_projects",
+			workdir:  "/Users/person/go_projects/src/SomeProject",
+			expected: "SomeProject",
+			err:      nil,
 		},
 		{
-			"/Users/john/go",
-			"",
-			errInvalidProjectRoot,
+			gopath:   "go",
+			workdir:  "go/src/github.com/SomeProject",
+			expected: "github.com/SomeProject",
+			err:      nil,
 		},
 		{
-			"go/src",
-			"",
-			errInvalidProjectRoot,
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/person/go/src/github.com/infobloxopen/SomeProject",
+			expected: "github.com/infobloxopen/SomeProject",
+			err:      nil,
+		},
+		{
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/python",
+			expected: "",
+			err:      errInvalidProjectRoot,
+		},
+		{
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/person/hi/src/SomeProject",
+			expected: "",
+			err:      errInvalidProjectRoot,
+		},
+		{
+			gopath:   "/Users/person/go",
+			workdir:  "/Users/person/go",
+			expected: "",
+			err:      errInvalidProjectRoot,
+		},
+		{
+			gopath:   "",
+			workdir:  "/Users/person/go/src/SomeProject",
+			expected: "",
+			err:      errMissingGOPATH,
 		},
 	}
 	for _, test := range tests {
-		root, err := ProjectRoot(test.path)
+		root, err := ProjectRoot(test.gopath, test.workdir)
 		if root != test.expected {
 			t.Errorf("Unexpected service name: %s - expected %s", root, test.expected)
 		}

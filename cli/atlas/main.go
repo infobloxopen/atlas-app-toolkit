@@ -154,7 +154,7 @@ func initializeApplication() {
 	if err != nil {
 		printErr(err)
 	}
-	root, err := ProjectRoot(wd)
+	root, err := ProjectRoot(os.Getenv("GOPATH"), wd)
 	if err != nil {
 		printErr(err)
 	}
