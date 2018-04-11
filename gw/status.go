@@ -28,7 +28,7 @@ const (
 )
 
 // RestStatus represents a response status in accordance with REST API Syntax.
-// See: https://github.com/Infoblox-CTO/ngp.api.toolkit#responses
+// See: https://github.com/infobloxopen/atlas-app-toolkit#responses
 type RestStatus struct {
 	HTTPStatus int `json:"status,omitempty"`
 	// Code is a string representation of an error code

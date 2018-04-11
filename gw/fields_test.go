@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/op"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/op"
 	"google.golang.org/grpc/metadata"
 )
 

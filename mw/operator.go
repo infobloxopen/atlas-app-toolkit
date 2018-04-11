@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/gw"
-	"github.com/Infoblox-CTO/ngp.api.toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 // WithCollectionOperator returns grpc.UnaryServerInterceptor

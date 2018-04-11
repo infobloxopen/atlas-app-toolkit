@@ -7,11 +7,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gw"
 )
 
 type Person struct {

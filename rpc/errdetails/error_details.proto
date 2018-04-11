@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package infoblox.rpc;
 
-option go_package = "github.com/Infoblox-CTO/ngp.api.toolkit/rpc/errdetails;errdetails";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails;errdetails";
 
 // TargetInfo is a default representation of error details that conforms
 // REST API Syntax Specification

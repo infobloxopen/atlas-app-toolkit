@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/gw"
-	"github.com/Infoblox-CTO/ngp.api.toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 type request struct {

@@ -26,7 +26,7 @@ func (c SortCriteria) GoString() string {
 // data structure.
 // Provided string is supposed to be in accordance with the sorting collection
 // operator from REST API Syntax.
-// See: https://github.com/Infoblox-CTO/ngp.api.toolkit#sorting
+// See: https://github.com/infobloxopen/atlas-app-toolkit#sorting
 func ParseSorting(s string) (*Sorting, error) {
 	var sorting Sorting
 

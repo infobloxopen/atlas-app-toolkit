@@ -23,7 +23,7 @@ potentially such as create/update times, and any necessary SQL or ORM tags
 can be defined in this ORMified object.
 
 ```
-package pb // import "github.com/Infoblox-CTO/ngp.api.toolkit/pb"
+package pb // import "github.com/infobloxopen/atlas-app-toolkit/pb"
 
 func Convert(source interface{}, dest interface{}) error
     Convert Copies data between fields at ORM and service levels. Works under

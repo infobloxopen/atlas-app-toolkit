@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 func TestSorting(t *testing.T) {

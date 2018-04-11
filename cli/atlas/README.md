@@ -26,12 +26,12 @@ More detailed installation instructions are available on the [GitHub repository]
 The following steps will install the `atlas` binary to your `$GOBIN` directory.
 
 ```sh
-$ go get github.com/Infoblox-CTO/ngp.api.toolkit/cli/atlas
+$ go get github.com/infobloxopen/atlas-app-toolkit/cli/atlas
 ```
 You're all set! Alternatively, you can clone the repository and install the binary manually.
 
 ```sh
-$ git clone https://github.com/Infoblox-CTO/ngp.api.toolkit.git
+$ git clone https://github.com/infobloxopen/atlas-app-toolkit.git
 $ cd ngp.api.toolkit/cli/atlas
 $ go install
 ```

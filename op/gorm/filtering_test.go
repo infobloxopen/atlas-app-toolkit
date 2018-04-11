@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Infoblox-CTO/ngp.api.toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 func TestGormFiltering(t *testing.T) {

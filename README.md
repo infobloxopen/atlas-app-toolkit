@@ -291,7 +291,7 @@ Also you can use our helper function `gw.Header()`
 import (
     "context"
 
-    "github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gw"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
@@ -353,7 +353,7 @@ See [this article](https://github.com/grpc-ecosystem/grpc-gateway/wiki/How-to-cu
 
 ```
 import (
-	"github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gw"
 )
 
 func init() {
@@ -385,7 +385,7 @@ Also you may use shortcuts like: `SetCreated`, `SetUpdated` and `SetDeleted`.
 
 ```golang
 import (
-    "github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gw"
 )
 
 func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
@@ -448,7 +448,7 @@ How to use [gw.DefaultProtoErrorHandler](gw/errors.go#L25) see example below:
 ```golang
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gw"
 
     "github.com/Infoblox-CTO/yourapp"
 )
@@ -495,7 +495,7 @@ import (
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
 
-    "github.com/Infoblox-CTO/ngp.api.toolkit/rpc/errdetails"
+    "github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 )
 
 func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
@@ -540,7 +540,7 @@ a `runtime.ServeMuxOption` using `runtime.WithMetadata(gw.MetadataAnnotator)`.
 ```golang
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/Infoblox-CTO/ngp.api.toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gw"
 
     "github.com/Infoblox-CTO/yourapp"
 )
@@ -563,7 +563,7 @@ If you want to explicitly declare one of collection operators in your `proto`
 scheme, to do so just import `collection_operators.proto`.
 
 ```proto
-import "github.com/Infoblox-CTO/ngp.api.toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Sorting sorting = 1;
@@ -634,7 +634,7 @@ appropriate metadata keys that will be handled by `grpc-gateway`. See example be
 ##### How to define field selection in my request?
 
 ```proto
-import "github.com/Infoblox-CTO/ngp.api.toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.FieldSelection fields = 1;
@@ -652,7 +652,7 @@ A service may implement collection sorting. A collection of response resources c
 ##### How to define sorting in my request?
 
 ```proto
-import "github.com/Infoblox-CTO/ngp.api.toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Sorting sort = 1;
@@ -668,8 +668,8 @@ has not been specified in an incoming HTTP request `gw.Sorting` returns `nil, ni
 import (
     "context"
 
-    "github.com/Infoblox-CTO/ngp.api.toolkit/gw"
-    "github.com/Infoblox-CTO/ngp.api.toolkit/op"
+    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
@@ -724,7 +724,7 @@ Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type,
 ##### How to define filtering in my request?
 
 ```proto
-import "github.com/Infoblox-CTO/ngp.api.toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Filtering filter = 1;
@@ -769,7 +769,7 @@ Note: Response offsets are optional since the client can often keep state on the
 ##### How to define pagination in my request/response?
 
 ```proto
-import "github.com/Infoblox-CTO/ngp.api.toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Pagination paging = 1;
