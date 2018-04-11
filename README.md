@@ -361,6 +361,8 @@ func init() {
 }
 ```
 
+You can also refer [example app](https://github.com/github.com/infobloxopen/atlas-contacts-app/pb/contacts/contacts.overwrite.pb.gw.go)
+
 #### Which forwarders I need to use to comply our REST API?
 
 We made default [ForwardResponseMessage](gw/response.go#L36) and [ForwardResponseMessage](gw/response.go#L38)
@@ -450,7 +452,7 @@ import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
     "github.com/infobloxopen/atlas-app-toolkit/gw"
 
-    "github.com/Infoblox-CTO/yourapp"
+    "github.com/yourrepo/yourapp"
 )
 
 func main() {
@@ -542,7 +544,7 @@ import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
     "github.com/infobloxopen/atlas-app-toolkit/gw"
 
-    "github.com/Infoblox-CTO/yourapp"
+    "github.com/yourrepo/yourapp"
 )
 
 func main() {
