@@ -25,11 +25,9 @@
   packages = [
     "jsonpb",
     "proto",
-    "protoc-gen-go/descriptor",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/empty",
     "ptypes/struct",
     "ptypes/timestamp",
     "ptypes/wrappers"
@@ -48,20 +46,16 @@
   packages = [
     ".",
     "auth",
-    "logging",
-    "logging/logrus",
     "logging/logrus/ctxlogrus",
     "tags",
     "tags/logrus",
-    "util/metautils",
-    "validator"
+    "util/metautils"
   ]
   revision = "eb23b08d08bbe930113a6512a7a829050341448c"
 
 [[projects]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
-    "protoc-gen-swagger/options",
     "runtime",
     "runtime/internal",
     "utilities"
@@ -99,10 +93,7 @@
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
-  packages = [
-    ".",
-    "dialects/postgres"
-  ]
+  packages = ["."]
   revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
   version = "v1.9.1"
 
@@ -111,22 +102,6 @@
   name = "github.com/jinzhu/inflection"
   packages = ["."]
   revision = "04140366298a54a039076d798123ffa108fff46c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/lib/pq"
-  packages = [
-    ".",
-    "hstore",
-    "oid"
-  ]
-  revision = "b2004221932bd6b13167ef654c81cffac36f7537"
-
-[[projects]]
-  name = "github.com/lyft/protoc-gen-validate"
-  packages = ["validate"]
-  revision = "8e6aaf55f4954f1ef9d3ee2e8f5a50e79cc04f8f"
-  version = "v0.0.5"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -210,7 +185,6 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = [
-    "googleapis/api/annotations",
     "googleapis/rpc/code",
     "googleapis/rpc/status"
   ]
@@ -249,6 +223,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c2a1784baecc8cbc15e83870a4c0008fe2f2f1d2b67a55d9a7d76a326feeb2fe"
+  inputs-digest = "ae9afecba22387a51b144a80aa90329104333fe037a29c14e495c4808168ef4f"
   solver-name = "gps-cdcl"
   solver-version = 1
