@@ -32,7 +32,7 @@ You're all set! Alternatively, you can clone the repository and install the bina
 
 ```sh
 $ git clone https://github.com/infobloxopen/atlas-app-toolkit.git
-$ cd ngp.api.toolkit/cli/atlas
+$ cd atlas-app-toolkit/cli/atlas
 $ go install
 ```
 
