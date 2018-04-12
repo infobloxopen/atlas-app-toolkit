@@ -61,10 +61,10 @@ func (ch *checksHandler) healthEndpoint(rw http.ResponseWriter, r *http.Request)
 }
 
 func (ch *checksHandler) readyEndpoint(rw http.ResponseWriter, r *http.Request) {
-	ch.handle(rw, r, ch.readinessChecks)
+	ch.handle(rw, r, ch.readinessChecks, ch.livenessChecks)
 }
 
-func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checks map[string]Check) {
+func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checksSets ...map[string]Check) {
 	if r.Method != http.MethodGet {
 		http.Error(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -74,17 +74,21 @@ func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checks 
 	status := http.StatusOK
 	ch.lock.RLock()
 	defer ch.lock.RUnlock()
-	for name, check := range checks {
-		if check == nil {
-			continue
-		}
-		if err := check(); err != nil {
-			status = http.StatusServiceUnavailable
-			errors[name] = err
+
+	for _, checks := range checksSets {
+		for name, check := range checks {
+			if check == nil {
+				continue
+			}
+			if err := check(); err != nil {
+				status = http.StatusServiceUnavailable
+				errors[name] = err
+			}
 		}
 	}
-
 	rw.WriteHeader(status)
+
+	return
 
 	// Uncomment to write errors and get non-empty response
 	// rw.Header().Set("Content-Type", "application/json; charset=utf-8")
