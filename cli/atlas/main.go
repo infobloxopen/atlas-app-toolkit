@@ -2,7 +2,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -20,6 +19,7 @@ const (
 	FLAG_NAME     = "name"
 	FLAG_REGISTRY = "registry"
 	FLAG_GATEWAY  = "gateway"
+	FLAG_DEBUG    = "debug"
 )
 
 var (
@@ -28,6 +28,7 @@ var (
 	initializeName     = initialize.String(FLAG_NAME, "", "the application name (required)")
 	initializeRegistry = initialize.String(FLAG_REGISTRY, "", "the Docker registry (optional)")
 	initializeGateway  = initialize.Bool(FLAG_GATEWAY, false, "generate project with a gRPC gateway (default false)")
+	initializeDebug    = initialize.Bool(FLAG_DEBUG, false, "print debug statements during intialization (default false)")
 )
 
 func main() {
@@ -236,14 +237,12 @@ func resolveImports(dirs []string) error {
 
 func runCommand(command string, args ...string) error {
 	cmd := exec.Command(command, args...)
-	stderr := &bytes.Buffer{}
-	cmd.Stderr = stderr
+	if *initializeDebug {
+		cmd.Stderr = os.Stdout
+		cmd.Stdout = os.Stderr
+	}
 	if err := cmd.Run(); err != nil {
-		message := fmt.Sprintf("error running '%s' command", command)
-		if output := fmt.Sprint(stderr); output != "" {
-			message = fmt.Sprintf("%s: %s", message, output)
-		}
-		return errors.New(message)
+		return err
 	}
 	return nil
 }
