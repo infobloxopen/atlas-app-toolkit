@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -204,8 +205,7 @@ func printErr(err error) {
 // initDep calls "dep init" to generate .toml files
 func initDep() error {
 	fmt.Print("Starting dep project... ")
-	err := exec.Command("dep", "init").Run()
-	if err != nil {
+	if err := runCommand("dep", "init"); err != nil {
 		return err
 	}
 	fmt.Println("done!")
@@ -215,8 +215,7 @@ func initDep() error {
 // generateProtobuf calls "make protobuf" to render initial .pb files
 func generateProtobuf() error {
 	fmt.Print("Generating protobuf files... ")
-	err := exec.Command("make", "protobuf").Run()
-	if err != nil {
+	if err := runCommand("make", "protobuf"); err != nil {
 		return err
 	}
 	fmt.Println("done!")
@@ -227,11 +226,24 @@ func generateProtobuf() error {
 func resolveImports(dirs []string) error {
 	fmt.Print("Resolving imports... ")
 	for _, dir := range dirs {
-		err := exec.Command("goimports", "-w", dir).Run()
-		if err != nil {
+		if err := runCommand("goimports", "-w", dir); err != nil {
 			return err
 		}
 	}
 	fmt.Println("done!")
+	return nil
+}
+
+func runCommand(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	stderr := &bytes.Buffer{}
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
+		message := fmt.Sprintf("error running '%s' command", command)
+		if output := fmt.Sprint(stderr); output != "" {
+			message = fmt.Sprintf("%s: %s", message, output)
+		}
+		return errors.New(message)
+	}
 	return nil
 }
