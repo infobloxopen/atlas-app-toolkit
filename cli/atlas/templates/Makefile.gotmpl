@@ -1,4 +1,4 @@
-PROJECT_ROOT 				:= {{ .Root }}/{{ .Name }}
+PROJECT_ROOT 				:= {{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}
 BUILD_PATH  				:= bin
 DOCKERFILE_PATH 		:= $(CURDIR)/docker
 

@@ -2,11 +2,9 @@ syntax = "proto3";
 
 package service;
 
-import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
 import "protoc-gen-swagger/options/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "{{ .Root }}/{{ .Name }}/pb;pb";
 

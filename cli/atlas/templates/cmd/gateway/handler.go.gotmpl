@@ -1,5 +1,12 @@
 package main
 
+import (
+	"context"
+	"net/http"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
+)
+
 // New{{ .Name | Service}}Handler returns an HTTP handler that serves the gRPC gateway
 func New{{ .Name | Service }}Handler(ctx context.Context, grpcAddr string, opts ...runtime.ServeMuxOption) (http.Handler, error) {
 	mux := runtime.NewServeMux(opts...)

@@ -1,5 +1,14 @@
 package main
 
+import (
+	"context"
+	"flag"
+	"log"
+	"net/http"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/gw"
+)
+
 var (
 	ServerAddr  string
 	GatewayAddr string

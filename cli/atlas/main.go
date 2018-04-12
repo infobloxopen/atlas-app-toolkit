@@ -19,6 +19,7 @@ const (
 	FLAG_NAME     = "name"
 	FLAG_REGISTRY = "registry"
 	FLAG_GATEWAY  = "gateway"
+	FLAG_DEBUG    = "debug"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 	initializeName     = initialize.String(FLAG_NAME, "", "the application name (required)")
 	initializeRegistry = initialize.String(FLAG_REGISTRY, "", "the Docker registry (optional)")
 	initializeGateway  = initialize.Bool(FLAG_GATEWAY, false, "generate project with a gRPC gateway (default false)")
+	initializeDebug    = initialize.Bool(FLAG_DEBUG, false, "print debug statements during intialization (default false)")
 )
 
 func main() {
@@ -154,7 +156,7 @@ func initializeApplication() {
 	if err != nil {
 		printErr(err)
 	}
-	root, err := ProjectRoot(wd)
+	root, err := ProjectRoot(os.Getenv("GOPATH"), wd)
 	if err != nil {
 		printErr(err)
 	}
@@ -188,10 +190,10 @@ func initializeApplication() {
 	if err := generateProtobuf(); err != nil {
 		printErr(err)
 	}
-	if err := resolveImports(app.directories()); err != nil {
+	if err := initDep(); err != nil {
 		printErr(err)
 	}
-	if err := initDep(); err != nil {
+	if err := resolveImports(app.directories()); err != nil {
 		printErr(err)
 	}
 }
@@ -204,8 +206,7 @@ func printErr(err error) {
 // initDep calls "dep init" to generate .toml files
 func initDep() error {
 	fmt.Print("Starting dep project... ")
-	err := exec.Command("dep", "init").Run()
-	if err != nil {
+	if err := runCommand("dep", "init"); err != nil {
 		return err
 	}
 	fmt.Println("done!")
@@ -215,8 +216,7 @@ func initDep() error {
 // generateProtobuf calls "make protobuf" to render initial .pb files
 func generateProtobuf() error {
 	fmt.Print("Generating protobuf files... ")
-	err := exec.Command("make", "protobuf").Run()
-	if err != nil {
+	if err := runCommand("make", "protobuf"); err != nil {
 		return err
 	}
 	fmt.Println("done!")
@@ -227,11 +227,22 @@ func generateProtobuf() error {
 func resolveImports(dirs []string) error {
 	fmt.Print("Resolving imports... ")
 	for _, dir := range dirs {
-		err := exec.Command("goimports", "-w", dir).Run()
-		if err != nil {
+		if err := runCommand("goimports", "-w", dir); err != nil {
 			return err
 		}
 	}
 	fmt.Println("done!")
+	return nil
+}
+
+func runCommand(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	if *initializeDebug {
+		cmd.Stderr = os.Stdout
+		cmd.Stdout = os.Stderr
+	}
+	if err := cmd.Run(); err != nil {
+		return err
+	}
 	return nil
 }

@@ -1,5 +1,11 @@
 package svc
 
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
 func NewBasicServer() (pb.{{ .Name | Service }}Server, error) {
 	return &echoServer{}, nil
 }
