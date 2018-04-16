@@ -196,6 +196,9 @@ func initializeApplication() {
 	if err := resolveImports(app.directories()); err != nil {
 		printErr(err)
 	}
+	if err := initRepo(); err != nil {
+		printErr(err)
+	}
 }
 
 func printErr(err error) {
@@ -230,6 +233,22 @@ func resolveImports(dirs []string) error {
 		if err := runCommand("goimports", "-w", dir); err != nil {
 			return err
 		}
+	}
+	fmt.Println("done!")
+	return nil
+}
+
+// initRepo initializes new applications as a git repository
+func initRepo() error {
+	fmt.Print("Initializing git repo... ")
+	if err := runCommand("git", "init"); err != nil {
+		return err
+	}
+	if err := runCommand("git", "add", "*"); err != nil {
+		return err
+	}
+	if err := runCommand("git", "commit", "-m", "Initial commit"); err != nil {
+		return err
 	}
 	fmt.Println("done!")
 	return nil
