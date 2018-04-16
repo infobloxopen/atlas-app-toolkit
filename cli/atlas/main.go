@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/build"
 	"html/template"
 	"os"
 	"os/exec"
@@ -156,7 +157,7 @@ func initializeApplication() {
 	if err != nil {
 		printErr(err)
 	}
-	root, err := ProjectRoot(os.Getenv("GOPATH"), wd)
+	root, err := ProjectRoot(build.Default.GOPATH, wd)
 	if err != nil {
 		printErr(err)
 	}
