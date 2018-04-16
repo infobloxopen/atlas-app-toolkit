@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -10,7 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	pdp "github.com/infobloxopen/themis/pdp-service"
-	"google.golang.org/grpc/transport"
+	"google.golang.org/grpc"
 )
 
 // functional options for the defaultBuilder
@@ -83,11 +82,10 @@ func WithCallback(attr attributer) option {
 // called by the client (e.g. ListPersons)
 func WithRequest() option {
 	withRequestFunc := func(ctx context.Context) ([]*pdp.Attribute, error) {
-		stream, ok := transport.StreamFromContext(ctx)
-		if !ok {
-			return nil, errors.New("failed getting stream from context")
+		service, method, err := getRequestDetails(ctx)
+		if err != nil {
+			return nil, err
 		}
-		service, method := getRequestDetails(*stream)
 		service = stripPackageName(service)
 		attributes := []*pdp.Attribute{
 			&pdp.Attribute{"operation", "string", method},
@@ -108,9 +106,13 @@ func stripPackageName(service string) string {
 	return fields[len(fields)-1]
 }
 
-func getRequestDetails(stream transport.Stream) (service, method string) {
-	fullMethodString := stream.Method()
-	return path.Dir(fullMethodString)[1:], path.Base(fullMethodString)
+func getRequestDetails(ctx context.Context) (string, string, error) {
+	fullMethodString, ok := grpc.Method(ctx)
+	if !ok {
+		return "", "", ErrInternal
+	}
+	fmt.Println(fullMethodString)
+	return path.Dir(fullMethodString)[1:], path.Base(fullMethodString), nil
 }
 
 func combineAttributes(first, second []*pdp.Attribute) []*pdp.Attribute {

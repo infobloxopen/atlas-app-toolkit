@@ -217,12 +217,12 @@
     "tap",
     "transport"
   ]
-  revision = "8e4536a86ab602859c20df5ebfd0bd4228d08655"
-  version = "v1.10.0"
+  revision = "d11072e7ca9811b1100b80ca0269ac831f06d024"
+  version = "v1.11.3"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ae9afecba22387a51b144a80aa90329104333fe037a29c14e495c4808168ef4f"
+  inputs-digest = "7c587a6db41fb6fcc707ef8405c9976a968314fc03ec4911447f915def61c0b6"
   solver-name = "gps-cdcl"
   solver-version = 1
