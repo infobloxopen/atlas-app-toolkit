@@ -2,16 +2,10 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	pdp "github.com/infobloxopen/themis/pdp-service"
-	"google.golang.org/grpc/metadata"
-)
-
-const (
-	TEST_SECRET = "some-secret-123"
 )
 
 func TestWithJWT(t *testing.T) {
@@ -139,29 +133,6 @@ func TestStripPackageName(t *testing.T) {
 			t.Errorf("Unexpected service name: %s - expected %s", name, test.expected)
 		}
 	}
-}
-
-// creates a context with a jwt
-func contextWithToken(token string) (context.Context, error) {
-	md := metadata.Pairs(
-		"authorization", fmt.Sprintf("token %s", token),
-	)
-	return metadata.NewIncomingContext(context.Background(), md), nil
-}
-
-// generates a token string based on the given jwt claims
-func makeToken(claims jwt.Claims, t *testing.T) string {
-	method := jwt.SigningMethodHS256
-	token := jwt.NewWithClaims(method, claims)
-	signingString, err := token.SigningString()
-	if err != nil {
-		t.Fatalf("Error when building token: %v", err)
-	}
-	signature, err := method.Sign(signingString, []byte(TEST_SECRET))
-	if err != nil {
-		t.Fatalf("Error when building token: %v", err)
-	}
-	return fmt.Sprintf("%s.%s", signingString, signature)
 }
 
 // checks if first and second attribute lists contain identical elements
