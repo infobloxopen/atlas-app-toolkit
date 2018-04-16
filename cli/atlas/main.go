@@ -76,7 +76,7 @@ func (a Application) GenerateMakefile() {
 }
 
 func (a Application) GenerateProto() {
-	a.generateFile("proto/service.proto", "templates/proto/service.proto.gotmpl")
+	a.generateFile("pb/service.proto", "templates/pb/service.proto.gotmpl")
 }
 
 func (a Application) GenerateServerMain() {
@@ -135,7 +135,6 @@ func (a Application) directories() []string {
 		"cmd/config",
 		"pb",
 		"svc",
-		"proto",
 		"docker",
 		"deploy",
 		"migrations",
