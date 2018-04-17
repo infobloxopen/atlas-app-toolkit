@@ -47,7 +47,11 @@ func TestGetJWTField(t *testing.T) {
 		ctx := context.Background()
 		if len(test.claims) != 0 {
 			token := makeToken(test.claims, t)
-			ctx, _ = contextWithToken(token)
+			c, err := contextWithToken(token)
+			if err != nil {
+				t.Fatalf("Error when building request context: %v", err)
+			}
+			ctx = c
 		}
 		actual, err := GetJWTField(ctx, test.field, nil)
 		if err != test.err {
