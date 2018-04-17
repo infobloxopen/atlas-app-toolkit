@@ -7,6 +7,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	pdp "github.com/infobloxopen/themis/pdp-service"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -116,6 +117,60 @@ func TestWithCallback(t *testing.T) {
 		builder := NewBuilder(WithCallback(test.callback))
 		req, err := builder.build(context.Background())
 		if err != nil {
+			t.Errorf("Unexpected error when building request: %v", err)
+		}
+		if !hasMatchingAttributes(req.Attributes, test.expected) {
+			t.Errorf("Invalid request attributes: %v - expected %v", req.GetAttributes(), test.expected)
+		}
+	}
+}
+
+type mockTransportStream struct{ method string }
+
+func (m mockTransportStream) Method() string               { return m.method }
+func (m mockTransportStream) SetHeader(metadata.MD) error  { return nil }
+func (m mockTransportStream) SendHeader(metadata.MD) error { return nil }
+func (m mockTransportStream) SetTrailer(metadata.MD) error { return nil }
+
+func TestWithRequest(t *testing.T) {
+	var tests = []struct {
+		stream   *mockTransportStream
+		expected []*pdp.Attribute
+		err      error
+	}{
+		{
+			stream: &mockTransportStream{method: "/PetStore/ListPets"},
+			expected: []*pdp.Attribute{
+				{Id: "operation", Type: "string", Value: "ListPets"},
+				{Id: "application", Type: "string", Value: "petstore"},
+			},
+			err: nil,
+		},
+		{
+			stream: &mockTransportStream{method: "/atlas.example.PetStore/ListPets"},
+			expected: []*pdp.Attribute{
+				{Id: "operation", Type: "string", Value: "ListPets"},
+				{Id: "application", Type: "string", Value: "petstore"},
+			},
+			err: nil,
+		},
+		{
+			stream:   nil,
+			expected: []*pdp.Attribute{},
+			err:      ErrInternal,
+		},
+	}
+	for _, test := range tests {
+		ctx := context.Background()
+		if test.stream != nil {
+			ctx = grpc.NewContextWithServerTransportStream(
+				context.Background(),
+				test.stream,
+			)
+		}
+		builder := NewBuilder(WithRequest())
+		req, err := builder.build(ctx)
+		if err != test.err {
 			t.Errorf("Unexpected error when building request: %v", err)
 		}
 		if !hasMatchingAttributes(req.Attributes, test.expected) {
