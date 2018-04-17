@@ -59,6 +59,41 @@ func TestGetJWTField(t *testing.T) {
 	}
 }
 
+func TestGetAccountID(t *testing.T) {
+	var accountIDTests = []struct {
+		claims   jwt.MapClaims
+		expected string
+		err      error
+	}{
+		{
+			claims: jwt.MapClaims{
+				"AccountID": "id-abc-123",
+			},
+			expected: "id-abc-123",
+			err:      nil,
+		},
+		{
+			claims:   jwt.MapClaims{},
+			expected: "",
+			err:      errMissingField,
+		},
+	}
+	for _, test := range accountIDTests {
+		token := makeToken(test.claims, t)
+		ctx, err := contextWithToken(token)
+		if err != nil {
+			t.Fatalf("Error when building request context: %v", err)
+		}
+		actual, err := GetAccountID(ctx, nil)
+		if err != test.err {
+			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
+		}
+		if actual != test.expected {
+			t.Errorf("Invalid AccountID: %v - expected %v", actual, test.expected)
+		}
+	}
+}
+
 // creates a context with a jwt
 func contextWithToken(token string) (context.Context, error) {
 	md := metadata.Pairs(
