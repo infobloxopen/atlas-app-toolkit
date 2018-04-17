@@ -2,16 +2,17 @@ syntax = "proto3";
 
 package service;
 
+import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}/pb;pb";
 
-// Echo, EchoRequest, and EchoResponse make up a "starter" example that
-// stands in place for the application protobuf definitions. It allows the Atlas
-// CLI to generate an end-to-end example for the sake of demonstration. The Echo
-// example should be replaced with an application-specific protobuf schema.
+// The {{ .Name | Service }} service, GetVersion RPC, and Version message
+// make up a simple "starter" example. It allows the Atlas CLI to generate an
+// end-to-end example for the sake of demonstration. Feel free to change 
+// GetVersion to better-suit how your versioning system, or get rid of it entirely.
 
 // Here are some helpful resources to aid you in your protobuf quest:
 // https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.proto
@@ -21,34 +22,23 @@ option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{
 
 // Happy protobuffing!
 
-// TODO: Follow instructions to build your own protobuf schema.
+// TODO: Write a protobuf schema for the {{ .Name | Service }} service. The 
+// messages and RPCs will compose the API for the service.
 
-// TODO: Stucture your own messages to suit your application. Each protocol 
-// buffer message is a small logical record of information, containing a 
-// series of name-value pairs.
-message Echo {
-  string message = 1;
-}
-
-message EchoRequest {
-  repeated Echo echos = 1;
-}
-
-message EchoResponse {
-  repeated Echo echos = 1;
-  string time = 2;
+// TODO: Stucture your own protobuf messages. Each protocol buffer message is a 
+// small logical record of information, containing a series of name-value pairs.
+message Version {
+  string semantic_version = 1;
 }
 
 // TODO: Define the {{ .Name | Service }} service and its methods. Feel free
 // to change the name of {{ .Name | Service }} to better-suit your naming
-// conventions. Remember, Echo is a simple example that should eventually 
-// get removed.
+// conventions.
 service {{ .Name | Service }} {
-  rpc Echo (EchoRequest) returns (EchoResponse) {
+  rpc GetVersion (google.protobuf.Empty) returns (Version) {
     {{ if .WithGateway }}// TODO: Provide mappings between REST endpoints and service methods.
     option (google.api.http) = {
-      post: "/echo"
-      body: "*"
+      get: "/version"
     };{{ end }}
   }
 }
