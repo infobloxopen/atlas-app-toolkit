@@ -13,8 +13,8 @@ const (
 	TEST_SECRET = "some-secret-123"
 )
 
-func TestGetTenantID(t *testing.T) {
-	var tenantIDTests = []struct {
+func TestGetJWTField(t *testing.T) {
+	var jwtFieldTests = []struct {
 		claims   jwt.MapClaims
 		field    string
 		expected string
@@ -43,7 +43,7 @@ func TestGetTenantID(t *testing.T) {
 			err:      errMissingToken,
 		},
 	}
-	for _, test := range tenantIDTests {
+	for _, test := range jwtFieldTests {
 		ctx := context.Background()
 		if len(test.claims) != 0 {
 			token := makeToken(test.claims, t)
@@ -54,7 +54,7 @@ func TestGetTenantID(t *testing.T) {
 			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
 		}
 		if actual != test.expected {
-			t.Errorf("Invalid tenant ID: %v - expected %v", actual, test.expected)
+			t.Errorf("Invalid JWT field: %v - expected %v", actual, test.expected)
 		}
 	}
 }
