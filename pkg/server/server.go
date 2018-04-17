@@ -1,11 +1,8 @@
 package server
 
 import (
-	"crypto/tls"
 	"net"
 	"net/http"
-
-	atlastls "github.com/infobloxopen/atlas-app-toolkit/pkg/tls"
 
 	"google.golang.org/grpc"
 )
@@ -16,7 +13,6 @@ type Server struct {
 	healthPath  string
 	metricsAddr string
 	metricsPath string
-	tlsConfig   *tls.Config
 	grpcServer  *grpc.Server
 	httpMux     *http.ServeMux
 }
