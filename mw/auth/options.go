@@ -29,7 +29,7 @@ func WithJWT(keyfunc jwt.Keyfunc) option {
 			return attributes, ErrInternal
 		}
 		for k, v := range claims {
-			attr := &pdp.Attribute{k, "string", fmt.Sprint(v)}
+			attr := &pdp.Attribute{Id: k, Type: "string", Value: fmt.Sprint(v)}
 			attributes = append(attributes, attr)
 		}
 		return attributes, nil
@@ -63,9 +63,9 @@ func WithRequest() option {
 		}
 		service = stripPackageName(service)
 		attributes := []*pdp.Attribute{
-			&pdp.Attribute{"operation", "string", method},
+			&pdp.Attribute{Id: "operation", Type: "string", Value: method},
 			// lowercase the service to match PARG naming conventions
-			&pdp.Attribute{"application", "string", strings.ToLower(service)},
+			&pdp.Attribute{Id: "application", Type: "string", Value: strings.ToLower(service)},
 		}
 		return attributes, nil
 	}

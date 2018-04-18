@@ -16,34 +16,34 @@ func TestAuthFunc(t *testing.T) {
 		expected   error
 	}{
 		{
-			Authorizer{"", NewBuilder(), NewHandler()},
-			func() pep.Client { return mockClient{} },
-			nil,
+			authorizer: Authorizer{"", NewBuilder(), NewHandler()},
+			factory:    func() pep.Client { return mockClient{} },
+			expected:   nil,
 		},
 		{
-			Authorizer{"", NewBuilder(), NewHandler()},
-			func() pep.Client { return mockClient{deny: true} },
-			ErrUnauthorized,
+			authorizer: Authorizer{"", NewBuilder(), NewHandler()},
+			factory:    func() pep.Client { return mockClient{deny: true} },
+			expected:   ErrUnauthorized,
 		},
 		{
-			Authorizer{"", NewBuilder(), NewHandler()},
-			func() pep.Client { return mockClient{errOnConnect: true} },
-			ErrInternal,
+			authorizer: Authorizer{"", NewBuilder(), NewHandler()},
+			factory:    func() pep.Client { return mockClient{errOnConnect: true} },
+			expected:   ErrInternal,
 		},
 		{
-			Authorizer{"", NewBuilder(), NewHandler()},
-			func() pep.Client { return mockClient{errOnValidate: true} },
-			ErrInternal,
+			authorizer: Authorizer{"", NewBuilder(), NewHandler()},
+			factory:    func() pep.Client { return mockClient{errOnValidate: true} },
+			expected:   ErrInternal,
 		},
 		{
-			Authorizer{"", mockBuilder{errOnBuild: true}, NewHandler()},
-			func() pep.Client { return mockClient{} },
-			ErrInternal,
+			authorizer: Authorizer{"", mockBuilder{errOnBuild: true}, NewHandler()},
+			factory:    func() pep.Client { return mockClient{} },
+			expected:   ErrInternal,
 		},
 		{
-			Authorizer{"", NewBuilder(), mockHandler{errOnHandle: true}},
-			func() pep.Client { return mockClient{} },
-			ErrInternal,
+			authorizer: Authorizer{"", NewBuilder(), mockHandler{errOnHandle: true}},
+			factory:    func() pep.Client { return mockClient{} },
+			expected:   ErrInternal,
 		},
 	}
 	for _, test := range authFuncTests {

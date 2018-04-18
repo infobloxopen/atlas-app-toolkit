@@ -13,7 +13,7 @@ const (
 	// TODO: Field is tentatively called "AccountID" but will probably need to be
 	// changed. We don't know what the JWT will look like, so we're giving it our
 	// best guess for the time being.
-	MULTI_TENANCY_FIELD = "AccountID"
+	MultiTenancyField = "AccountID"
 )
 
 var (
@@ -39,7 +39,7 @@ func GetJWTField(ctx context.Context, field string, keyfunc jwt.Keyfunc) (string
 }
 
 func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
-	return GetJWTField(ctx, MULTI_TENANCY_FIELD, keyfunc)
+	return GetJWTField(ctx, MultiTenancyField, keyfunc)
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.
