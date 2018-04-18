@@ -13,7 +13,9 @@ import (
 )
 
 var (
-	ErrInternal     = grpc.Errorf(codes.Internal, "unable to process request")
+	// ErrInternal indicates a server-side error occured during authorization
+	ErrInternal = grpc.Errorf(codes.Internal, "unable to process request")
+	// ErrUnauthorized indicates that a given request has been denied
 	ErrUnauthorized = grpc.Errorf(codes.PermissionDenied, "unauthorized")
 )
 
@@ -49,7 +51,7 @@ func (d defaultBuilder) build(ctx context.Context) (pdp.Request, error) {
 		}
 		attributes = combineAttributes(attributes, attrs)
 	}
-	return pdp.Request{attributes}, nil
+	return pdp.Request{Attributes: attributes}, nil
 }
 
 // NewBuilder returns an instance of the default Builder that includes all of

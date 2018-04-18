@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	TEST_SECRET = "some-secret-123"
+	// TestSecret dummy secret used for signing test JWTs
+	TestSecret = "some-secret-123"
 )
 
 func TestGetJWTField(t *testing.T) {
@@ -114,7 +115,7 @@ func makeToken(claims jwt.Claims, t *testing.T) string {
 	if err != nil {
 		t.Fatalf("Error when building token: %v", err)
 	}
-	signature, err := method.Sign(signingString, []byte(TEST_SECRET))
+	signature, err := method.Sign(signingString, []byte(TestSecret))
 	if err != nil {
 		t.Fatalf("Error when building token: %v", err)
 	}

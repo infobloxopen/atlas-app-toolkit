@@ -24,11 +24,11 @@ func TestWithJWT(t *testing.T) {
 				"department": "engineering",
 			}, t),
 			expected: []*pdp.Attribute{
-				&pdp.Attribute{"department", "string", "engineering"},
-				&pdp.Attribute{"username", "string", "john"},
+				&pdp.Attribute{Id: "department", Type: "string", Value: "engineering"},
+				&pdp.Attribute{Id: "username", Type: "string", Value: "john"},
 			},
 			keyfunc: func(token *jwt.Token) (interface{}, error) {
-				return []byte(TEST_SECRET), nil
+				return []byte(TestSecret), nil
 			},
 			err: nil,
 		},
@@ -89,23 +89,23 @@ func TestWithCallback(t *testing.T) {
 		expected []*pdp.Attribute
 	}{
 		{
-			func(ctx context.Context) ([]*pdp.Attribute, error) {
+			callback: func(ctx context.Context) ([]*pdp.Attribute, error) {
 				attributes := []*pdp.Attribute{
-					&pdp.Attribute{"fruit", "string", "apple"},
-					&pdp.Attribute{"vegetable", "string", "carrot"},
+					&pdp.Attribute{Id: "fruit", Type: "string", Value: "apple"},
+					&pdp.Attribute{Id: "vegetable", Type: "string", Value: "carrot"},
 				}
 				return attributes, nil
 			},
-			[]*pdp.Attribute{
-				{"fruit", "string", "apple"},
-				{"vegetable", "string", "carrot"},
+			expected: []*pdp.Attribute{
+				{Id: "fruit", Type: "string", Value: "apple"},
+				{Id: "vegetable", Type: "string", Value: "carrot"},
 			},
 		},
 		{
-			func(ctx context.Context) ([]*pdp.Attribute, error) {
+			callback: func(ctx context.Context) ([]*pdp.Attribute, error) {
 				return []*pdp.Attribute{}, nil
 			},
-			[]*pdp.Attribute{},
+			expected: []*pdp.Attribute{},
 		},
 	}
 	for _, test := range callbackTests {
@@ -179,9 +179,9 @@ func TestStripPackageName(t *testing.T) {
 		fullname string
 		expected string
 	}{
-		{"ngp.api.toolkit.example.addressbook.AddressBook", "AddressBook"},
-		{"AddressBook", "AddressBook"},
-		{"", ""},
+		{fullname: "ngp.api.toolkit.example.addressbook.AddressBook", expected: "AddressBook"},
+		{fullname: "AddressBook", expected: "AddressBook"},
+		{fullname: "", expected: ""},
 	}
 	for _, test := range tests {
 		name := stripPackageName(test.fullname)
@@ -196,10 +196,10 @@ func hasMatchingAttributes(first, second []*pdp.Attribute) bool {
 	if len(first) != len(second) {
 		return false
 	}
-	for _, attr_first := range first {
+	for _, attrFirst := range first {
 		var hasAttribute bool
-		for _, attr_second := range second {
-			hasAttribute = hasAttribute || attr_first.String() == attr_second.String()
+		for _, attrSecond := range second {
+			hasAttribute = hasAttribute || attrFirst.String() == attrSecond.String()
 		}
 		if !hasAttribute {
 			return false
