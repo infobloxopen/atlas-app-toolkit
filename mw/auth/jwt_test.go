@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	// TestSecret dummy secret used for signing test JWTs
 	TestSecret = "some-secret-123"
 )
 

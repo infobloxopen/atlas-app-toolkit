@@ -13,7 +13,9 @@ import (
 )
 
 var (
-	ErrInternal     = grpc.Errorf(codes.Internal, "unable to process request")
+	// ErrInternal indicates a server-side error occured during authorization
+	ErrInternal = grpc.Errorf(codes.Internal, "unable to process request")
+	// ErrUnauthorized indicates that a given request has been denied
 	ErrUnauthorized = grpc.Errorf(codes.PermissionDenied, "unauthorized")
 )
 
