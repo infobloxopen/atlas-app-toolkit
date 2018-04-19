@@ -78,7 +78,7 @@ func TestForwardResponseMessage(t *testing.T) {
 	}
 
 	if l := len(v.Result); l != 2 {
-		t.Fatal("invalid number of items in response result: %d - expected: %d", l, 2)
+		t.Fatalf("invalid number of items in response result: %d - expected: %d", l, 2)
 	}
 
 	poe, hemingway := v.Result[0], v.Result[1]

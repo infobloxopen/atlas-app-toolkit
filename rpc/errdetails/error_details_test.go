@@ -30,7 +30,7 @@ func TestOkCode(t *testing.T) {
 	}
 
 	if ti.GetCode() != tu.GetCode() {
-		t.Errorf("invalid code", tu.GetCode())
+		t.Errorf("invalid code: %d", tu.GetCode())
 	}
 
 	// code is not set
@@ -39,7 +39,7 @@ func TestOkCode(t *testing.T) {
 		t.Error(err)
 	}
 	if ti.GetCode() != int32(codes.OK) {
-		t.Errorf("invalid code: %s", ti.GetCode())
+		t.Errorf("invalid code: %d", ti.GetCode())
 	}
 
 	// code is null
@@ -48,7 +48,7 @@ func TestOkCode(t *testing.T) {
 		t.Error(err)
 	}
 	if ti.GetCode() != int32(codes.OK) {
-		t.Errorf("invalid code: %s", ti.GetCode())
+		t.Errorf("invalid code: %d", ti.GetCode())
 	}
 
 	// code is empty string
@@ -57,7 +57,7 @@ func TestOkCode(t *testing.T) {
 		t.Error(err)
 	}
 	if ti.GetCode() != int32(codes.OK) {
-		t.Errorf("invalid code: %s", ti.GetCode())
+		t.Errorf("invalid code: %d", ti.GetCode())
 	}
 }
 
@@ -84,7 +84,7 @@ func TestUnimplementedCode(t *testing.T) {
 	}
 
 	if ti.GetCode() != tu.GetCode() {
-		t.Errorf("invalid code", tu.GetCode())
+		t.Errorf("invalid code: %d", tu.GetCode())
 	}
 
 	ti.Reset()
@@ -92,7 +92,7 @@ func TestUnimplementedCode(t *testing.T) {
 		t.Error(err)
 	}
 	if ti.GetCode() != int32(codes.Unimplemented) {
-		t.Errorf("invalid code: %s", ti.GetCode())
+		t.Errorf("invalid code: %d", ti.GetCode())
 	}
 }
 
@@ -119,7 +119,7 @@ func TestUnknownCode(t *testing.T) {
 	}
 
 	if ti.GetCode() != tu.GetCode() {
-		t.Errorf("invalid code", tu.GetCode())
+		t.Errorf("invalid code: %d", tu.GetCode())
 	}
 
 	ti.Reset()
@@ -127,6 +127,6 @@ func TestUnknownCode(t *testing.T) {
 		t.Error(err)
 	}
 	if ti.GetCode() != int32(codes.Unknown) {
-		t.Errorf("invalid code: %s", ti.GetCode())
+		t.Errorf("invalid code: %d", ti.GetCode())
 	}
 }

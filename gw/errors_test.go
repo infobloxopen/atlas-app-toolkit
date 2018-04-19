@@ -33,7 +33,7 @@ func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 	}
 
 	if v.Status.HTTPStatus != http.StatusInternalServerError {
-		t.Errorf("invalid http status: %s", v.Status.HTTPStatus)
+		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
 	}
 
 	if v.Status.Code != code.Code_UNKNOWN.String() {
@@ -64,7 +64,7 @@ func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 	}
 
 	if v.Status.HTTPStatus != http.StatusNotImplemented {
-		t.Errorf("invalid http status: %s", v.Status.HTTPStatus)
+		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
 	}
 
 	if v.Status.Code != "NOT_IMPLEMENTED" {

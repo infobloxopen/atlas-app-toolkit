@@ -61,7 +61,7 @@ func TestSorting(t *testing.T) {
 	}
 
 	if len(s.GetCriterias()) != 2 {
-		t.Fatalf("invalid number of sort criterias: %s - expected: 2", len(s.GetCriterias()))
+		t.Fatalf("invalid number of sort criterias: %d - expected: 2", len(s.GetCriterias()))
 	}
 	if c := s.GetCriterias(); c[0].GoString() != "name ASC" || c[0].Tag != "name" || c[0].Order != op.SortCriteria_ASC {
 		t.Errorf("invalid sort criteria: %v - expected: %v", c[0], op.SortCriteria{"name", op.SortCriteria_ASC})
@@ -105,9 +105,9 @@ func TestPagination(t *testing.T) {
 	}
 	s, ok := status.FromError(err)
 	if !ok {
-		t.Fatalf("unexpected non status error: %s", s)
+		t.Fatalf("unexpected non status error: %v", s)
 	}
 	if s.Code() != codes.InvalidArgument {
-		t.Errorf("invalid status error code: %s", s.Code())
+		t.Errorf("invalid status error code: %d", s.Code())
 	}
 }
