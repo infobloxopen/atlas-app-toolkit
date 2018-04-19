@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/build"
 	"html/template"
 	"os"
 	"os/exec"
@@ -75,7 +76,7 @@ func (a Application) GenerateMakefile() {
 }
 
 func (a Application) GenerateProto() {
-	a.generateFile("proto/service.proto", "templates/proto/service.proto.gotmpl")
+	a.generateFile("pb/service.proto", "templates/pb/service.proto.gotmpl")
 }
 
 func (a Application) GenerateServerMain() {
@@ -134,7 +135,6 @@ func (a Application) directories() []string {
 		"cmd/config",
 		"pb",
 		"svc",
-		"proto",
 		"docker",
 		"deploy",
 		"migrations",
@@ -156,7 +156,7 @@ func initializeApplication() {
 	if err != nil {
 		printErr(err)
 	}
-	root, err := ProjectRoot(os.Getenv("GOPATH"), wd)
+	root, err := ProjectRoot(build.Default.GOPATH, wd)
 	if err != nil {
 		printErr(err)
 	}
@@ -196,6 +196,9 @@ func initializeApplication() {
 	if err := resolveImports(app.directories()); err != nil {
 		printErr(err)
 	}
+	if err := initRepo(); err != nil {
+		printErr(err)
+	}
 }
 
 func printErr(err error) {
@@ -230,6 +233,22 @@ func resolveImports(dirs []string) error {
 		if err := runCommand("goimports", "-w", dir); err != nil {
 			return err
 		}
+	}
+	fmt.Println("done!")
+	return nil
+}
+
+// initRepo initializes new applications as a git repository
+func initRepo() error {
+	fmt.Print("Initializing git repo... ")
+	if err := runCommand("git", "init"); err != nil {
+		return err
+	}
+	if err := runCommand("git", "add", "*"); err != nil {
+		return err
+	}
+	if err := runCommand("git", "commit", "-m", "Initial commit"); err != nil {
+		return err
 	}
 	fmt.Println("done!")
 	return nil
