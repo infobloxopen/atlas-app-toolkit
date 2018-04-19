@@ -44,7 +44,7 @@ func TestParsePagination(t *testing.T) {
 	// null offset
 	p, err := ParsePagination("0", "null", "ptoken")
 	if err != nil {
-		t.Error("unexpected error: %s", err)
+		t.Errorf("unexpected error: %v", err)
 	}
 	if p.GetOffset() != 0 {
 		t.Errorf("invalid offset: %d - expected: 0", p.GetOffset())
@@ -83,7 +83,7 @@ func TestParsePagination(t *testing.T) {
 		t.Errorf("invalid offset: %d - expected: 100", p.GetOffset())
 	}
 	if p.GetPageToken() != "ptoken" {
-		t.Errorf("invalid page token: %d - expected: ptoken", p.GetPageToken())
+		t.Errorf("invalid page token: %q - expected: ptoken", p.GetPageToken())
 	}
 }
 

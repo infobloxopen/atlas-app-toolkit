@@ -49,11 +49,11 @@ func TestHeaderN(t *testing.T) {
 	}
 
 	if v, ok := HeaderN(ctx, "key1", 0); ok || v != nil {
-		t.Errorf("invalid result with n==0: %s, %s", v, ok)
+		t.Errorf("invalid result with n==0: %s, %v", v, ok)
 	}
 
 	if v, ok := HeaderN(ctx, "key1", 10); ok || v != nil {
-		t.Errorf("invalid result with n>len(md): %s, %s", v, ok)
+		t.Errorf("invalid result with n>len(md): %s, %v", v, ok)
 	}
 }
 
@@ -61,6 +61,6 @@ func TestPrefixOutgoingHeaderMatcher(t *testing.T) {
 	key := "Content-Type"
 	v, ok := PrefixOutgoingHeaderMatcher(key)
 	if !ok || v != runtime.MetadataHeaderPrefix+key {
-		t.Errorf("header %s is not matched: %s, %s", key, v, ok)
+		t.Errorf("header %s is not matched: %s, %v", key, v, ok)
 	}
 }
