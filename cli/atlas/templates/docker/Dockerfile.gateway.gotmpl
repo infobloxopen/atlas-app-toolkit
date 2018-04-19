@@ -1,7 +1,11 @@
-FROM alpine:3.5
+# build the gateway binary
+FROM golang:1.10.0 as builder
+WORKDIR /go/src/{{ .Root }}/{{ .Name }}
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o bin/gateway ./cmd/gateway
 
-WORKDIR /usr/local
-
-COPY bin/gateway bin/gateway
-
-ENTRYPOINT ["bin/gateway"]
+# build the gateway binary
+FROM alpine:latest as runner
+WORKDIR /bin
+COPY --from=0 /go/src/{{ .Root }}/{{ .Name }}/bin/gateway .
+ENTRYPOINT ["gateway"]
