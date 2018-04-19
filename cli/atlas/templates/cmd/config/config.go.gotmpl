@@ -1,7 +1,12 @@
 package config
 
 const (
-  SERVER_ADDRESS = "0.0.0.0:9090"
-  {{ if .WithGateway }}GATEWAY_ADDRESS = "0.0.0.0:8080"
-  GATEWAY_URL = "/{{ .Name | URL }}/v1/" {{ end }}
+  // ServerAddress is the default address for the gRPC server, if no override is specified in the flags
+  ServerAddress = "0.0.0.0:9090"
+  {{ if .WithGateway -}}
+  // GatewayAddress is the default address for the gateway server, if no override is specified in the flags
+  GatewayAddress = "0.0.0.0:8080"
+  // GatewayURL is the default URL endpoint for the gateway server.
+  GatewayURL = "/{{ .Name | URL }}/v1/"
+  {{ end }}
 )
