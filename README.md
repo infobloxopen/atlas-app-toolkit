@@ -1,4 +1,4 @@
-# NGP API Toolkit
+# API Toolkit
 
 1. [Getting Started](#getting-started)
     1. [Plugins](#plugins)
@@ -37,7 +37,7 @@ forwards incoming HTTP requests to gRPC services
 
 ### Plugins
 
-NGP API Toolkit is not a framework it is a set of plugins for Google Protocol Buffer compiler.
+API Toolkit is not a framework it is a set of plugins for Google Protocol Buffer compiler.
 
 #### gRPC Protobuf
 
@@ -53,21 +53,21 @@ See official [documentation](https://github.com/grpc-ecosystem/grpc-gateway)
 
 #### Middlewares
 
-The one of requirements for NGP API Toolkit was support of Pipeline model.
+One of the requirements to the API Toolkit is to support a Pipeline model.
 We recommend to use gRPC server interceptor as middleware. See [examples](https://github.com/grpc-ecosystem/go-grpc-middleware)
 
-##### GetTenantID
+##### GetAccountID
 
-We offer a convenient way to extract the TenantID field from an incoming authorization token.
-For this purpose `mw.GetTenantID(ctx)` function can be used:
+We offer a convenient way to extract the AccountID field from an incoming authorization token.
+For this purpose `auth.GetAccountID(ctx, nil)` function can be used:
 ```
 func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	input := req.GetContact()
 
-	tenantID, err := mw.GetTenantID(ctx)
+	accountID, err := mw.GetAccountID(ctx, nil)
 	if err == nil {
-		input.TenantId = tenantID
-	} else if input.GetTenantId() == "" {
+		input.AccountId = accountID
+	} else if input.GetAccountId() == "" {
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadRespo
 }
 ```
 
-When bootstrapping a gRPC server, add middleware that will extract the tenant_id token from the request context and set it in the request struct. The middleware will have to navigate the request struct via reflection, in the case that the tenant_id field is nested within the request (like if it's in a request wrapper as per our example above)
+When bootstrapping a gRPC server, add middleware that will extract the account_id token from the request context and set it in the request struct. The middleware will have to navigate the request struct via reflection, in the case that the account_id field is nested within the request (like if it's in a request wrapper as per our example above)
 
 
 #### Validation
