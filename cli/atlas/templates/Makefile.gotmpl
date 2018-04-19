@@ -89,7 +89,7 @@ protobuf:
 	--grpc-gateway_out=logtostderr=true:. \
 	{{ end -}}
 	--validate_out="lang=go:." \
-	--swagger_out=:. $(PROJECT_ROOT)/proto/service.proto
+	--swagger_out=:. $(PROJECT_ROOT)/pb/service.proto
 
 .PHONY: vendor
 vendor:
