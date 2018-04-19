@@ -25,17 +25,17 @@ option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{
 // TODO: Write a protobuf schema for the {{ .Name | Service }} service. The 
 // messages and RPCs will compose the API for the service.
 
-// TODO: Stucture your own protobuf messages. Each protocol buffer message is a 
+// TODO: Structure your own protobuf messages. Each protocol buffer message is a 
 // small logical record of information, containing a series of name-value pairs.
-message Version {
-  string semantic_version = 1;
+message VersionResponse {
+  string version = 1;
 }
 
 // TODO: Define the {{ .Name | Service }} service and its methods. Feel free
 // to change the name of {{ .Name | Service }} to better-suit your naming
 // conventions.
 service {{ .Name | Service }} {
-  rpc GetVersion (google.protobuf.Empty) returns (Version) {
+  rpc GetVersion (google.protobuf.Empty) returns (VersionResponse) {
     {{ if .WithGateway }}// TODO: Provide mappings between REST endpoints and service methods.
     option (google.api.http) = {
       get: "/version"

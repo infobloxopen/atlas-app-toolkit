@@ -36,8 +36,8 @@ import (
 type server struct{}
 
 // GetVersion returns the current version of the service
-func (server) GetVersion(context.Context, *empty.Empty) (*pb.Version, error) {
-	return &pb.Version{SemanticVersion: "0.0.1"}, nil
+func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
+	return &pb.VersionResponse{Version: "0.0.1"}, nil
 }
 
 // NewBasicServer returns an instance of the default server interface
