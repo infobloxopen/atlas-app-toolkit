@@ -137,3 +137,16 @@ func (a Authorizer) authFunc(factory func() pep.Client) grpc_auth.AuthFunc {
 		return ctx, nil
 	}
 }
+
+func makeInterceptor(a string, b Builder, h Handler) grpc.UnaryServerInterceptor {
+	authorizer := Authorizer{PDPAddress: a, Bldr: b, Hdlr: h}
+	return grpc_auth.UnaryServerInterceptor(authorizer.AuthFunc())
+}
+
+func DefaultAuthInterceptor(authzAddress string) grpc.UnaryServerInterceptor {
+	return makeInterceptor(
+		authzAddress,
+		NewBuilder(WithJWT(nil), WithRequest()),
+		NewHandler(),
+	)
+}
