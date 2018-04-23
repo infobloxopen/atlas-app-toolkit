@@ -19,7 +19,6 @@ GATEWAY_PATH		:= $(PROJECT_ROOT)/cmd/gateway
 GATEWAY_IMAGE		:= {{ if .Registry }}{{ .Registry }}/{{ end }}{{ .Name }}-gateway:$(IMAGE_VERSION)
 GATEWAY_DOCKERFILE 	:= $(DOCKERFILE_PATH)/Dockerfile.gateway
 {{ end }}
-
 # configuration for the protobuf gentool
 SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
@@ -45,18 +44,10 @@ fmt:
 test: fmt
 	@go test $(GO_TEST_FLAGS) $(GO_PACKAGES)
 
-.PHONY: server-build
-server-build:
-	@go build $(GO_BUILD_FLAGS) -o $(SERVER_BINARY) $(SERVER_PATH)
-
 .PHONY: server-docker
 server-docker:
 	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE) .
 {{ if .WithGateway }}
-.PHONY:
-gateway-build:
-	@go build $(GO_BUILD_FLAGS) -o $(GATEWAY_BINARY) $(GATEWAY_PATH)
-
 .PHONY: gateway-docker
 gateway-docker:
 	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE) .
