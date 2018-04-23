@@ -86,7 +86,6 @@ func getRequestDetails(ctx context.Context) (string, string, error) {
 	if !ok {
 		return "", "", ErrInternal
 	}
-	fmt.Println(fullMethodString)
 	return path.Dir(fullMethodString)[1:], path.Base(fullMethodString), nil
 }
 
