@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/infobloxopen/atlas-app-toolkit/cli/atlas/templates"
-	"github.com/infobloxopen/atlas-app-toolkit/cli/atlas/tools"
 )
 
 const (
@@ -50,7 +49,7 @@ func (b bootstrap) Run() error {
 	if err != nil {
 		return initializationError{err: err}
 	}
-	root, err := tools.ProjectRoot(build.Default.GOPATH, wd)
+	root, err := templates.ProjectRoot(build.Default.GOPATH, wd)
 	if err != nil {
 		return initializationError{err: err}
 	}
@@ -184,8 +183,8 @@ func initDep() error {
 func (app Application) generateFile(filename, templatePath string) error {
 	t := template.New("file").Funcs(template.FuncMap{
 		"Title":   strings.Title,
-		"Service": tools.ServiceName,
-		"URL":     tools.ServerURL,
+		"Service": templates.ServiceName,
+		"URL":     templates.ServerURL,
 	})
 	bytes, err := templates.Asset(templatePath)
 	if err != nil {
