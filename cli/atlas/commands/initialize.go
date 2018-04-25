@@ -169,16 +169,6 @@ func (app Application) getDirectories() []string {
 	return dirnames
 }
 
-// initDep calls "dep init" to generate .toml files
-func initDep() error {
-	fmt.Print("Starting dep project... ")
-	if err := runCommand("dep", "init"); err != nil {
-		return err
-	}
-	fmt.Println("done!")
-	return nil
-}
-
 // generateFile creates a file by rendering a template
 func (app Application) generateFile(filename, templatePath string) error {
 	t := template.New("file").Funcs(template.FuncMap{
@@ -269,6 +259,16 @@ func runCommand(command string, args ...string) error {
 func generateProtobuf() error {
 	fmt.Print("Generating protobuf files... ")
 	if err := runCommand("make", "protobuf"); err != nil {
+		return err
+	}
+	fmt.Println("done!")
+	return nil
+}
+
+// initDep calls "dep init" to generate .toml files
+func initDep() error {
+	fmt.Print("Starting dep project... ")
+	if err := runCommand("dep", "init"); err != nil {
 		return err
 	}
 	fmt.Println("done!")
