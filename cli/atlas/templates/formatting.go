@@ -1,4 +1,4 @@
-package main
+package templates
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func ServiceName(str string) (string, error) {
 	}
 	// split string on one or more non-alphanumeric runes
 	fields := strings.FieldsFunc(str, isSpecial)
-	for i, _ := range fields {
+	for i := range fields {
 		fields[i] = strings.Title(fields[i])
 	}
 	return strings.Join(fields, ""), nil
