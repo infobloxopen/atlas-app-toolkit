@@ -42,8 +42,9 @@ func (b bootstrap) GetFlagset() *flag.FlagSet { return initialize }
 
 func (b bootstrap) Run() error {
 	if *initializeName == "" {
-		initialize.PrintDefaults()
-		os.Exit(1)
+		return initializationError{
+			errors.New("application name is required"),
+		}
 	}
 	wd, err := os.Getwd()
 	if err != nil {
