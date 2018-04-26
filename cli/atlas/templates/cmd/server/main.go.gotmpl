@@ -5,6 +5,7 @@ import (
 	"net"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	{{ if .WithGateway }}"github.com/infobloxopen/atlas-app-toolkit/mw"{{ end }}
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -27,6 +28,10 @@ func main() {
 			grpc_middleware.ChainUnaryServer(
 				// validation middleware
 				grpc_validator.UnaryServerInterceptor(),
+				{{ if .WithGateway }} 
+				// collection operators middleware
+				mw.WithCollectionOperator(),
+				{{ end }}
 				// logging middleware
 				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
 			),
