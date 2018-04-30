@@ -3,3 +3,4 @@ bin
 postgres-data
 debug
 .vscode
+.idea
