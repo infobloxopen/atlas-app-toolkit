@@ -60,7 +60,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetVersion(t *testing.T) {
-	t.Log("Hello!")
 	resp, err := http.Get("http://localhost:8080/test/v1/version")
 	if err != nil {
 		t.Errorf("expected get/version to succeed, but got error: %v", err)
