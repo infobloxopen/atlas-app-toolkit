@@ -4,3 +4,5 @@ postgres-data
 debug
 .vscode
 .idea
+coverage.txt
+cli/atlas/test

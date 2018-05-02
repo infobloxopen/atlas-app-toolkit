@@ -1,5 +1,8 @@
 # API Toolkit
 
+[![Build Status](https://img.shields.io/travis/infobloxopen/atlas-app-toolkit/master.svg?label=build)](https://travis-ci.org/infobloxopen/atlas-app-toolkit)
+[![Code Coverage](https://img.shields.io/codecov/c/github/infobloxopen/atlas-app-toolkit/master.svg)](https://codecov.io/github/infobloxopen/atlas-app-toolkit?branch=master)
+
 1. [Getting Started](#getting-started)
     1. [Plugins](#plugins)
         1. [gRPC Protobuf](#grpc-protobuf)
