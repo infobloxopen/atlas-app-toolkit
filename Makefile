@@ -10,7 +10,7 @@ GENTOOL_IMAGE := infoblox/atlas-gentool:v2
 
 default: test
 
-test: check-fmt vendor
+test:
 	echo "" > coverage.txt
 	for d in `go list ./... | grep -v vendor`; do \
 		t=$$(date +%s); \
