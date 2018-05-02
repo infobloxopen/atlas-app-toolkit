@@ -1,4 +1,4 @@
-package wrapper
+package appserver
 
 import (
 	"context"
@@ -11,17 +11,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func TestNewServerWrapper(t *testing.T) {
-	serverWrapper, err := NewServerWrapper()
-	assert.NotNil(t, serverWrapper, "Server Wrapper shouldn't be nil")
+func TestNewAppServer(t *testing.T) {
+	appServer, err := NewAppServer()
+	assert.NotNil(t, appServer, "Server Wrapper shouldn't be nil")
 	assert.NoError(t, err, "Error should be nil")
-	var errorOption Option = func(sw *ServerWrapper) error { return fmt.Errorf("Option Error") }
-	serverWrapper, err = NewServerWrapper(errorOption)
-	assert.Nil(t, serverWrapper, "Server Wrapper should be nil")
+	var errorOption Option = func(sw *AppServer) error { return fmt.Errorf("Option Error") }
+	appServer, err = NewAppServer(errorOption)
+	assert.Nil(t, appServer, "Server Wrapper should be nil")
 	assert.Error(t, err, "Error shouldn't be nil")
-	var noErrorOption Option = func(sw *ServerWrapper) error { return nil }
-	serverWrapper, err = NewServerWrapper(noErrorOption)
-	assert.NotNil(t, serverWrapper, "Server Wrapper shouldn't be nil")
+	var noErrorOption Option = func(sw *AppServer) error { return nil }
+	appServer, err = NewAppServer(noErrorOption)
+	assert.NotNil(t, appServer, "Server Wrapper shouldn't be nil")
 	assert.NoError(t, err, "Error should be nil")
 }
 
@@ -35,15 +35,16 @@ func TestWithInitializerCall(t *testing.T) {
 	server := grpc.NewServer()
 	grpcOption := WithGRPC(":9099", server)
 	initOption := WithInitializer(initializer, time.Second*5)
-	serverWrapper, _ := NewServerWrapper(grpcOption, initOption)
-	defer serverWrapper.cleanup()
-	go serverWrapper.Serve()
+	appServer, _ := NewAppServer(grpcOption, initOption)
+	defer appServer.cleanup()
+	go appServer.Serve()
 	select {
 	case <-ctx.Done():
 		cancel()
 		close(done)
 		t.Errorf("Timeout reached while waiting for initializer will be called")
 	case <-done:
+		cancel()
 		break
 	}
 }
@@ -60,11 +61,11 @@ func TestWithinitializerError(t *testing.T) {
 	server := grpc.NewServer()
 	grpcOption := WithGRPC(":9190", server)
 	initOption := WithInitializer(initializer, time.Second*5)
-	serverWrapper, _ := NewServerWrapper(grpcOption, initOption)
-	defer serverWrapper.cleanup()
+	appServer, _ := NewAppServer(grpcOption, initOption)
+	defer appServer.cleanup()
 
 	go func() {
-		errCh <- serverWrapper.Serve()
+		errCh <- appServer.Serve()
 	}()
 	initTimeoutError := fmt.Sprintf("Initialization timeout expired. Last error: %v", errString)
 	select {
@@ -88,7 +89,7 @@ func TestWithinitializerError(t *testing.T) {
 	}
 }
 
-// TODO: This test requires ServerWrapper component redesigned a little
+// TODO: This test requires AppServer component redesigned a little
 func testWithHealthOptionsCall(t *testing.T) {
 	done := make(chan struct{})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -97,13 +98,13 @@ func testWithHealthOptionsCall(t *testing.T) {
 		done <- struct{}{}
 	}))
 	healthOption := WithHealthOptions(":8098", mux)
-	serverWrapper, _ := NewServerWrapper(healthOption)
-	defer serverWrapper.cleanup()
+	appServer, _ := NewAppServer(healthOption)
+	defer appServer.cleanup()
 
 	go func() {
 		// This will hang forever here due to internal channels
 		// require WithGRPC option presence
-		serverWrapper.Serve()
+		appServer.Serve()
 	}()
 	client := http.Client{
 		Timeout: time.Second * 10,

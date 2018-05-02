@@ -1,4 +1,4 @@
-package wrapper
+package appserver
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ServerWrapper structure holds various parameters needed
+// AppServer structure holds various parameters needed
 // for GRPC server to function properly including optional items
 // like health checks and metrics
-type ServerWrapper struct {
+type AppServer struct {
 	grpcAddr      string
 	healthAddr    string
 	initTimeout   time.Duration
@@ -25,13 +25,11 @@ type ServerWrapper struct {
 	httpMux       *http.ServeMux
 }
 
-// Option is a definition for a function which is used to add items
-// for
-type Option func(*ServerWrapper) error
+type Option func(*AppServer) error
 type Initializer func() error
 
-func NewServerWrapper(options ...Option) (*ServerWrapper, error) {
-	s := &ServerWrapper{}
+func NewAppServer(options ...Option) (*AppServer, error) {
+	s := &AppServer{}
 
 	// call option functions on instance to set options on it
 	for _, opt := range options {
@@ -46,7 +44,7 @@ func NewServerWrapper(options ...Option) (*ServerWrapper, error) {
 }
 
 func WithInitializer(initializer Initializer, initFailedTimeout time.Duration) Option {
-	return func(s *ServerWrapper) error {
+	return func(s *AppServer) error {
 		s.initializer = initializer
 		s.initTimeout = initFailedTimeout
 		return nil
@@ -54,7 +52,7 @@ func WithInitializer(initializer Initializer, initFailedTimeout time.Duration) O
 }
 
 func WithGRPC(addr string, g *grpc.Server) Option {
-	return func(s *ServerWrapper) error {
+	return func(s *AppServer) error {
 		s.grpcAddr = addr
 		s.grpcServer = g
 		return nil
@@ -66,7 +64,7 @@ func WithHealth(handler http.Handler) Option {
 }
 
 func WithHealthOptions(addr string, handler http.Handler) Option {
-	return func(s *ServerWrapper) error {
+	return func(s *AppServer) error {
 		s.healthAddr = addr
 		s.healthHandler = handler
 		return nil
@@ -78,14 +76,14 @@ func WithMetrics() Option {
 }
 
 func WithMetricsOptions(addr, path string) Option {
-	return func(s *ServerWrapper) error {
+	return func(s *AppServer) error {
 		s.metricsAddr = addr
 		s.metricsPath = path
 		return nil
 	}
 }
 
-func (s *ServerWrapper) ServeWithListeners(g, h, m net.Listener) error {
+func (s *AppServer) ServeWithListeners(g, h, m net.Listener) error {
 	errChan := make(chan error)
 	doneChan := make(chan bool)
 
@@ -115,6 +113,7 @@ func (s *ServerWrapper) ServeWithListeners(g, h, m net.Listener) error {
 				}
 				if err != nil {
 					errChan <- err
+					return
 				}
 			}
 			if err := s.grpcServer.Serve(g); err != nil {
@@ -137,7 +136,7 @@ func (s *ServerWrapper) ServeWithListeners(g, h, m net.Listener) error {
 	}
 }
 
-func (s *ServerWrapper) Serve() error {
+func (s *AppServer) Serve() error {
 	var g, h, m net.Listener
 	var err error
 	if s.grpcAddr != "" {
@@ -161,7 +160,7 @@ func (s *ServerWrapper) Serve() error {
 	return s.ServeWithListeners(g, h, m)
 }
 
-func (s *ServerWrapper) cleanup() {
+func (s *AppServer) cleanup() {
 	if s.grpcServer != nil {
 		s.grpcServer.Stop()
 	}
