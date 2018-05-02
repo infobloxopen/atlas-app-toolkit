@@ -74,3 +74,11 @@ func WithEndpointRegistration(prefix string, endpoints ...registerFunc) Option {
 		g.endpoints[prefix] = append(g.endpoints[prefix], endpoints...)
 	}
 }
+
+// WithServerAddress determines what address the gateway will connect to. By
+// default, the gateway will connect to 0.0.0.0:9090
+func WithServerAddress(address string) Option {
+	return func(g *gateway) {
+		g.serverAddress = address
+	}
+}
