@@ -9,6 +9,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	// DefaultServerAddress is the standard gRPC server address that a REST
+	// gateway will connect to.
+	DefaultServerAddress = ":9090"
+)
+
 // Option is a functional option that modifies the REST gateway on
 // initialization
 type Option func(*gateway)
@@ -26,7 +32,7 @@ type gateway struct {
 func NewGateway(options ...Option) (*http.ServeMux, error) {
 	// configure gateway defaults
 	g := gateway{
-		serverAddress:     ":9090",
+		serverAddress:     DefaultServerAddress,
 		endpoints:         make(map[string][]registerFunc),
 		serverDialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
