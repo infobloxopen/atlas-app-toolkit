@@ -25,7 +25,7 @@ SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
 DOCKER_RUNNER		:= docker run --rm
 DOCKER_RUNNER		+= -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
-DOCKER_GENERATOR	:= infobloxcto/gentool:v1
+DOCKER_GENERATOR	:= infoblox/atlas-gentool:v1
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 
 # configuration for building on host machine
