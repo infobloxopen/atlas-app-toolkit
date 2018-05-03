@@ -161,9 +161,10 @@ func (app Application) getDirectories() []string {
 		"cmd/config",
 		"pkg/pb",
 		"pkg/svc",
+		"db/migrations",
+		"db/fixtures",
 		"docker",
 		"deploy",
-		"migrations",
 	}
 	if app.WithGateway {
 		dirnames = append(dirnames, fmt.Sprintf("cmd/%s", "gateway"))
