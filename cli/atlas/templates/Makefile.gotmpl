@@ -11,13 +11,13 @@ IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
 # configuration for server binary and image
 SERVER_BINARY 		:= $(BUILD_PATH)/server
 SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}:$(IMAGE_VERSION)
+SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}
 SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile.server
 {{ if .WithGateway }}
 # configuration for gateway binary and image
 GATEWAY_BINARY		:= $(BUILD_PATH)/gateway
 GATEWAY_PATH		:= $(PROJECT_ROOT)/cmd/gateway
-GATEWAY_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-gateway:$(IMAGE_VERSION)
+GATEWAY_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-gateway
 GATEWAY_DOCKERFILE 	:= $(DOCKERFILE_PATH)/Dockerfile.gateway
 {{ end }}
 # configuration for the protobuf gentool
@@ -47,11 +47,11 @@ test: fmt
 
 .PHONY: server-docker
 server-docker:
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE) .
+	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
 {{ if .WithGateway }}
 .PHONY: gateway-docker
 gateway-docker:
-	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE) .
+	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE):$(IMAGE_VERSION) .
 {{ end }}
 {{- if .Registry }}
 .PHONY: push
@@ -76,3 +76,8 @@ vendor:
 .PHONY: vendor-update
 vendor-update:
 	@dep ensure
+	
+.PHONY: clean
+clean:
+	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
+	{{ if .WithGateway }}@docker rmi -f $(shell docker images -q $(GATEWAY_IMAGE)) || true{{ end }}
