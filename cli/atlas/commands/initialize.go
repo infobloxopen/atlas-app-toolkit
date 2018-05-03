@@ -124,6 +124,7 @@ func (app Application) initializeFiles() error {
 		Application.generateServerMain,
 		Application.generateConfig,
 		Application.generateService,
+		Application.generateServiceTest,
 	}
 	if app.WithGateway {
 		gatewayInitializers := []func(Application) error{
@@ -242,6 +243,10 @@ func (app Application) generateConfig() error {
 
 func (app Application) generateService() error {
 	return app.generateFile("pkg/svc/zserver.go", "templates/pkg/svc/zserver.go.gotmpl")
+}
+
+func (app Application) generateServiceTest() error {
+	return app.generateFile("pkg/svc/zserver_test.go", "templates/pkg/svc/zserver_test.go.gotmpl")
 }
 
 func runCommand(command string, args ...string) error {
