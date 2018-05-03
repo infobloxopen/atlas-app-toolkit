@@ -6,17 +6,18 @@ DOCKERFILE_PATH		:= $(CURDIR)/docker
 USERNAME		:= $(USER)
 GIT_COMMIT		:= $(shell git describe --dirty=-unsupported --always || echo pre-commit)
 IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
-
+{{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
+{{ end}}
 # configuration for server binary and image
 SERVER_BINARY 		:= $(BUILD_PATH)/server
 SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE		:= {{ if .Registry }}{{ .Registry }}/{{ end }}{{ .Name }}:$(IMAGE_VERSION)
+SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}:$(IMAGE_VERSION)
 SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile.server
 {{ if .WithGateway }}
 # configuration for gateway binary and image
 GATEWAY_BINARY		:= $(BUILD_PATH)/gateway
 GATEWAY_PATH		:= $(PROJECT_ROOT)/cmd/gateway
-GATEWAY_IMAGE		:= {{ if .Registry }}{{ .Registry }}/{{ end }}{{ .Name }}-gateway:$(IMAGE_VERSION)
+GATEWAY_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-gateway:$(IMAGE_VERSION)
 GATEWAY_DOCKERFILE 	:= $(DOCKERFILE_PATH)/Dockerfile.gateway
 {{ end }}
 # configuration for the protobuf gentool
