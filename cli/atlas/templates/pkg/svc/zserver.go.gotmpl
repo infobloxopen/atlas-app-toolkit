@@ -24,7 +24,7 @@ import (
 // TODO: Update the GetVersion function when newer versions of your service
 // become available. Feel free to change GetVersion to better-suit how your
 // versioning system, or get rid of it entirely. GetVersion helps make up a
-// simple "starter" example that allows an end-to-end example. It is not
+// simple "starter" example that allows an end-to-end example. It is not`
 // required.
 //
 // TODO: Oh yeah, delete this guide when you no longer need it.
@@ -32,12 +32,17 @@ import (
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ FAREWELL AND GOOD LUCK ~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+const (
+	// version is the current version of the service
+	version = "0.0.1"
+)
+
 // Default implementation of the {{ .Name | Service }} server interface
 type server struct{}
 
 // GetVersion returns the current version of the service
 func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
-	return &pb.VersionResponse{Version: "0.0.1"}, nil
+	return &pb.VersionResponse{Version: version}, nil
 }
 
 // NewBasicServer returns an instance of the default server interface

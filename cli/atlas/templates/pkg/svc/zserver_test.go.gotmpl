@@ -12,7 +12,7 @@ func TestGetVersion(t *testing.T) {
 		err      error
 	}{
 		{
-			expected: &pb.VersionResponse{Version: ServiceVersion},
+			expected: &pb.VersionResponse{Version: version},
 			err:      nil,
 		},
 	}
