@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}/pb;pb";
+option go_package = "{{ if .Root }}{{ .Root }}/{{ .Name }}{{ else }}{{ .Name }}{{ end }}/pkg/pb;pb";
 
 // The {{ .Name | Service }} service, GetVersion RPC, and Version message
 // make up a simple "starter" example. It allows the Atlas CLI to generate an

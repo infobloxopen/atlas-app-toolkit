@@ -158,8 +158,8 @@ func (app Application) getDirectories() []string {
 	dirnames := []string{
 		"cmd/server",
 		"cmd/config",
-		"pb",
-		"svc",
+		"pkg/pb",
+		"pkg/svc",
 		"docker",
 		"deploy",
 		"migrations",
@@ -217,7 +217,7 @@ func (app Application) generateMakefile() error {
 }
 
 func (app Application) generateProto() error {
-	return app.generateFile("pb/service.proto", "templates/pb/service.proto.gotmpl")
+	return app.generateFile("pkg/pb/service.proto", "templates/pkg/pb/service.proto.gotmpl")
 }
 
 func (app Application) generateServerMain() error {
@@ -241,7 +241,7 @@ func (app Application) generateConfig() error {
 }
 
 func (app Application) generateService() error {
-	return app.generateFile("svc/zserver.go", "templates/svc/zserver.go.gotmpl")
+	return app.generateFile("pkg/svc/zserver.go", "templates/pkg/svc/zserver.go.gotmpl")
 }
 
 func runCommand(command string, args ...string) error {
