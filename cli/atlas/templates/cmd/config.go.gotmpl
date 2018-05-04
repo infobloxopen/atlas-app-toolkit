@@ -8,5 +8,7 @@ const (
   GatewayAddress = "0.0.0.0:8080"
   // GatewayURL is the default URL endpoint for the gateway server.
   GatewayURL = "/{{ .Name | URL }}/v1/"
-  {{ end }}
+  {{ end }}{{ if .WithDatabase -}}
+  // DatabaseAddress is the default address for the database, if no override is specified in the flags
+  DatabaseAddress = "0.0.0.0:5432"{{ end }}
 )
