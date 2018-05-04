@@ -62,10 +62,9 @@ push:
 .PHONY: protobuf
 protobuf:
 	@$(GENERATOR) \
-	--go_out=plugins=grpc:. \
-	{{ if .WithGateway -}}
-	--grpc-gateway_out=logtostderr=true:. \
-	{{ end -}}
+	--go_out=plugins=grpc:. \{{ if .WithGateway }}
+	--grpc-gateway_out=logtostderr=true:. \{{ end }}{{ if .WithDatabase }}
+	--gorm_out=. \{{ end }}
 	--validate_out="lang=go:." \
 	--swagger_out=:. $(PROJECT_ROOT)/pkg/pb/service.proto
 
