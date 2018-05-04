@@ -87,8 +87,8 @@ func (s *AppServer) ServeWithListeners(g, h, m net.Listener) error {
 	errChan := make(chan error)
 	doneChan := make(chan bool)
 
-	if s.healthAddr != "" && h != nil && s.healthHandler != nil {
-		go http.ListenAndServe(s.healthAddr, s.healthHandler)
+	if h != nil && s.healthHandler != nil {
+		go http.Serve(h, s.healthHandler)
 	}
 
 	// grpc first

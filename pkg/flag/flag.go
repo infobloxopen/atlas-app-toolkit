@@ -16,14 +16,36 @@ type GRPCFlags struct {
 
 type TLSFlags struct {
 	cert *string
-	key *string
-	ca *string
+	key  *string
+	ca   *string
 }
 
-func HealthFlags() (*string, *string) {
+type HealthProbesFlags struct {
+	addr       *string
+	healthPath *string
+	readyPath  *string
+}
+
+func NewHealthProbesFlags() *HealthProbesFlags {
 	addr := flag.String("health-addr", ":8080", "address to use for the health endpoint")
-	path := flag.String("health-path", "/health", "path to use for the health endpoint")
-	return addr, path
+	healthPath := flag.String("health-path", "/healthz", "path to use for the health endpoint")
+	readyPath := flag.String("ready-path", "/ready", "path to use for the readiness endpoint")
+	return &HealthProbesFlags{
+		addr:       addr,
+		healthPath: healthPath,
+		readyPath:  readyPath}
+}
+
+func (hpf *HealthProbesFlags) Addr() string {
+	return *hpf.addr
+}
+
+func (hpf *HealthProbesFlags) HealthPath() string {
+	return *hpf.healthPath
+}
+
+func (hpf *HealthProbesFlags) ReadyPath() string {
+	return *hpf.readyPath
 }
 
 func MetricsFlags() (*string, *string) {
