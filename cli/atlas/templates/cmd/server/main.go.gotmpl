@@ -50,6 +50,6 @@ func main() {
 
 func init() {
 	// default server address; optionally set via command-line flags
-	flag.StringVar(&Address, "address", config.ServerAddress, "the gRPC server address")
+	flag.StringVar(&Address, "address", cmd.ServerAddress, "the gRPC server address")
 	flag.Parse()
 }

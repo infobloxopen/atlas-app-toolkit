@@ -21,7 +21,7 @@ func main() {
 	serverHandler, err := New{{ .Name | Service }}Handler(context.Background(), ServerAddr, errHandler)
 	// strip all but trailing "/" on incoming requests
 	serverHandler = http.StripPrefix(
-		config.GatewayURL[:len(config.GatewayURL)-1],
+		cmd.GatewayURL[:len(cmd.GatewayURL)-1],
 		serverHandler,
 	)
 	if err != nil {
@@ -29,7 +29,7 @@ func main() {
 	}
 	// map HTTP endpoints to handlers
 	mux := http.NewServeMux()
-	mux.Handle(config.GatewayURL, serverHandler)
+	mux.Handle(cmd.GatewayURL, serverHandler)
 	mux.HandleFunc("/swagger/", SwaggerHandler)
 	// serve handlers on the gateway address
 	http.ListenAndServe(GatewayAddr, mux)
@@ -37,8 +37,8 @@ func main() {
 
 func init() {
 	// default gateway values; optionally configured via command-line flags
-	flag.StringVar(&ServerAddr, "server", config.ServerAddress, "address of the gRPC server")
-	flag.StringVar(&GatewayAddr, "gateway", config.GatewayAddress, "address of the gateway server")
+	flag.StringVar(&ServerAddr, "server", cmd.ServerAddress, "address of the gRPC server")
+	flag.StringVar(&GatewayAddr, "gateway", cmd.GatewayAddress, "address of the gateway server")
 	flag.StringVar(&SwaggerDir, "swagger-dir", "share", "directory of the swagger.json file")
 	flag.Parse()
 }

@@ -124,6 +124,7 @@ func (app Application) initializeFiles() error {
 		Application.generateServerMain,
 		Application.generateConfig,
 		Application.generateService,
+		Application.generateServiceTest,
 	}
 	if app.WithGateway {
 		gatewayInitializers := []func(Application) error{
@@ -157,12 +158,12 @@ func (app Application) initializeDirectories() error {
 func (app Application) getDirectories() []string {
 	dirnames := []string{
 		"cmd/server",
-		"cmd/config",
-		"pb",
-		"svc",
+		"pkg/pb",
+		"pkg/svc",
+		"db/migrations",
+		"db/fixtures",
 		"docker",
 		"deploy",
-		"migrations",
 	}
 	if app.WithGateway {
 		dirnames = append(dirnames, fmt.Sprintf("cmd/%s", "gateway"))
@@ -217,7 +218,7 @@ func (app Application) generateMakefile() error {
 }
 
 func (app Application) generateProto() error {
-	return app.generateFile("pb/service.proto", "templates/pb/service.proto.gotmpl")
+	return app.generateFile("pkg/pb/service.proto", "templates/pkg/pb/service.proto.gotmpl")
 }
 
 func (app Application) generateServerMain() error {
@@ -237,11 +238,15 @@ func (app Application) generateGatewaySwagger() error {
 }
 
 func (app Application) generateConfig() error {
-	return app.generateFile("cmd/config/config.go", "templates/cmd/config/config.go.gotmpl")
+	return app.generateFile("cmd/config.go", "templates/cmd/config.go.gotmpl")
 }
 
 func (app Application) generateService() error {
-	return app.generateFile("svc/zserver.go", "templates/svc/zserver.go.gotmpl")
+	return app.generateFile("pkg/svc/zserver.go", "templates/pkg/svc/zserver.go.gotmpl")
+}
+
+func (app Application) generateServiceTest() error {
+	return app.generateFile("pkg/svc/zserver_test.go", "templates/pkg/svc/zserver_test.go.gotmpl")
 }
 
 func runCommand(command string, args ...string) error {

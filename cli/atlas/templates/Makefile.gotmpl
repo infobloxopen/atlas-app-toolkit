@@ -6,17 +6,18 @@ DOCKERFILE_PATH		:= $(CURDIR)/docker
 USERNAME		:= $(USER)
 GIT_COMMIT		:= $(shell git describe --dirty=-unsupported --always || echo pre-commit)
 IMAGE_VERSION		?= $(USERNAME)-dev-$(GIT_COMMIT)
-
+{{ if .Registry }}IMAGE_REGISTRY ?= {{ .Registry}}
+{{ end}}
 # configuration for server binary and image
 SERVER_BINARY 		:= $(BUILD_PATH)/server
 SERVER_PATH		:= $(PROJECT_ROOT)/cmd/server
-SERVER_IMAGE		:= {{ if .Registry }}{{ .Registry }}/{{ end }}{{ .Name }}:$(IMAGE_VERSION)
+SERVER_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}
 SERVER_DOCKERFILE	:= $(DOCKERFILE_PATH)/Dockerfile.server
 {{ if .WithGateway }}
 # configuration for gateway binary and image
 GATEWAY_BINARY		:= $(BUILD_PATH)/gateway
 GATEWAY_PATH		:= $(PROJECT_ROOT)/cmd/gateway
-GATEWAY_IMAGE		:= {{ if .Registry }}{{ .Registry }}/{{ end }}{{ .Name }}-gateway:$(IMAGE_VERSION)
+GATEWAY_IMAGE		:= {{ if .Registry }}$(IMAGE_REGISTRY)/{{ end }}{{ .Name }}-gateway
 GATEWAY_DOCKERFILE 	:= $(DOCKERFILE_PATH)/Dockerfile.gateway
 {{ end }}
 # configuration for the protobuf gentool
@@ -24,7 +25,7 @@ SRCROOT_ON_HOST		:= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SRCROOT_IN_CONTAINER	:= /go/src/$(PROJECT_ROOT)
 DOCKER_RUNNER		:= docker run --rm
 DOCKER_RUNNER		+= -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
-DOCKER_GENERATOR	:= infobloxcto/gentool:v1
+DOCKER_GENERATOR	:= infoblox/atlas-gentool:v1
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
 
 # configuration for building on host machine
@@ -46,11 +47,11 @@ test: fmt
 
 .PHONY: server-docker
 server-docker:
-	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE) .
+	@docker build -f $(SERVER_DOCKERFILE) -t $(SERVER_IMAGE):$(IMAGE_VERSION) .
 {{ if .WithGateway }}
 .PHONY: gateway-docker
 gateway-docker:
-	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE) .
+	@docker build -f $(GATEWAY_DOCKERFILE) -t $(GATEWAY_IMAGE):$(IMAGE_VERSION) .
 {{ end }}
 {{- if .Registry }}
 .PHONY: push
@@ -66,7 +67,7 @@ protobuf:
 	--grpc-gateway_out=logtostderr=true:. \
 	{{ end -}}
 	--validate_out="lang=go:." \
-	--swagger_out=:. $(PROJECT_ROOT)/pb/service.proto
+	--swagger_out=:. $(PROJECT_ROOT)/pkg/pb/service.proto
 
 .PHONY: vendor
 vendor:
@@ -75,3 +76,8 @@ vendor:
 .PHONY: vendor-update
 vendor-update:
 	@dep ensure
+	
+.PHONY: clean
+clean:
+	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
+	{{ if .WithGateway }}@docker rmi -f $(shell docker images -q $(GATEWAY_IMAGE)) || true{{ end }}

@@ -32,12 +32,17 @@ import (
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ FAREWELL AND GOOD LUCK ~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+const (
+	// version is the current version of the service
+	version = "0.0.1"
+)
+
 // Default implementation of the {{ .Name | Service }} server interface
 type server struct{}
 
 // GetVersion returns the current version of the service
 func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
-	return &pb.VersionResponse{Version: "0.0.1"}, nil
+	return &pb.VersionResponse{Version: version}, nil
 }
 
 // NewBasicServer returns an instance of the default server interface
