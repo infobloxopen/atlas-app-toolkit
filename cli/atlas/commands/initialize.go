@@ -158,7 +158,6 @@ func (app Application) initializeDirectories() error {
 func (app Application) getDirectories() []string {
 	dirnames := []string{
 		"cmd/server",
-		"cmd/config",
 		"pkg/pb",
 		"pkg/svc",
 		"db/migrations",
@@ -239,7 +238,7 @@ func (app Application) generateGatewaySwagger() error {
 }
 
 func (app Application) generateConfig() error {
-	return app.generateFile("cmd/config/config.go", "templates/cmd/config/config.go.gotmpl")
+	return app.generateFile("cmd/config.go", "templates/cmd/config.go.gotmpl")
 }
 
 func (app Application) generateService() error {
