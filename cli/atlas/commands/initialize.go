@@ -22,6 +22,7 @@ const (
 	flagRegistryName = "registry"
 	flagWithGateway  = "gateway"
 	flagWithDebug    = "debug"
+	flagWithDatabase = "db"
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 	initializeRegistry = initialize.String(flagRegistryName, "", "the Docker registry (optional)")
 	initializeGateway  = initialize.Bool(flagWithGateway, false, "generate project with a gRPC gateway (default false)")
 	initializeDebug    = initialize.Bool(flagWithDebug, false, "print debug statements during intialization (default false)")
+	initializeDatabase = initialize.Bool(flagWithDatabase, false, "initialize the application with database folders")
 )
 
 // bootstrap implements the command interface for project intialization
@@ -55,10 +57,11 @@ func (b bootstrap) Run() error {
 		return initializationError{err: err}
 	}
 	app := Application{
-		Name:        *initializeName,
-		Registry:    *initializeRegistry,
-		Root:        root,
-		WithGateway: *initializeGateway,
+		Name:         *initializeName,
+		Registry:     *initializeRegistry,
+		Root:         root,
+		WithGateway:  *initializeGateway,
+		WithDatabase: *initializeDatabase,
 	}
 	if err := app.initialize(); err != nil {
 		return initializationError{err: err}
@@ -74,10 +77,11 @@ func (e initializationError) Error() string {
 
 // Application models the data that the templates need to render files
 type Application struct {
-	Name        string
-	Registry    string
-	Root        string
-	WithGateway bool
+	Name         string
+	Registry     string
+	Root         string
+	WithGateway  bool
+	WithDatabase bool
 }
 
 // initialize generates brand-new application
