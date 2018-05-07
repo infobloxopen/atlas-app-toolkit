@@ -9,7 +9,8 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	{{ if .WithDatabase }}"github.com/jinzhu/gorm"{{ end }}
+	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
 )
 
 var (
