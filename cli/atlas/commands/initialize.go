@@ -184,9 +184,10 @@ func (app Application) getDirectories() []string {
 // generateFile creates a file by rendering a template
 func (app Application) generateFile(filename, templatePath string) error {
 	t := template.New("file").Funcs(template.FuncMap{
-		"Title":   strings.Title,
-		"Service": templates.ServiceName,
-		"URL":     templates.ServerURL,
+		"Title":    strings.Title,
+		"Service":  templates.ServiceName,
+		"URL":      templates.ServerURL,
+		"Database": templates.DatabaseName,
 	})
 	bytes, err := templates.Asset(templatePath)
 	if err != nil {
