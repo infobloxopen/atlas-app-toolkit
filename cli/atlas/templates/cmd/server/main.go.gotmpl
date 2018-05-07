@@ -15,7 +15,7 @@ import (
 
 var (
 	Address string
-	Database string
+	DBConnectionString string
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 		),
 	){{ if .WithDatabase }}
 	// create new postgres database
-	db, err := gorm.Open("postgres", Database)
+	db, err := gorm.Open("postgres", DBConnectionString)
 	if err != nil {
 		logger.Fatalln(err)
 	}{{ end }}
@@ -59,6 +59,6 @@ func main() {
 func init() {
 	// default server address; optionally set via command-line flags
 	flag.StringVar(&Address, "address", cmd.ServerAddress, "the gRPC server address"){{ if .WithDatabase }}
-	flag.StringVar(&Database, "db", cmd.DatabaseAddress, "the database address"){{ end }}
+	flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
 	flag.Parse()
 }
