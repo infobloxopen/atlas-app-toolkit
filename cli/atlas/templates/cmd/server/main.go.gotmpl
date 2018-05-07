@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	Address string
-	DBConnectionString string
+	ServerAddress 			string
+	DBConnectionString 	string
 )
 
 func main() {
 	logger := logrus.New()
 	// create new tcp listenerf
-	ln, err := net.Listen("tcp", Address)
+	ln, err := net.Listen("tcp", ServerAddress)
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -58,7 +58,7 @@ func main() {
 
 func init() {
 	// default server address; optionally set via command-line flags
-	flag.StringVar(&Address, "address", cmd.ServerAddress, "the gRPC server address"){{ if .WithDatabase }}
+	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address"){{ if .WithDatabase }}
 	flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
 	flag.Parse()
 }
