@@ -455,22 +455,22 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"templates/.gitignore.gotmpl": templatesGitignoreGotmpl,
-	"templates/Makefile.gotmpl": templatesMakefileGotmpl,
-	"templates/README.md.gotmpl": templatesReadmeMdGotmpl,
-	"templates/cmd/config.go.gotmpl": templatesCmdConfigGoGotmpl,
-	"templates/cmd/gateway/handler.go.gotmpl": templatesCmdGatewayHandlerGoGotmpl,
-	"templates/cmd/gateway/main.go.gotmpl": templatesCmdGatewayMainGoGotmpl,
-	"templates/cmd/gateway/swagger.go.gotmpl": templatesCmdGatewaySwaggerGoGotmpl,
-	"templates/cmd/server/main.go.gotmpl": templatesCmdServerMainGoGotmpl,
+	"templates/.gitignore.gotmpl":                    templatesGitignoreGotmpl,
+	"templates/Makefile.gotmpl":                      templatesMakefileGotmpl,
+	"templates/README.md.gotmpl":                     templatesReadmeMdGotmpl,
+	"templates/cmd/config.go.gotmpl":                 templatesCmdConfigGoGotmpl,
+	"templates/cmd/gateway/handler.go.gotmpl":        templatesCmdGatewayHandlerGoGotmpl,
+	"templates/cmd/gateway/main.go.gotmpl":           templatesCmdGatewayMainGoGotmpl,
+	"templates/cmd/gateway/swagger.go.gotmpl":        templatesCmdGatewaySwaggerGoGotmpl,
+	"templates/cmd/server/main.go.gotmpl":            templatesCmdServerMainGoGotmpl,
 	"templates/docker/Dockerfile.application.gotmpl": templatesDockerDockerfileApplicationGotmpl,
-	"templates/docker/Dockerfile.gateway.gotmpl": templatesDockerDockerfileGatewayGotmpl,
-	"templates/formatting.go": templatesFormattingGo,
-	"templates/formatting_test.go": templatesFormatting_testGo,
-	"templates/pkg/pb/service.proto.gotmpl": templatesPkgPbServiceProtoGotmpl,
-	"templates/pkg/svc/zserver.go.gotmpl": templatesPkgSvcZserverGoGotmpl,
-	"templates/pkg/svc/zserver_test.go.gotmpl": templatesPkgSvcZserver_testGoGotmpl,
-	"templates/template-bindata.go": templatesTemplateBindataGo,
+	"templates/docker/Dockerfile.gateway.gotmpl":     templatesDockerDockerfileGatewayGotmpl,
+	"templates/formatting.go":                        templatesFormattingGo,
+	"templates/formatting_test.go":                   templatesFormatting_testGo,
+	"templates/pkg/pb/service.proto.gotmpl":          templatesPkgPbServiceProtoGotmpl,
+	"templates/pkg/svc/zserver.go.gotmpl":            templatesPkgSvcZserverGoGotmpl,
+	"templates/pkg/svc/zserver_test.go.gotmpl":       templatesPkgSvcZserver_testGoGotmpl,
+	"templates/template-bindata.go":                  templatesTemplateBindataGo,
 }
 
 // AssetDir returns the file names below a certain
@@ -512,16 +512,17 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
 	"templates": &bintree{nil, map[string]*bintree{
 		".gitignore.gotmpl": &bintree{templatesGitignoreGotmpl, map[string]*bintree{}},
-		"Makefile.gotmpl": &bintree{templatesMakefileGotmpl, map[string]*bintree{}},
-		"README.md.gotmpl": &bintree{templatesReadmeMdGotmpl, map[string]*bintree{}},
+		"Makefile.gotmpl":   &bintree{templatesMakefileGotmpl, map[string]*bintree{}},
+		"README.md.gotmpl":  &bintree{templatesReadmeMdGotmpl, map[string]*bintree{}},
 		"cmd": &bintree{nil, map[string]*bintree{
 			"config.go.gotmpl": &bintree{templatesCmdConfigGoGotmpl, map[string]*bintree{}},
 			"gateway": &bintree{nil, map[string]*bintree{
 				"handler.go.gotmpl": &bintree{templatesCmdGatewayHandlerGoGotmpl, map[string]*bintree{}},
-				"main.go.gotmpl": &bintree{templatesCmdGatewayMainGoGotmpl, map[string]*bintree{}},
+				"main.go.gotmpl":    &bintree{templatesCmdGatewayMainGoGotmpl, map[string]*bintree{}},
 				"swagger.go.gotmpl": &bintree{templatesCmdGatewaySwaggerGoGotmpl, map[string]*bintree{}},
 			}},
 			"server": &bintree{nil, map[string]*bintree{
@@ -530,16 +531,16 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"docker": &bintree{nil, map[string]*bintree{
 			"Dockerfile.application.gotmpl": &bintree{templatesDockerDockerfileApplicationGotmpl, map[string]*bintree{}},
-			"Dockerfile.gateway.gotmpl": &bintree{templatesDockerDockerfileGatewayGotmpl, map[string]*bintree{}},
+			"Dockerfile.gateway.gotmpl":     &bintree{templatesDockerDockerfileGatewayGotmpl, map[string]*bintree{}},
 		}},
-		"formatting.go": &bintree{templatesFormattingGo, map[string]*bintree{}},
+		"formatting.go":      &bintree{templatesFormattingGo, map[string]*bintree{}},
 		"formatting_test.go": &bintree{templatesFormatting_testGo, map[string]*bintree{}},
 		"pkg": &bintree{nil, map[string]*bintree{
 			"pb": &bintree{nil, map[string]*bintree{
 				"service.proto.gotmpl": &bintree{templatesPkgPbServiceProtoGotmpl, map[string]*bintree{}},
 			}},
 			"svc": &bintree{nil, map[string]*bintree{
-				"zserver.go.gotmpl": &bintree{templatesPkgSvcZserverGoGotmpl, map[string]*bintree{}},
+				"zserver.go.gotmpl":      &bintree{templatesPkgSvcZserverGoGotmpl, map[string]*bintree{}},
 				"zserver_test.go.gotmpl": &bintree{templatesPkgSvcZserver_testGoGotmpl, map[string]*bintree{}},
 			}},
 		}},
@@ -593,4 +594,3 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-
