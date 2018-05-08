@@ -1,4 +1,4 @@
-package mw
+package collection_operators
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type response struct {
 	PageInfo *op.PageInfo
 }
 
-func TestWithCollectionOperatorSorting(t *testing.T) {
+func TestUnaryServerInterceptorSorting(t *testing.T) {
 	hreq, err := http.NewRequest(http.MethodGet, "http://app.com?_order_by=name asc, age desc", nil)
 	if err != nil {
 		t.Fatalf("failed to build new http request: %s", err)
@@ -29,7 +29,7 @@ func TestWithCollectionOperatorSorting(t *testing.T) {
 
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	req := &request{Sorting: nil}
-	interceptor := WithCollectionOperator()
+	interceptor := UnaryServerInterceptor()
 
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		msg := req.(*request)
@@ -55,7 +55,7 @@ func TestWithCollectionOperatorSorting(t *testing.T) {
 	}
 }
 
-func TestWithCollectionOperatorPagination(t *testing.T) {
+func TestUnaryServerInterceptorPagination(t *testing.T) {
 	hreq, err := http.NewRequest(http.MethodGet, "http://app.com?_limit=10&_offset=20", nil)
 	if err != nil {
 		t.Fatalf("failed to build new http request: %s", err)
@@ -65,7 +65,7 @@ func TestWithCollectionOperatorPagination(t *testing.T) {
 
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	req := &request{Pagination: nil}
-	interceptor := WithCollectionOperator()
+	interceptor := UnaryServerInterceptor()
 
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		msg := req.(*request)

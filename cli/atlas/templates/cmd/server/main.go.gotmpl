@@ -30,7 +30,7 @@ func main() {
 				grpc_validator.UnaryServerInterceptor(),
 				{{ if .WithGateway }} 
 				// collection operators middleware
-				mw.WithCollectionOperator(),
+				collection_operators.UnaryServerInterceptor(),
 				{{ end }}
 				// logging middleware
 				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
