@@ -49,7 +49,7 @@ $ go install
 Rather than build applications completely from scratch, you can leverage the command-line tool to initialize a new project. This will generate the necessary files and folders to get started.
 
 ```sh
-$ atlas init-app name=my-application
+$ atlas init-app -name=my-application
 $ cd my-application
 ```
 #### Flags
@@ -69,17 +69,17 @@ You can run `atlas init-app --help` to see these flags and their descriptions on
 
 ```sh
 # generates an application with a grpc gateway 
-atlas init-app name=my-application -gateway
+atlas init-app -name=my-application -gateway
 ```
 
 ```sh
 # generates an application with a postgres database
-atlas init-app name=my-application -db
+atlas init-app -name=my-application -db
 ```
 
 ```sh
 # specifies a docker registry
-atlas init-app name=my-application -registry=infoblox
+atlas init-app -name=my-application -registry=infoblox
 ```
 Images names will vary depending on whether or not a Docker registry has been provided.
 
@@ -96,5 +96,5 @@ image-name:image-version
 Of course, you may include all the flags in the `init-app` command.
 
 ```sh
-atlas init-app name=my-application -gateway -db -registry=infoblox
+atlas init-app -name=my-application -gateway -db -registry=infoblox
 ```
