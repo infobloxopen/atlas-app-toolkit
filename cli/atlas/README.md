@@ -105,7 +105,7 @@ go fmt templates/template-bindata.go
 ```
 ### Running the Integration Tests
 
-The Atlas CLI integration tests ensure that new changes do not break exists features. To run the Atlas CLI unit and integration tests locally, set `ec2=true` in your environment.
+The Atlas CLI integration tests ensure that new changes do not break exists features. To run the Atlas CLI unit and integration tests locally, set `e2e=true` in your environment.
 ```
 # atlas-app-toolkit/cli/atlas
 export e2e=true
