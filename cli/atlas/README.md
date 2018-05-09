@@ -90,14 +90,14 @@ Contributions to the Atlas CLI are welcome via pull requests and issues. If you'
 ### Regenerating Template Bindata
 The `templates/` directory contains a set of Go templates. When the Atlas CLI bootstraps a new application, it uses these templates to render new application files.
 
-This project uses [go-bindata](https://github.com/jteeuwen/go-bindata) to package the Go templates and `atlas` source files together into a single binary. If your changes involve adding or updating templates, you will need regenerate the template bindata by running the following command: 
+This project uses [go-bindata](https://github.com/jteeuwen/go-bindata) to package the Go templates and `atlas` source files together into a single binary. If your changes involve adding or updating templates, you will need to regenerate the template bindata by running this command in the toolkit's root directory: 
 
 ```sh
-# atlas-app-toolkit/cli/atlas
-go generate
+# atlas-app-toolkit/
+make atlas-cli
 ```
 
-This command regenerates the `templates/template-bindata.go` file. Your templating changes will take effect the next time you run the `atlas` binary. The go-bindata library does not generate correctly-formatted Go code, so please reformat `template-bindata.go` before opening a pull request.
+This command regenerates the `templates/template-bindata.go` file. Your templating changes will take effect the next time you run the `atlas` binary.
 
 ```
 # atlas-app-toolkit/cli/atlas

@@ -40,3 +40,6 @@ check-fmt:
 
 .PHONY: gen
 gen: .gen-op .gen-errdetails
+
+atlas-cli:
+	cd cli/atlas/ && go generate && go fmt ./templates && go install
