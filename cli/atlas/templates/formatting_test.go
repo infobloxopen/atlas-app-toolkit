@@ -152,3 +152,41 @@ func TestIsSpecial(t *testing.T) {
 		}
 	}
 }
+
+func TestDatabaseName(t *testing.T) {
+	var tests = []struct {
+		appname  string
+		expected string
+		err      error
+	}{
+		{
+			appname:  "ddi.dns.config",
+			expected: "ddi_dns_config",
+			err:      nil,
+		},
+		{
+			appname:  "contacts",
+			expected: "contacts",
+			err:      nil,
+		},
+		{
+			appname:  "_contacts",
+			expected: "",
+			err:      errInvalidFirstRune,
+		},
+		{
+			appname:  "some&.!@app!name",
+			expected: "some_app_name",
+			err:      nil,
+		},
+	}
+	for _, test := range tests {
+		db, err := DatabaseName(test.appname)
+		if err != test.err {
+			t.Errorf("Unexpected formatting error: %s - expected %s", err, test.err)
+		}
+		if db != test.expected {
+			t.Errorf("Unexpected service name: %s - expected %s", db, test.expected)
+		}
+	}
+}

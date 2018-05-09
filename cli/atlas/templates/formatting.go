@@ -29,6 +29,15 @@ func ServiceName(str string) (string, error) {
 	return strings.Join(fields, ""), nil
 }
 
+// DatabaseName generates the name of the application's database
+func DatabaseName(str string) (string, error) {
+	if first := rune(str[0]); !unicode.IsLetter(first) {
+		return "", errInvalidFirstRune
+	}
+	fields := strings.FieldsFunc(str, isSpecial)
+	return strings.Join(fields, "_"), nil
+}
+
 // ServerURL takes a string and forms a valid URL string
 func ServerURL(str string) (string, error) {
 	if len(str) < 1 {

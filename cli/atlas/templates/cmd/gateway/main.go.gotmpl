@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	ServerAddr  string
-	GatewayAddr string
-	SwaggerDir  string
+	ServerAddress		string
+	GatewayAddress	string
+	SwaggerDir  		string
 )
 
 func main() {
 	// create HTTP handler for gateway
 	errHandler := runtime.WithProtoErrorHandler(gw.ProtoMessageErrorHandler)
-	serverHandler, err := New{{ .Name | Service }}Handler(context.Background(), ServerAddr, errHandler)
+	serverHandler, err := New{{ .Name | Service }}Handler(context.Background(), ServerAddress, errHandler)
 	// strip all but trailing "/" on incoming requests
 	serverHandler = http.StripPrefix(
 		cmd.GatewayURL[:len(cmd.GatewayURL)-1],
@@ -32,13 +32,13 @@ func main() {
 	mux.Handle(cmd.GatewayURL, serverHandler)
 	mux.HandleFunc("/swagger/", SwaggerHandler)
 	// serve handlers on the gateway address
-	http.ListenAndServe(GatewayAddr, mux)
+	http.ListenAndServe(GatewayAddress, mux)
 }
 
 func init() {
 	// default gateway values; optionally configured via command-line flags
-	flag.StringVar(&ServerAddr, "server", cmd.ServerAddress, "address of the gRPC server")
-	flag.StringVar(&GatewayAddr, "gateway", cmd.GatewayAddress, "address of the gateway server")
+	flag.StringVar(&ServerAddress, "server", cmd.ServerAddress, "address of the gRPC server")
+	flag.StringVar(&GatewayAddress, "gateway", cmd.GatewayAddress, "address of the gateway server")
 	flag.StringVar(&SwaggerDir, "swagger-dir", "share", "directory of the swagger.json file")
 	flag.Parse()
 }
