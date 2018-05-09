@@ -27,7 +27,10 @@ DOCKER_RUNNER		:= docker run --rm
 DOCKER_RUNNER		+= -v $(SRCROOT_ON_HOST):$(SRCROOT_IN_CONTAINER)
 DOCKER_GENERATOR	:= infoblox/atlas-gentool:v1
 GENERATOR		:= $(DOCKER_RUNNER) $(DOCKER_GENERATOR)
-
+{{ if .WithDatabase }}
+# configuration for the database
+DATBASE_ADDRESS		:= localhost:5432
+{{ end }}
 # configuration for building on host machine
 GO_CACHE		:= -pkgdir $(BUILD_PATH)/go-cache
 GO_BUILD_FLAGS		?= $(GO_CACHE) -i -v
@@ -62,10 +65,9 @@ push:
 .PHONY: protobuf
 protobuf:
 	@$(GENERATOR) \
-	--go_out=plugins=grpc:. \
-	{{ if .WithGateway -}}
-	--grpc-gateway_out=logtostderr=true:. \
-	{{ end -}}
+	--go_out=plugins=grpc:. \{{ if .WithGateway }}
+	--grpc-gateway_out=logtostderr=true:. \{{ end }}{{ if .WithDatabase }}
+	--gorm_out=. \{{ end }}
 	--validate_out="lang=go:." \
 	--swagger_out=:. $(PROJECT_ROOT)/pkg/pb/service.proto
 
@@ -81,3 +83,12 @@ vendor-update:
 clean:
 	@docker rmi -f $(shell docker images -q $(SERVER_IMAGE)) || true
 	{{ if .WithGateway }}@docker rmi -f $(shell docker images -q $(GATEWAY_IMAGE)) || true{{ end }}
+{{ if .WithDatabase }}
+.PHONY: migrate-up
+migrate-up:
+	@migrate -database 'postgres://$(DATABASE_ADDRESS)/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations up
+	
+.PHONY: migrate-down
+migrate-down:
+	@migrate -database 'postgres://$(DATABASE_ADDRESS):5432/{{ .Name | Database }}?sslmode=disable' -path ./db/migrations down
+{{ end }}

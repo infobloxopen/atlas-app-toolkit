@@ -9,16 +9,19 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	{{ if .WithDatabase }}"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"{{ end }}
 )
 
 var (
-	Address string
+	ServerAddress 			string
+	DBConnectionString 	string
 )
 
 func main() {
 	logger := logrus.New()
 	// create new tcp listenerf
-	ln, err := net.Listen("tcp", Address)
+	ln, err := net.Listen("tcp", ServerAddress)
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -36,9 +39,14 @@ func main() {
 				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
 			),
 		),
-	)
+	){{ if .WithDatabase }}
+	// create new postgres database
+	db, err := gorm.Open("postgres", DBConnectionString)
+	if err != nil {
+		logger.Fatalln(err)
+	}{{ end }}
 	// register service implementation with the grpc server
-	s, err := svc.NewBasicServer()
+	s, err := svc.NewBasicServer({{ if .WithDatabase }}db{{ end }})
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -50,6 +58,7 @@ func main() {
 
 func init() {
 	// default server address; optionally set via command-line flags
-	flag.StringVar(&Address, "address", cmd.ServerAddress, "the gRPC server address")
+	flag.StringVar(&ServerAddress, "address", cmd.ServerAddress, "the gRPC server address"){{ if .WithDatabase }}
+	flag.StringVar(&DBConnectionString, "db", cmd.DBConnectionString, "the database address"){{ end }}
 	flag.Parse()
 }

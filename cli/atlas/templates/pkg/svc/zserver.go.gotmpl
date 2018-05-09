@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	{{ if .WithDatabase }}"github.com/jinzhu/gorm"{{ end }}
 )
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +39,7 @@ const (
 )
 
 // Default implementation of the {{ .Name | Service }} server interface
-type server struct{}
+type server struct{ {{ if .WithDatabase }}db *gorm.DB{{ end }} }
 
 // GetVersion returns the current version of the service
 func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
@@ -46,6 +47,6 @@ func (server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, er
 }
 
 // NewBasicServer returns an instance of the default server interface
-func NewBasicServer() (pb.{{ .Name | Service }}Server, error) {
-	return &server{}, nil
+func NewBasicServer({{ if .WithDatabase}}database *gorm.DB{{ end }}) (pb.{{ .Name | Service }}Server, error) {
+	return &server{ {{ if .WithDatabase}}db: database{{ end }} }, nil
 }
