@@ -7,17 +7,17 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
+	"github.com/infobloxopen/atlas-app-toolkit/collections"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 type request struct {
-	Sorting    *op.Sorting
-	Pagination *op.Pagination
+	Sorting    *collections.Sorting
+	Pagination *collections.Pagination
 }
 
 type response struct {
-	PageInfo *op.PageInfo
+	PageInfo *collections.PageInfo
 }
 
 func TestWithCollectionOperatorSorting(t *testing.T) {
@@ -38,12 +38,12 @@ func TestWithCollectionOperatorSorting(t *testing.T) {
 			t.Fatalf("invalid number of sort criteria: %d - expected: %d", len(criteria), 2)
 		}
 
-		if c := criteria[0]; c.Tag != "name" || c.Order != op.SortCriteria_ASC {
-			t.Errorf("invalid sort criteria: %v - expected: %v", c, op.SortCriteria{"name", op.SortCriteria_ASC})
+		if c := criteria[0]; c.Tag != "name" || c.Order != collections.SortCriteria_ASC {
+			t.Errorf("invalid sort criteria: %v - expected: %v", c, collections.SortCriteria{"name", collections.SortCriteria_ASC})
 		}
 
-		if c := criteria[1]; c.Tag != "age" || c.Order != op.SortCriteria_DESC {
-			t.Errorf("invalid sort criteria: %v - expected: %v", c, op.SortCriteria{"age", op.SortCriteria_DESC})
+		if c := criteria[1]; c.Tag != "age" || c.Order != collections.SortCriteria_DESC {
+			t.Errorf("invalid sort criteria: %v - expected: %v", c, collections.SortCriteria{"age", collections.SortCriteria_DESC})
 		}
 
 		return &response{}, nil
@@ -88,8 +88,8 @@ func TestWithCollectionOperatorPagination(t *testing.T) {
 }
 
 func TestUnsetOp(t *testing.T) {
-	page := new(op.PageInfo)
-	res := &response{PageInfo: &op.PageInfo{Offset: 30, Size: 10}}
+	page := new(collections.PageInfo)
+	res := &response{PageInfo: &collections.PageInfo{Offset: 30, Size: 10}}
 
 	if err := unsetOp(res, page); err != nil {
 		t.Fatalf("unexpected error: %s", err)

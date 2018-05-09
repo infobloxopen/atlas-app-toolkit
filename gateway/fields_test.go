@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/collections"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -177,7 +177,7 @@ func ensureRetain(t *testing.T, input, fields, expected string) {
 		return
 	}
 
-	flds := op.ParseFieldSelection(fields)
+	flds := collections.ParseFieldSelection(fields)
 	doRetainFields(indata, flds.Fields)
 
 	if !reflect.DeepEqual(indata, expdata) {
@@ -211,7 +211,7 @@ func TestFieldSelection(t *testing.T) {
 	ctx = metadata.NewIncomingContext(context.Background(), md)
 
 	flds = FieldSelection(ctx)
-	expected := &op.FieldSelection{Fields: op.FieldSelectionMap{"name": &op.Field{Name: "name"}, "address": &op.Field{Name: "address", Subs: op.FieldSelectionMap{"street": &op.Field{Name: "street"}}}}}
+	expected := &collections.FieldSelection{Fields: collections.FieldSelectionMap{"name": &collections.Field{Name: "name"}, "address": &collections.Field{Name: "address", Subs: collections.FieldSelectionMap{"street": &collections.Field{Name: "street"}}}}}
 	if !reflect.DeepEqual(flds, expected) {
 		t.Errorf("Unexpected result %v while expecting %v", flds, expected)
 	}

@@ -12,7 +12,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/infobloxopen/atlas-app-toolkit/op"
+	"github.com/infobloxopen/atlas-app-toolkit/collections"
 )
 
 const (
@@ -81,14 +81,14 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 // incoming HTTP request function returns (nil, nil).
 // If provided sorting parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `op.ParseSorting` for details.
-func Sorting(ctx context.Context) (*op.Sorting, error) {
+// See: `collections.ParseSorting` for details.
+func Sorting(ctx context.Context) (*collections.Sorting, error) {
 	raw, ok := Header(ctx, sortMetaKey)
 	if !ok {
 		return nil, nil
 	}
 
-	s, err := op.ParseSorting(raw)
+	s, err := collections.ParseSorting(raw)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -101,14 +101,14 @@ func Sorting(ctx context.Context) (*op.Sorting, error) {
 // incoming HTTP request function returns (nil, nil).
 // If provided filtering parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `op.ParseFiltering` for details.
-func Filtering(ctx context.Context) (*op.Filtering, error) {
+// See: `collections.ParseFiltering` for details.
+func Filtering(ctx context.Context) (*collections.Filtering, error) {
 	raw, ok := Header(ctx, filterMetaKey)
 	if !ok {
 		return nil, nil
 	}
 
-	f, err := op.ParseFiltering(raw)
+	f, err := collections.ParseFiltering(raw)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -118,12 +118,12 @@ func Filtering(ctx context.Context) (*op.Filtering, error) {
 
 // Pagination extracts pagination parameters from incoming gRPC context.
 // If some of parameters has not been specified in query string of incoming
-// HTTP request corresponding fields in `op.PaginationRequest` structure will be set
+// HTTP request corresponding fields in `collections.PaginationRequest` structure will be set
 // to nil.
 // If provided pagination parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `op.ParsePagination` for details.
-func Pagination(ctx context.Context) (*op.Pagination, error) {
+// See: `collections.ParsePagination` for details.
+func Pagination(ctx context.Context) (*collections.Pagination, error) {
 	l, lok := Header(ctx, limitMetaKey)
 	o, ook := Header(ctx, offsetMetaKey)
 	pt, ptok := Header(ctx, pageTokenMetaKey)
@@ -132,7 +132,7 @@ func Pagination(ctx context.Context) (*op.Pagination, error) {
 		return nil, nil
 	}
 
-	p, err := op.ParsePagination(l, o, pt)
+	p, err := collections.ParsePagination(l, o, pt)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -141,7 +141,7 @@ func Pagination(ctx context.Context) (*op.Pagination, error) {
 }
 
 // SetPagination sets page info to outgoing gRPC context.
-func SetPageInfo(ctx context.Context, p *op.PageInfo) error {
+func SetPageInfo(ctx context.Context, p *collections.PageInfo) error {
 	m := make(map[string]string)
 
 	if pt := p.GetPageToken(); pt != "" {

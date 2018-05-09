@@ -6,8 +6,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 
+	"github.com/infobloxopen/atlas-app-toolkit/collections"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 // ApplyCollectionOperators applies collections operators taken from context ctx to gorm instance db.
@@ -21,14 +21,14 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error
 		return nil, err
 	}
 
-	var s *op.Sorting
+	var s *collections.Sorting
 	s, err = gateway.Sorting(ctx)
 	if err != nil {
 		return nil, err
 	}
 	db = ApplySorting(db, s)
 
-	var p *op.Pagination
+	var p *collections.Pagination
 	p, err = gateway.Pagination(ctx)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(db *gorm.DB, f *op.Filtering) (*gorm.DB, error) {
+func ApplyFiltering(db *gorm.DB, f *collections.Filtering) (*gorm.DB, error) {
 	str, args, err := FilteringToGorm(f)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func ApplyFiltering(db *gorm.DB, f *op.Filtering) (*gorm.DB, error) {
 }
 
 // ApplySorting applies sorting operator s to gorm instance db.
-func ApplySorting(db *gorm.DB, s *op.Sorting) *gorm.DB {
+func ApplySorting(db *gorm.DB, s *collections.Sorting) *gorm.DB {
 	var crs []string
 	for _, cr := range s.GetCriterias() {
 		if cr.IsDesc() {
@@ -73,12 +73,12 @@ func ApplySorting(db *gorm.DB, s *op.Sorting) *gorm.DB {
 }
 
 // ApplyPagination applies pagination operator p to gorm instance db.
-func ApplyPagination(db *gorm.DB, p *op.Pagination) *gorm.DB {
+func ApplyPagination(db *gorm.DB, p *collections.Pagination) *gorm.DB {
 	return db.Offset(p.GetOffset()).Limit(p.DefaultLimit())
 }
 
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(db *gorm.DB, fs *op.FieldSelection) *gorm.DB {
+func ApplyFieldSelection(db *gorm.DB, fs *collections.FieldSelection) *gorm.DB {
 	var fields []string
 	for _, f := range fs.GetFields() {
 		fields = append(fields, f.GetName())

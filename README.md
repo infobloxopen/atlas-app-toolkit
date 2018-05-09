@@ -595,7 +595,7 @@ populated in case if they provided in incoming HTTP request.
 
 #### How can I apply collection operators passed to my GRPC service to a GORM query?
 
-You can use `ApplyCollectionOperators` method from [op/gorm](op/gorm) package.
+You can use `ApplyCollectionOperators` method from [op/gorm](collections/gorm) package.
 
 ```golang
 ...
@@ -610,7 +610,7 @@ gormDB.Find(&people)
 
 Separate methods per each collection operator are also available.
 
-Check out [example](example/tagging/service.go) and [implementation](op/gorm/collection_operators.go).
+Check out [example](example/tagging/service.go) and [implementation](collections/gorm/collection_operators.go).
 
 #### Field Selection
 
@@ -638,7 +638,7 @@ appropriate metadata keys that will be handled by `grpc-gateway`. See example be
 ##### How to define field selection in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import collections;
 
 message MyRequest {
     infoblox.api.FieldSelection fields = 1;
@@ -693,7 +693,7 @@ Also you may want to declare sorting parameter in your `proto` message.
 In this case it will be populated automatically if you using
 `mw.WithCollectionOperator` server interceptor.
 
-See documentation in [op package](op/sorting.go)
+See documentation in [op package](collections/sorting.go)
 
 #### Filtering
 
@@ -728,7 +728,7 @@ Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type,
 ##### How to define filtering in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import collections;
 
 message MyRequest {
     infoblox.api.Filtering filter = 1;
@@ -773,7 +773,7 @@ Note: Response offsets are optional since the client can often keep state on the
 ##### How to define pagination in my request/response?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import collections;
 
 message MyRequest {
     infoblox.api.Pagination paging = 1;

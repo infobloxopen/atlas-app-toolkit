@@ -1,4 +1,4 @@
-package op
+package collections
 
 import (
 	"regexp/syntax"
