@@ -99,10 +99,6 @@ make atlas-cli
 
 Your templating changes will take effect next time you run the `atlas` binary.
 
-```
-# atlas-app-toolkit/cli/atlas
-go fmt templates/template-bindata.go
-```
 ### Running the Integration Tests
 
 The Atlas CLI integration tests ensure that new changes do not break exists features. To run the Atlas CLI unit and integration tests locally, set `e2e=true` in your environment.
