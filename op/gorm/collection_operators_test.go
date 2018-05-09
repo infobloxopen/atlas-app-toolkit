@@ -11,7 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 type Person struct {
@@ -47,7 +47,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 	}
 	mock.ExpectQuery(fixedFullRe("SELECT name FROM \"people\" WHERE ((age <= $1)) ORDER BY age desc LIMIT 2 OFFSET 1")).WithArgs(25.0)
 
-	md := gw.MetadataAnnotator(nil, req)
+	md := gateway.MetadataAnnotator(nil, req)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	gormDB, err = ApplyCollectionOperators(gormDB, ctx)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
 	"google.golang.org/grpc"
 )
 
@@ -49,8 +48,8 @@ func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 	mux := http.ServeMux{}
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
-			runtime.WithProtoErrorHandler(gw.ProtoMessageErrorHandler),
-			runtime.WithMetadata(gw.MetadataAnnotator),
+			runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
+			runtime.WithMetadata(MetadataAnnotator),
 		)
 		for _, register := range registers {
 			if err := register(

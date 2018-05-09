@@ -1,4 +1,4 @@
-package gw
+package gateway
 
 import (
 	"context"

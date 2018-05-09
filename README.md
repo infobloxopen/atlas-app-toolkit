@@ -367,7 +367,7 @@ You can also refer [example app](https://github.com/github.com/infobloxopen/atla
 
 #### Which forwarders I need to use to comply our REST API?
 
-We made default [ForwardResponseMessage](gw/response.go#L36) and [ForwardResponseMessage](gw/response.go#L38)
+We made default [ForwardResponseMessage](gateway/response.go#L36) and [ForwardResponseMessage](gateway/response.go#L38)
 implementations that conform REST API Syntax.
 
 **NOTE** the forwarders still set `200 - OK` as HTTP status code if no errors encountered.
@@ -380,10 +380,10 @@ That is a common approach in gRPC to send extra information for response as
 metadata.
 
 We recommend use [gRPC status package](https://godoc.org/google.golang.org/grpc/status)
-and our custom function [SetStatus](gw/status.go#L44) to add extra metadata
+and our custom function [SetStatus](gateway/status.go#L44) to add extra metadata
 to the gRPC response.
 
-See documentation in package [status](gw/status.go).
+See documentation in package [status](gateway/status.go).
 
 Also you may use shortcuts like: `SetCreated`, `SetUpdated` and `SetDeleted`.
 
@@ -447,7 +447,7 @@ You can write your own `ProtoErrorHandler` or use `gw.DefaultProtoErrorHandler` 
 
 How to handle error on gRPC-Gateway see [article](https://mycodesmells.com/post/grpc-gateway-error-handler)
 
-How to use [gw.DefaultProtoErrorHandler](gw/errors.go#L25) see example below:
+How to use [gw.DefaultProtoErrorHandler](gateway/errors.go#L25) see example below:
 
 ```golang
 import (

@@ -6,13 +6,13 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
 // ApplyCollectionOperators applies collections operators taken from context ctx to gorm instance db.
 func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error) {
-	f, err := gw.Filtering(ctx)
+	f, err := gateway.Filtering(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -22,20 +22,20 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error
 	}
 
 	var s *op.Sorting
-	s, err = gw.Sorting(ctx)
+	s, err = gateway.Sorting(ctx)
 	if err != nil {
 		return nil, err
 	}
 	db = ApplySorting(db, s)
 
 	var p *op.Pagination
-	p, err = gw.Pagination(ctx)
+	p, err = gateway.Pagination(ctx)
 	if err != nil {
 		return nil, err
 	}
 	db = ApplyPagination(db, p)
 
-	fs := gw.FieldSelection(ctx)
+	fs := gateway.FieldSelection(ctx)
 	if err != nil {
 		return nil, err
 	}

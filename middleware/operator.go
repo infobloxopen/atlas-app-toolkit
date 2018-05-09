@@ -1,4 +1,4 @@
-package mw
+package middleware
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
@@ -37,7 +37,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.Sorting
-		sorting, err := gw.Sorting(ctx)
+		sorting, err := gateway.Sorting(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid sorting operator - %s", err)
 			grpclog.Errorln(err)
@@ -50,7 +50,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.FieldSelection
-		fieldSelection := gw.FieldSelection(ctx)
+		fieldSelection := gateway.FieldSelection(ctx)
 		if fieldSelection != nil {
 			if err := setOp(req, fieldSelection); err != nil {
 				grpclog.Errorf("collection operator interceptor: failed to set field selection operator - %s", err)
@@ -58,7 +58,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.Filtering
-		filtering, err := gw.Filtering(ctx)
+		filtering, err := gateway.Filtering(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid filtering operator - %s", err)
 			grpclog.Errorln(err)
@@ -71,7 +71,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.ClientDrivenPagination
-		pagination, err := gw.Pagination(ctx)
+		pagination, err := gateway.Pagination(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid pagination operator - %s", err)
 			grpclog.Errorln(err)
@@ -94,7 +94,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
 		}
 
-		if err := gw.SetPageInfo(ctx, page); err != nil {
+		if err := gateway.SetPageInfo(ctx, page); err != nil {
 			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-package mw
+package middleware
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
@@ -25,7 +25,7 @@ func TestWithCollectionOperatorSorting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to build new http request: %s", err)
 	}
-	md := gw.MetadataAnnotator(context.Background(), hreq)
+	md := gateway.MetadataAnnotator(context.Background(), hreq)
 
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	req := &request{Sorting: nil}
@@ -61,7 +61,7 @@ func TestWithCollectionOperatorPagination(t *testing.T) {
 		t.Fatalf("failed to build new http request: %s", err)
 	}
 
-	md := gw.MetadataAnnotator(context.Background(), hreq)
+	md := gateway.MetadataAnnotator(context.Background(), hreq)
 
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	req := &request{Pagination: nil}
