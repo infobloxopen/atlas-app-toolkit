@@ -29,13 +29,13 @@ func FieldSelection(ctx context.Context) *collections.FieldSelection {
 }
 
 //retainFields function extracts the configuration for fields that
-//need to be ratained either from gRPC response or from original request
+//need to be ratained either from gRPC response or from original testRequest
 //(in case when gRPC side didn't set any preferences) and retains only
 //this fields on outgoing response (dynmap).
 func retainFields(ctx context.Context, req *http.Request, dynmap map[string]interface{}) {
 	fieldsStr, ok := Header(ctx, fieldsMetaKey)
 	if !ok && req != nil {
-		//no fields in gprc response -> try to get from original request
+		//no fields in gprc response -> try to get from original testRequest
 		vals := req.URL.Query()
 		fieldsStr = vals.Get(fieldsQueryKey)
 	}

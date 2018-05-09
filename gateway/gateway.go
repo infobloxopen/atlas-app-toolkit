@@ -58,7 +58,7 @@ func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 				return nil, err
 			}
 		}
-		// strip prefix from request URI, but leave the trailing "/"
+		// strip prefix from testRequest URI, but leave the trailing "/"
 		mux.Handle(prefix, http.StripPrefix(prefix[:len(prefix)-1], gwmux))
 	}
 	return &mux, nil

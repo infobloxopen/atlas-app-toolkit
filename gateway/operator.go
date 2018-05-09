@@ -38,7 +38,7 @@ const (
 // See: 'WithMetadata' option.
 //
 // MetadataAnnotator extracts values of collections operators from incoming
-// HTTP request accroding to REST API Syntax.
+// HTTP testRequest accroding to REST API Syntax.
 // E.g:
 // - _order_by="name asc,age desc"
 // - _fields="name,age"
@@ -78,7 +78,7 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 
 // Sorting extracts sort parameters from incoming gRPC context.
 // If sorting collection operator has not been specified in query string of
-// incoming HTTP request function returns (nil, nil).
+// incoming HTTP testRequest function returns (nil, nil).
 // If provided sorting parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
 // See: `collections.ParseSorting` for details.
@@ -98,7 +98,7 @@ func Sorting(ctx context.Context) (*collections.Sorting, error) {
 
 // Filtering extracts filter parameters from incoming gRPC context.
 // If filtering collection operator has not been specified in query string of
-// incoming HTTP request function returns (nil, nil).
+// incoming HTTP testRequest function returns (nil, nil).
 // If provided filtering parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
 // See: `collections.ParseFiltering` for details.
@@ -118,7 +118,7 @@ func Filtering(ctx context.Context) (*collections.Filtering, error) {
 
 // Pagination extracts pagination parameters from incoming gRPC context.
 // If some of parameters has not been specified in query string of incoming
-// HTTP request corresponding fields in `collections.PaginationRequest` structure will be set
+// HTTP testRequest corresponding fields in `collections.PaginationRequest` structure will be set
 // to nil.
 // If provided pagination parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`

@@ -190,7 +190,7 @@ func TestFieldSelection(t *testing.T) {
 	// fields parameters is not specified
 	req, err := http.NewRequest(http.MethodGet, "http://app.com?someparam=1", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md := MetadataAnnotator(context.Background(), req)
@@ -204,7 +204,7 @@ func TestFieldSelection(t *testing.T) {
 	// fields parameters is specified
 	req, err = http.NewRequest(http.MethodGet, "http://app.com?_fields=name,address.street&someparam=1", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md = MetadataAnnotator(context.Background(), req)

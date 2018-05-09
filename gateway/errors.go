@@ -13,7 +13,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
-// ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the request.
+// ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.
 // Addition bool argument indicates whether method (http.ResponseWriter.WriteHeader) was called or not.
 type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, error)
 

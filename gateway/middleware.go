@@ -1,26 +1,24 @@
-package middleware
+package gateway
 
 import (
 	"context"
 	"fmt"
 	"reflect"
 
+	"github.com/infobloxopen/atlas-app-toolkit/collections"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
-
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
-// WithCollectionOperator returns grpc.UnaryServerInterceptor
-// that should be used as a middleware if an user's request message
+// UnaryServerInterceptor returns grpc.UnaryServerInterceptor
+// that should be used as a middleware if an user's testRequest message
 // defines any of collection operators.
 //
 // Returned middleware populates collection operators from gRPC metadata if
-// they defined in a request message.
-func WithCollectionOperator() grpc.UnaryServerInterceptor {
+// they defined in a testRequest message.
+func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 		// handle panic
 		defer func() {
@@ -32,12 +30,12 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}()
 
 		if req == nil {
-			grpclog.Warningf("collection operator interceptor: empty request %+v", req)
+			grpclog.Warningf("collection operator interceptor: empty testRequest %+v", req)
 			return handler(ctx, req)
 		}
 
 		// looking for op.Sorting
-		sorting, err := gateway.Sorting(ctx)
+		sorting, err := Sorting(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid sorting operator - %s", err)
 			grpclog.Errorln(err)
@@ -50,7 +48,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.FieldSelection
-		fieldSelection := gateway.FieldSelection(ctx)
+		fieldSelection := FieldSelection(ctx)
 		if fieldSelection != nil {
 			if err := setOp(req, fieldSelection); err != nil {
 				grpclog.Errorf("collection operator interceptor: failed to set field selection operator - %s", err)
@@ -58,7 +56,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.Filtering
-		filtering, err := gateway.Filtering(ctx)
+		filtering, err := Filtering(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid filtering operator - %s", err)
 			grpclog.Errorln(err)
@@ -71,7 +69,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.ClientDrivenPagination
-		pagination, err := gateway.Pagination(ctx)
+		pagination, err := Pagination(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid pagination operator - %s", err)
 			grpclog.Errorln(err)
@@ -94,7 +92,7 @@ func WithCollectionOperator() grpc.UnaryServerInterceptor {
 			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
 		}
 
-		if err := gateway.SetPageInfo(ctx, page); err != nil {
+		if err := SetPageInfo(ctx, page); err != nil {
 			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
 			return nil, err
 		}
@@ -107,13 +105,13 @@ func setOp(req, op interface{}) error {
 	reqval := reflect.ValueOf(req)
 
 	if reqval.Kind() != reflect.Ptr {
-		return fmt.Errorf("request is not a pointer - %s", reqval.Kind())
+		return fmt.Errorf("testRequest is not a pointer - %s", reqval.Kind())
 	}
 
 	reqval = reqval.Elem()
 
 	if reqval.Kind() != reflect.Struct {
-		return fmt.Errorf("request value is not a struct - %s", reqval.Kind())
+		return fmt.Errorf("testRequest value is not a struct - %s", reqval.Kind())
 	}
 
 	for i := 0; i < reqval.NumField(); i++ {
@@ -124,7 +122,7 @@ func setOp(req, op interface{}) error {
 		}
 
 		if !f.IsValid() || !f.CanSet() {
-			return fmt.Errorf("operation field %+v in request %+v is invalid or cannot be set", op, req)
+			return fmt.Errorf("operation field %+v in testRequest %+v is invalid or cannot be set", op, req)
 		}
 
 		if vop := reflect.ValueOf(op); vop.IsValid() {

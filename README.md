@@ -595,7 +595,7 @@ populated in case if they provided in incoming HTTP request.
 
 #### How can I apply collection operators passed to my GRPC service to a GORM query?
 
-You can use `ApplyCollectionOperators` method from [op/gorm](collections/gorm) package.
+You can use `ApplyCollectionOperators` method from [op/gorm](gateway/gorm) package.
 
 ```golang
 ...
@@ -610,7 +610,7 @@ gormDB.Find(&people)
 
 Separate methods per each collection operator are also available.
 
-Check out [example](example/tagging/service.go) and [implementation](collections/gorm/collection_operators.go).
+Check out [example](example/tagging/service.go) and [implementation](gateway/gorm/collection_operators.go).
 
 #### Field Selection
 

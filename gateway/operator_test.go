@@ -16,7 +16,7 @@ func TestSorting(t *testing.T) {
 	// sort parameters is not specified
 	req, err := http.NewRequest(http.MethodGet, "http://app.com?someparam=1", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md := MetadataAnnotator(context.Background(), req)
@@ -30,7 +30,7 @@ func TestSorting(t *testing.T) {
 	// invalid sort parameters
 	req, err = http.NewRequest(http.MethodGet, "http://app.com?_order_by=name dasc, age desc&someparam=1", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md = MetadataAnnotator(context.Background(), req)
@@ -49,7 +49,7 @@ func TestSorting(t *testing.T) {
 	// valid sort parameters
 	req, err = http.NewRequest(http.MethodGet, "http://app.com?_order_by=name asc, age desc&someparam=1", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md = MetadataAnnotator(context.Background(), req)
@@ -72,10 +72,10 @@ func TestSorting(t *testing.T) {
 }
 
 func TestPagination(t *testing.T) {
-	// valid pagination request
+	// valid pagination testRequest
 	req, err := http.NewRequest(http.MethodGet, "http://app.com?_limit=20&_offset=10&_page_token=ptoken", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md := MetadataAnnotator(context.Background(), req)
@@ -90,10 +90,10 @@ func TestPagination(t *testing.T) {
 		t.Errorf("invalid pagination: %s - expected: %s", page, &collections.Pagination{Limit: 20, Offset: 10, PageToken: "ptoken"})
 	}
 
-	// invalid pagination request
+	// invalid pagination testRequest
 	req, err = http.NewRequest(http.MethodGet, "http://app.com?_limit=twenty&_offset=10", nil)
 	if err != nil {
-		t.Fatalf("failed to build new http request: %s", err)
+		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
 
 	md = MetadataAnnotator(context.Background(), req)
