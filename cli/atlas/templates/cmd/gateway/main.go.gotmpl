@@ -29,10 +29,16 @@ func main() {
 	}
 	// map HTTP endpoints to handlers
 	mux := http.NewServeMux()
+	s := &http.Server{
+				Addr:           GatewayAddress,
+				Handler:        mux,
+				ReadTimeout:    10 * time.Second,
+				WriteTimeout:   10 * time.Second,
+				}
 	mux.Handle(cmd.GatewayURL, serverHandler)
 	mux.HandleFunc("/swagger/", SwaggerHandler)
 	// serve handlers on the gateway address
-	http.ListenAndServe(GatewayAddress, mux)
+	log.Fatal(s.ListenAndServe())
 }
 
 func init() {
