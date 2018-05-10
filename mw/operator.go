@@ -1,4 +1,4 @@
-package mw
+package collection_operators
 
 import (
 	"context"
@@ -14,13 +14,13 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/op"
 )
 
-// WithCollectionOperator returns grpc.UnaryServerInterceptor
+// UnaryServerInterceptor returns grpc.UnaryServerInterceptor
 // that should be used as a middleware if an user's request message
 // defines any of collection operators.
 //
 // Returned middleware populates collection operators from gRPC metadata if
 // they defined in a request message.
-func WithCollectionOperator() grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 		// handle panic
 		defer func() {

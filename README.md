@@ -66,7 +66,7 @@ For this purpose `auth.GetAccountID(ctx, nil)` function can be used:
 func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	input := req.GetContact()
 
-	accountID, err := mw.GetAccountID(ctx, nil)
+	accountID, err := auth.GetAccountID(ctx, nil)
 	if err == nil {
 		input.AccountId = accountID
 	} else if input.GetAccountId() == "" {
@@ -575,7 +575,7 @@ message MyRequest {
 ```
 
 After you declare one of collection operator in your `proto` message you need
-to add `mw.WithCollectionOperator` server interceptor to the chain in your
+to add `collection_operators.UnaryServerInterceptor` server interceptor to the chain in your
 gRPC service.
 
 ```golang
@@ -583,7 +583,7 @@ gRPC service.
     grpc.UnaryInterceptor(
       grpc_middleware.ChainUnaryServer( // middleware chain
         ...
-        mw.WithCollectionOperator(), // collection operators
+        collection_operators.UnaryServerInterceptor(), // collection operators
         ...
       ),
     ),
@@ -691,7 +691,7 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 
 Also you may want to declare sorting parameter in your `proto` message.
 In this case it will be populated automatically if you using
-`mw.WithCollectionOperator` server interceptor.
+`collection_operators.UnaryServerInterceptor` server interceptor.
 
 See documentation in [op package](op/sorting.go)
 
