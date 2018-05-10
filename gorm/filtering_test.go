@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 func TestGormFiltering(t *testing.T) {
@@ -116,7 +116,7 @@ func TestGormFiltering(t *testing.T) {
 			"field1 === null",
 			"",
 			nil,
-			&collections.UnexpectedSymbolError{},
+			&query.UnexpectedSymbolError{},
 		},
 	}
 

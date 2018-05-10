@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 func TestSorting(t *testing.T) {
@@ -63,11 +63,11 @@ func TestSorting(t *testing.T) {
 	if len(s.GetCriterias()) != 2 {
 		t.Fatalf("invalid number of sort criterias: %d - expected: 2", len(s.GetCriterias()))
 	}
-	if c := s.GetCriterias(); c[0].GoString() != "name ASC" || c[0].Tag != "name" || c[0].Order != collections.SortCriteria_ASC {
-		t.Errorf("invalid sort criteria: %v - expected: %v", c[0], collections.SortCriteria{"name", collections.SortCriteria_ASC})
+	if c := s.GetCriterias(); c[0].GoString() != "name ASC" || c[0].Tag != "name" || c[0].Order != query.SortCriteria_ASC {
+		t.Errorf("invalid sort criteria: %v - expected: %v", c[0], query.SortCriteria{"name", query.SortCriteria_ASC})
 	}
-	if c := s.GetCriterias(); c[1].GoString() != "age DESC" || c[1].Tag != "age" || c[1].Order != collections.SortCriteria_DESC {
-		t.Errorf("invalid sort criteria: %v - expected: %v", c[1], collections.SortCriteria{"age", collections.SortCriteria_DESC})
+	if c := s.GetCriterias(); c[1].GoString() != "age DESC" || c[1].Tag != "age" || c[1].Order != query.SortCriteria_DESC {
+		t.Errorf("invalid sort criteria: %v - expected: %v", c[1], query.SortCriteria{"age", query.SortCriteria_DESC})
 	}
 }
 
@@ -87,7 +87,7 @@ func TestPagination(t *testing.T) {
 	}
 
 	if page.GetLimit() != 20 || page.GetOffset() != 10 || page.GetPageToken() != "ptoken" {
-		t.Errorf("invalid pagination: %s - expected: %s", page, &collections.Pagination{Limit: 20, Offset: 10, PageToken: "ptoken"})
+		t.Errorf("invalid pagination: %s - expected: %s", page, &query.Pagination{Limit: 20, Offset: 10, PageToken: "ptoken"})
 	}
 
 	// invalid pagination testRequest

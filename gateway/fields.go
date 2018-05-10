@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
 //SetFieldSelection sets op.FieldSelection to gRPC metadata
-func SetFieldSelection(ctx context.Context, fields *collections.FieldSelection) error {
+func SetFieldSelection(ctx context.Context, fields *query.FieldSelection) error {
 	fieldsStr := fields.GoString()
 	md := metadata.Pairs(
 		runtime.MetadataPrefix+fieldsMetaKey, fieldsStr,
@@ -20,12 +20,12 @@ func SetFieldSelection(ctx context.Context, fields *collections.FieldSelection) 
 }
 
 //FieldSelection extracts op.FieldSelection from gRPC metadata
-func FieldSelection(ctx context.Context) *collections.FieldSelection {
+func FieldSelection(ctx context.Context) *query.FieldSelection {
 	fields, ok := Header(ctx, fieldsMetaKey)
 	if !ok {
 		return nil
 	}
-	return collections.ParseFieldSelection(fields)
+	return query.ParseFieldSelection(fields)
 }
 
 //retainFields function extracts the configuration for fields that
@@ -44,7 +44,7 @@ func retainFields(ctx context.Context, req *http.Request, dynmap map[string]inte
 		return
 	}
 
-	fields := collections.ParseFieldSelection(fieldsStr)
+	fields := query.ParseFieldSelection(fieldsStr)
 	if fields != nil {
 		for _, result := range dynmap {
 			if results, ok := result.([]interface{}); ok {
@@ -58,7 +58,7 @@ func retainFields(ctx context.Context, req *http.Request, dynmap map[string]inte
 	}
 }
 
-func doRetainFields(obj map[string]interface{}, fields collections.FieldSelectionMap) {
+func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) {
 	if fields == nil || len(fields) == 0 {
 		return
 	}

@@ -1,4 +1,4 @@
-package collections
+package query
 
 import (
 	"fmt"

@@ -693,7 +693,7 @@ Also you may want to declare sorting parameter in your `proto` message.
 In this case it will be populated automatically if you using
 `mw.WithCollectionOperator` server interceptor.
 
-See documentation in [op package](collections/sorting.go)
+See documentation in [op package](query/sorting.go)
 
 #### Filtering
 

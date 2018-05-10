@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package infoblox.api;
 
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/collections;collections";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/query;query";
 
 // SortCriteria represents sort criteria
 message SortCriteria {

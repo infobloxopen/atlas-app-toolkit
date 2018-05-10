@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -87,7 +87,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		// looking for op.PageInfo
-		page := new(collections.PageInfo)
+		page := new(query.PageInfo)
 		if err := unsetOp(res, page); err != nil {
 			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
 		}

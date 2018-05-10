@@ -12,7 +12,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 // It must be mainly used as ServeMuxOption for gRPC Gateway 'ServeMux'
 // See: 'WithMetadata' option.
 //
-// MetadataAnnotator extracts values of collections operators from incoming
+// MetadataAnnotator extracts values of query operators from incoming
 // HTTP testRequest accroding to REST API Syntax.
 // E.g:
 // - _order_by="name asc,age desc"
@@ -81,14 +81,14 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 // incoming HTTP testRequest function returns (nil, nil).
 // If provided sorting parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `collections.ParseSorting` for details.
-func Sorting(ctx context.Context) (*collections.Sorting, error) {
+// See: `query.ParseSorting` for details.
+func Sorting(ctx context.Context) (*query.Sorting, error) {
 	raw, ok := Header(ctx, sortMetaKey)
 	if !ok {
 		return nil, nil
 	}
 
-	s, err := collections.ParseSorting(raw)
+	s, err := query.ParseSorting(raw)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -101,14 +101,14 @@ func Sorting(ctx context.Context) (*collections.Sorting, error) {
 // incoming HTTP testRequest function returns (nil, nil).
 // If provided filtering parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `collections.ParseFiltering` for details.
-func Filtering(ctx context.Context) (*collections.Filtering, error) {
+// See: `query.ParseFiltering` for details.
+func Filtering(ctx context.Context) (*query.Filtering, error) {
 	raw, ok := Header(ctx, filterMetaKey)
 	if !ok {
 		return nil, nil
 	}
 
-	f, err := collections.ParseFiltering(raw)
+	f, err := query.ParseFiltering(raw)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -118,12 +118,12 @@ func Filtering(ctx context.Context) (*collections.Filtering, error) {
 
 // Pagination extracts pagination parameters from incoming gRPC context.
 // If some of parameters has not been specified in query string of incoming
-// HTTP testRequest corresponding fields in `collections.PaginationRequest` structure will be set
+// HTTP testRequest corresponding fields in `query.PaginationRequest` structure will be set
 // to nil.
 // If provided pagination parameters are invalid function returns
 // `status.Error(codes.InvalidArgument, parser_error)`
-// See: `collections.ParsePagination` for details.
-func Pagination(ctx context.Context) (*collections.Pagination, error) {
+// See: `query.ParsePagination` for details.
+func Pagination(ctx context.Context) (*query.Pagination, error) {
 	l, lok := Header(ctx, limitMetaKey)
 	o, ook := Header(ctx, offsetMetaKey)
 	pt, ptok := Header(ctx, pageTokenMetaKey)
@@ -132,7 +132,7 @@ func Pagination(ctx context.Context) (*collections.Pagination, error) {
 		return nil, nil
 	}
 
-	p, err := collections.ParsePagination(l, o, pt)
+	p, err := query.ParsePagination(l, o, pt)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -141,7 +141,7 @@ func Pagination(ctx context.Context) (*collections.Pagination, error) {
 }
 
 // SetPagination sets page info to outgoing gRPC context.
-func SetPageInfo(ctx context.Context, p *collections.PageInfo) error {
+func SetPageInfo(ctx context.Context, p *query.PageInfo) error {
 	m := make(map[string]string)
 
 	if pt := p.GetPageToken(); pt != "" {
