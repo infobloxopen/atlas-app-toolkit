@@ -109,7 +109,7 @@ This project uses [go-bindata](https://github.com/jteeuwen/go-bindata) to packag
 
 ```sh
 # atlas-app-toolkit/
-make atlas-cli
+make build-cli
 ```
 
 Your templating changes will take effect next time you run the `atlas` binary.
