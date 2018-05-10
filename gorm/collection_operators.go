@@ -1,11 +1,47 @@
 package gorm
 
 import (
+	"context"
 	"strings"
 
 	"github.com/infobloxopen/atlas-app-toolkit/collections"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/jinzhu/gorm"
 )
+
+func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error) {
+	// ApplyCollectionOperators applies collections operators taken from context ctx to gorm instance db.
+	f, err := gateway.Filtering(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db, err = ApplyFiltering(db, f)
+	if err != nil {
+		return nil, err
+	}
+
+	var s *collections.Sorting
+	s, err = gateway.Sorting(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db = ApplySorting(db, s)
+
+	var p *collections.Pagination
+	p, err = gateway.Pagination(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db = ApplyPagination(db, p)
+
+	fs := gateway.FieldSelection(ctx)
+	if err != nil {
+		return nil, err
+	}
+	db = ApplyFieldSelection(db, fs)
+
+	return db, nil
+}
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
 func ApplyFiltering(db *gorm.DB, f *collections.Filtering) (*gorm.DB, error) {

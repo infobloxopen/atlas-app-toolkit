@@ -21,8 +21,9 @@ endif
 .PHONY: default
 default: test
 
-test: check-fmt vendor
-	$(BUILDER) go test ./...
+test:
+	go test ./...
+
 
 vendor:
 	$(BUILDER) dep ensure
