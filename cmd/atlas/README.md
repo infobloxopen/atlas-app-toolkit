@@ -22,6 +22,15 @@ $ brew install dep
 ```
 More detailed installation instructions are available on the [GitHub repository](https://github.com/golang/dep).
 
+#### golang-migrate
+Bootstrapped applications use [golang-migrate](https://github.com/golang-migrate/migrate) for database migrations. You can install the `migrate` binary with the standard Go toolchain:
+
+```
+$ go get -u -d github.com/golang-migrate/migrate/cli github.com/lib/pq
+$ go build -tags 'postgres' -o /usr/local/bin/migrate github.com/golang-migrate/migrate/cli
+```
+See the official golang-migrate [GitHub repository](https://github.com/golang-migrate/migrate) for more information about this tool.
+
 ### Installing
 The following steps will install the `atlas` binary to your `$GOBIN` directory.
 
@@ -40,17 +49,18 @@ $ go install
 Rather than build applications completely from scratch, you can leverage the command-line tool to initialize a new project. This will generate the necessary files and folders to get started.
 
 ```sh
-$ atlas init-app name=my-application
+$ atlas init-app -name=my-application
 $ cd my-application
 ```
 #### Flags
 Here's the full set of flags for the `init-app` command.
 
-| Flag          | Description                                                 | Required      | Default Value |
-| ------------- | ----------------------------------------------------------- | ------------- | ------------- |
-| `name`        | The name of the new application                             | Yes           | N/A           |
-| `gateway`     | Initialize the application with a gRPC gateway              | No            | `false`       |
-| `registry`    | The Docker registry where application images are pushed     | No            | `""`          |
+| Flag          | Description                                                     | Required      | Default Value |
+| ------------- | --------------------------------------------------------------- | ------------- | ------------- |
+| `name`        | The name of the new application                                 | Yes           | N/A           |
+| `db`          | Bootstrap the application with PostgreSQL database integration  | No            | `false`       |
+| `gateway`     | Initialize the application with a gRPC gateway                  | No            | `false`       |
+| `registry`    | The Docker registry where application images are pushed         | No            | `""`          |
 
 You can run `atlas init-app --help` to see these flags and their descriptions on the command-line.
 
@@ -59,12 +69,17 @@ You can run `atlas init-app --help` to see these flags and their descriptions on
 
 ```sh
 # generates an application with a grpc gateway 
-atlas init-app name=my-application -gateway
+atlas init-app -name=my-application -gateway
+```
+
+```sh
+# generates an application with a postgres database
+atlas init-app -name=my-application -db
 ```
 
 ```sh
 # specifies a docker registry
-atlas init-app name=my-application -registry=infoblox
+atlas init-app -name=my-application -registry=infoblox
 ```
 Images names will vary depending on whether or not a Docker registry has been provided.
 
@@ -81,5 +96,5 @@ image-name:image-version
 Of course, you may include all the flags in the `init-app` command.
 
 ```sh
-atlas init-app name=my-application -gateway -registry=infoblox
+atlas init-app -name=my-application -gateway -db -registry=infoblox
 ```
