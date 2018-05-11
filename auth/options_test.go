@@ -130,22 +130,34 @@ func (m mockTransportStream) SetTrailer(metadata.MD) error { return nil }
 func TestWithRequest(t *testing.T) {
 	var tests = []struct {
 		stream   *mockTransportStream
+		appID    string
 		expected []*pdp.Attribute
 		err      error
 	}{
 		{
 			stream: &mockTransportStream{method: "/PetStore/ListPets"},
+			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "ListPets"},
-				{Id: "application", Type: "string", Value: "petstore"},
+				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "application", Type: "string", Value: "shoppingmall"},
 			},
 			err: nil,
 		},
 		{
 			stream: &mockTransportStream{method: "/atlas.example.PetStore/ListPets"},
+			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "ListPets"},
-				{Id: "application", Type: "string", Value: "petstore"},
+				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "application", Type: "string", Value: "shoppingmall"},
+			},
+			err: nil,
+		},
+		{
+			stream: &mockTransportStream{method: "/PetStore/ListPets"},
+			appID:  "",
+			expected: []*pdp.Attribute{
+				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "application", Type: "string", Value: "default"},
 			},
 			err: nil,
 		},
@@ -163,7 +175,7 @@ func TestWithRequest(t *testing.T) {
 				test.stream,
 			)
 		}
-		builder := NewBuilder(WithRequest())
+		builder := NewBuilder(WithRequest(test.appID))
 		req, err := builder.build(ctx)
 		if err != test.err {
 			t.Errorf("Unexpected error when building request: %v", err)

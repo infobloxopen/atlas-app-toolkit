@@ -55,17 +55,21 @@ func WithCallback(attr attributer) option {
 // to Themis in the authorization request. Specifically, this includes the gRPC
 // service name (e.g. AddressBook) and the corresponding function that is
 // called by the client (e.g. ListPersons)
-func WithRequest() option {
+func WithRequest(appID string) option {
+	// assume PARGs are in default namespace if no appID is provided
+	if appID == "" {
+		appID = "default"
+	}
 	withRequestFunc := func(ctx context.Context) ([]*pdp.Attribute, error) {
 		service, method, err := getRequestDetails(ctx)
 		if err != nil {
 			return nil, err
 		}
-		service = stripPackageName(service)
+		operation := fmt.Sprintf("%s.%s", stripPackageName(service), method)
 		attributes := []*pdp.Attribute{
-			&pdp.Attribute{Id: "operation", Type: "string", Value: method},
-			// lowercase the service to match PARG naming conventions
-			&pdp.Attribute{Id: "application", Type: "string", Value: strings.ToLower(service)},
+			&pdp.Attribute{Id: "operation", Type: "string", Value: operation},
+			// lowercase the appID to match PARG namespace
+			&pdp.Attribute{Id: "application", Type: "string", Value: strings.ToLower(appID)},
 		}
 		return attributes, nil
 	}
