@@ -638,7 +638,7 @@ appropriate metadata keys that will be handled by `grpc-gateway`. See example be
 ##### How to define field selection in my request?
 
 ```proto
-import collections;
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.FieldSelection fields = 1;
@@ -656,7 +656,7 @@ A service may implement collection sorting. A collection of response resources c
 ##### How to define sorting in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Sorting sort = 1;
@@ -728,7 +728,7 @@ Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type,
 ##### How to define filtering in my request?
 
 ```proto
-import collections;
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Filtering filter = 1;
@@ -773,7 +773,7 @@ Note: Response offsets are optional since the client can often keep state on the
 ##### How to define pagination in my request/response?
 
 ```proto
-import collections;
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Pagination paging = 1;
