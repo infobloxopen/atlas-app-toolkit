@@ -367,7 +367,7 @@ You can also refer [example app](https://github.com/github.com/infobloxopen/atla
 
 #### Which forwarders I need to use to comply our REST API?
 
-We made default [ForwardResponseMessage](gw/response.go#L36) and [ForwardResponseMessage](gw/response.go#L38)
+We made default [ForwardResponseMessage](gateway/response.go#L36) and [ForwardResponseMessage](gateway/response.go#L38)
 implementations that conform REST API Syntax.
 
 **NOTE** the forwarders still set `200 - OK` as HTTP status code if no errors encountered.
@@ -380,10 +380,10 @@ That is a common approach in gRPC to send extra information for response as
 metadata.
 
 We recommend use [gRPC status package](https://godoc.org/google.golang.org/grpc/status)
-and our custom function [SetStatus](gw/status.go#L44) to add extra metadata
+and our custom function [SetStatus](gateway/status.go#L44) to add extra metadata
 to the gRPC response.
 
-See documentation in package [status](gw/status.go).
+See documentation in package [status](gateway/status.go).
 
 Also you may use shortcuts like: `SetCreated`, `SetUpdated` and `SetDeleted`.
 
@@ -447,7 +447,7 @@ You can write your own `ProtoErrorHandler` or use `gw.DefaultProtoErrorHandler` 
 
 How to handle error on gRPC-Gateway see [article](https://mycodesmells.com/post/grpc-gateway-error-handler)
 
-How to use [gw.DefaultProtoErrorHandler](gw/errors.go#L25) see example below:
+How to use [gw.DefaultProtoErrorHandler](gateway/errors.go#L25) see example below:
 
 ```golang
 import (
@@ -595,7 +595,7 @@ populated in case if they provided in incoming HTTP request.
 
 #### How can I apply collection operators passed to my GRPC service to a GORM query?
 
-You can use `ApplyCollectionOperators` method from [op/gorm](op/gorm) package.
+You can use `ApplyCollectionOperators` method from [op/gorm](gateway/gorm) package.
 
 ```golang
 ...
@@ -610,7 +610,7 @@ gormDB.Find(&people)
 
 Separate methods per each collection operator are also available.
 
-Check out [example](example/tagging/service.go) and [implementation](op/gorm/collection_operators.go).
+Check out [example](example/tagging/service.go) and [implementation](gateway/gorm/collection_operators.go).
 
 #### Field Selection
 
@@ -638,7 +638,7 @@ appropriate metadata keys that will be handled by `grpc-gateway`. See example be
 ##### How to define field selection in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.FieldSelection fields = 1;
@@ -656,7 +656,7 @@ A service may implement collection sorting. A collection of response resources c
 ##### How to define sorting in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Sorting sort = 1;
@@ -693,7 +693,7 @@ Also you may want to declare sorting parameter in your `proto` message.
 In this case it will be populated automatically if you using
 `mw.WithCollectionOperator` server interceptor.
 
-See documentation in [op package](op/sorting.go)
+See documentation in [op package](query/sorting.go)
 
 #### Filtering
 
@@ -728,7 +728,7 @@ Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type,
 ##### How to define filtering in my request?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Filtering filter = 1;
@@ -773,7 +773,7 @@ Note: Response offsets are optional since the client can often keep state on the
 ##### How to define pagination in my request/response?
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
 
 message MyRequest {
     infoblox.api.Pagination paging = 1;
