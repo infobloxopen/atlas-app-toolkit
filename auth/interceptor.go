@@ -143,10 +143,10 @@ func makeInterceptor(a string, b Builder, h Handler) grpc.UnaryServerInterceptor
 	return grpc_auth.UnaryServerInterceptor(authorizer.AuthFunc())
 }
 
-func UnaryServerInterceptor(authzAddress string) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor(authzAddress, appID string) grpc.UnaryServerInterceptor {
 	return makeInterceptor(
 		authzAddress,
-		NewBuilder(WithJWT(nil), WithRequest()),
+		NewBuilder(WithJWT(nil), WithRequest(appID)),
 		NewHandler(),
 	)
 }
