@@ -1,14 +1,14 @@
-package tls
+package server
 
 import (
 	"path/filepath"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/pkg/test"
+	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 )
 
 func getPEMFiles(t *testing.T) (rmFunc func(), cert, key, ca string) {
-	tempDir, rmFunc, err := test.WritePEMFiles("")
+	tempDir, rmFunc, err := server_test.WritePEMFiles("")
 	if err != nil {
 		t.Fatalf("Could not write PEM files: %s", err)
 	}

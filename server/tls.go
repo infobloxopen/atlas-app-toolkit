@@ -1,5 +1,5 @@
 // This code is derived from https://github.com/coredns/coredns
-package tls
+package server
 
 import (
 	"crypto/tls"
@@ -9,12 +9,12 @@ import (
 )
 
 // NewTLSConfig returns a TLS config that includes a certificate
-// Use for server TLS config or when using a client certificate
+// Use for Server TLS config or when using a client certificate
 // If caPath is empty, system CAs will be used
 func NewTLSConfig(certPath, keyPath, caPath string) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("could not load TLS cert: %s", err)
+		return nil, err
 	}
 
 	roots, err := loadRoots(caPath)
@@ -22,7 +22,11 @@ func NewTLSConfig(certPath, keyPath, caPath string) (*tls.Config, error) {
 		return nil, err
 	}
 
-	return &tls.Config{Certificates: []tls.Certificate{cert}, RootCAs: roots}, nil
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      roots,
+		NextProtos:   []string{"h2"},
+	}, nil
 }
 
 // NewTLSClientConfig returns a TLS config for a client connection

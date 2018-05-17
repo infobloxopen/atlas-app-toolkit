@@ -25,6 +25,7 @@
   packages = [
     "jsonpb",
     "proto",
+    "protoc-gen-go/descriptor",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -125,6 +126,12 @@
   version = "v1.0.5"
 
 [[projects]]
+  name = "github.com/soheilhy/cmux"
+  packages = ["."]
+  revision = "e09e9389d85d8492d313d73d1469c029e710623f"
+  version = "v0.1.4"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
@@ -184,6 +191,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = [
+    "googleapis/api/annotations",
     "googleapis/rpc/code",
     "googleapis/rpc/status"
   ]
@@ -222,6 +230,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c540784fc9d068f4336e17df4bea6d403f1bcba5862b72202e1860de6a61ee76"
+  inputs-digest = "e9ae61cbd9c739d803f5f20d169bbe5c7b4d9ee560679506b6f91275fbf98df5"
   solver-name = "gps-cdcl"
   solver-version = 1

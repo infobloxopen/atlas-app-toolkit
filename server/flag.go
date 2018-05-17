@@ -1,10 +1,8 @@
-package flag
+package server
 
 import (
 	"crypto/tls"
 	"flag"
-
-	atlastls "github.com/infobloxopen/atlas-app-toolkit/pkg/tls"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -66,15 +64,15 @@ func (f *GRPCFlags) Addr() string {
 
 func NewTLSFlags() *TLSFlags {
 	f := &TLSFlags{}
-	f.cert = flag.String("cert", "", "path to the server certificate in PEM format")
-	f.key = flag.String("key", "", "path to the server private key in PEM format")
+	f.cert = flag.String("cert", "", "path to the Server certificate in PEM format")
+	f.key = flag.String("key", "", "path to the Server private key in PEM format")
 	f.ca = flag.String("ca", "", "path to the CA PEM for validating the client cert; system CAs will be used if blank")
 
 	return f
 }
 
 func (f *TLSFlags) TLSConfig() (*tls.Config, error) {
-	return atlastls.NewTLSConfig(*f.cert, *f.key, *f.ca)
+	return NewTLSConfig(*f.cert, *f.key, *f.ca)
 }
 
 func (f *TLSFlags) WithGRPCTLSCreds() (grpc.ServerOption, error) {
