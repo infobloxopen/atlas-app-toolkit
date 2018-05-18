@@ -255,11 +255,11 @@ func TestWithTLS(t *testing.T) {
 			},
 		},
 		{
-			peer: makePeer("CN=minikubeCA", "CN=client-service"),
+			peer: makePeer("minikubeCA", "client-service"),
 			expected: []*pdp.Attribute{
 				{Id: "tlsVerified", Type: "boolean", Value: "true"},
-				{Id: "tlsIssuer", Type: "string", Value: "CN=minikubeCA"},
-				{Id: "tlsSubject", Type: "string", Value: "CN=client-service"},
+				{Id: "tlsIssuer", Type: "string", Value: "minikubeCA"},
+				{Id: "tlsSubject", Type: "string", Value: "client-service"},
 			},
 		},
 	}
