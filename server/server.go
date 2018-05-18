@@ -57,8 +57,12 @@ func WithGrpcServer(grpcServer *grpc.Server) Option {
 }
 
 func WithHealthChecks(checker health.Checker) Option {
+	return WithHandler(checker.Handler())
+}
+
+func WithHandler(h http.Handler) Option {
 	return func(s *Server) error {
-		s.mux.Handle("/", checker.Handler())
+		s.mux.Handle("/", h)
 		return nil
 	}
 }
@@ -69,8 +73,7 @@ func WithGateway(options ...gateway.Option) Option {
 		if err != nil {
 			return err
 		}
-		s.mux.Handle("/", gwMux)
-		return nil
+		return WithHandler(gwMux)(s)
 	}
 }
 

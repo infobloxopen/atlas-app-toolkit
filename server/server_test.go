@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"testing"
 	"time"
@@ -46,12 +45,10 @@ func TestNewServer(t *testing.T) {
 		_, url, close := buildTestServer(t)
 		defer close()
 
-		log.Printf("getting %q", url)
 		resp, err := http.Get(url)
 		if err != nil {
 			t.Errorf("wasn't expecting error, but got %v", err)
 		}
-		log.Print(resp)
 		if resp.StatusCode != 404 {
 			t.Errorf("expected status 404, but got %d\nresponse: %v", resp.StatusCode, resp)
 		}
@@ -63,6 +60,23 @@ func TestNewServer(t *testing.T) {
 			t.Errorf("expected error %v, but got %v", expected, actual)
 		}
 	})
+}
+
+func TestWithHandler(t *testing.T) {
+	h := http.NewServeMux()
+	h.HandleFunc("/test", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(204)
+		writer.Write([]byte("test"))
+	})
+	_, url, close := buildTestServer(t, WithHandler(h))
+	defer close()
+	resp, err := http.Get(fmt.Sprint(url, "/test"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 204 {
+		t.Errorf("expected status code 204, but got %d", resp.StatusCode)
+	}
 }
 
 func TestWithHealthChecks(t *testing.T) {
