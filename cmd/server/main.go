@@ -1,11 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"log"
 	"net"
 	"net/http"
-
-	"crypto/tls"
 
 	"github.com/infobloxopen/atlas-app-toolkit/cmd"
 	"github.com/infobloxopen/atlas-app-toolkit/server"

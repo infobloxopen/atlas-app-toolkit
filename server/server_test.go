@@ -9,6 +9,9 @@ import (
 
 	"fmt"
 
+	"io/ioutil"
+
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
 	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 	"github.com/infobloxopen/atlas-app-toolkit/servertest"
@@ -105,6 +108,48 @@ func TestWithHealthChecks(t *testing.T) {
 				t.Errorf("expected status code %d, but got %d", test.expected, resp.StatusCode)
 			}
 		})
+	}
+}
+
+func TestWithGateway(t *testing.T) {
+	grpcL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+	httpL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gs := grpc.NewServer()
+	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
+
+	s, err := NewServer(
+		WithGrpcServer(gs),
+		WithGateway(
+			gateway.WithEndpointRegistration("/v1/", server_test.RegisterHelloHandlerFromEndpoint),
+			gateway.WithServerAddress(grpcL.Addr().String()),
+		),
+	)
+
+	go s.Serve(grpcL, httpL)
+	defer s.Stop()
+
+	resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/v1/hello?name=test"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 200 {
+		t.Errorf("expected status code 200, but got %d\nresponse: %v", resp.StatusCode, resp)
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := `{"greeting":"hello, test!"}`
+	actual := string(respBytes)
+	if expected != actual {
+		t.Errorf("expected %q, but got %q", expected, actual)
 	}
 }
 
