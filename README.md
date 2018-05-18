@@ -37,6 +37,10 @@ Tollkit approach provides following features:
 - REST API is presented by a separate service (gRPC Gateway) that serves as a reverse-proxy and
 forwards incoming HTTP requests to gRPC services
 
+### Initializing your Application
+
+To get started with the toolkit, check out the [Atlas CLI](https://github.com/infobloxopen/atlas-cli) repository. The Atlas CLI's "bootstrap command" can generate new applications that make use of the toolkit. For Atlas newcomers, this is a great way to get up-to-speed with toolkit best practices.
+
 ### Plugins
 
 API Toolkit is not a framework it is a set of plugins for Google Protocol Buffer compiler.
