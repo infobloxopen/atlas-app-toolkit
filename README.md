@@ -83,6 +83,41 @@ func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadRespo
 
 When bootstrapping a gRPC server, add middleware that will extract the account_id token from the request context and set it in the request struct. The middleware will have to navigate the request struct via reflection, in the case that the account_id field is nested within the request (like if it's in a request wrapper as per our example above)
 
+##### Transaction Management
+
+We provide transaction management by offering `gorm.Transaction` wrapper and `gorm.UnaryServerInterceptor`.
+The `gorm.Transaction` works as a singleton to prevent an application of creating more than one transaction instance per incoming request.
+The `gorm.UnaryServerInterceptor` performs management on transactions. 
+Interceptor creates new transaction on each incoming request and commits it if request finishes without error, otherwise transaction is aborted.
+The created transaction is stored in `context.Context` and passed to the request handler as usual.
+
+```go
+// add gorm interceptor to the chain
+  server := grpc.NewServer(
+    grpc.UnaryInterceptor(
+      grpc_middleware.ChainUnaryServer( // middleware chain
+        ...
+        gorm.UnaryServerInterceptor(), // transaction management
+        ...
+      ),
+    ),
+  )
+
+import (
+	"github.com/infobloxcopen/atlas-app-toolkit/gorm"
+)
+
+func (s *MyService) MyMethod(ctx context.Context, req *MyMethodRequest) (*MyMethodResponse, error) {
+	// extract gorm transaction from context
+	txn, ok := gorm.FromContext(ctx)
+	if !ok {
+		return panic("transaction is not opened") // don't panic in production!
+	}
+	gormDB := txn.Begin()
+	// do stuff with *gorm.DB
+	return &MyMethodResponse{...}, nil
+}
+```
 
 #### Validation
 We recommend to use [this validation plugin](https://github.com/lyft/protoc-gen-validate) to generate
@@ -293,7 +328,7 @@ Also you can use our helper function `gw.Header()`
 import (
     "context"
 
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
