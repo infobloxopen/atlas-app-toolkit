@@ -86,6 +86,7 @@ func (t *Transaction) Commit() error {
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor that manages
 // a `*Transaction` instance.
 // New *Transaction instance is created before grpc.UnaryHandler call.
+// Client is responsible to call `txn.Begin()` to open transaction.
 // If call of grpc.UnaryHandler returns with an error the transaction
 // is aborted, otherwise committed.
 func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
@@ -93,31 +94,40 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 		// prepare new *Transaction instance
 		txn := &Transaction{parent: db}
 
-		var terr error
 		defer func() {
+			// simple panic handler
+			if perr := recover(); perr != nil {
+				// we do not try to safe the world -
+				// just attempt to close our transaction
+				// re-raise panic and let someone to handle it
+				txn.Rollback()
+				panic(perr)
+			}
+
+			var terr error
+			if err != nil {
+				terr = txn.Rollback()
+			} else {
+				if terr = txn.Commit(); terr != nil {
+					err = status.Error(codes.Internal, "failed to commit transaction")
+				}
+			}
+
 			if terr == nil {
 				return
 			}
+
 			st := status.Convert(err)
-			st, _ = st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
-			err = st.Err()
+			st, serr := st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
+			// do not override error if failed to attach details
+			if serr == nil {
+				err = st.Err()
+			}
+			return
 		}()
 
-		if terr = txn.Begin().Error; terr != nil {
-			return nil, status.Error(codes.Internal, "failed to open transaction")
-		}
 		ctx = NewContext(ctx, txn)
-
 		resp, err = handler(ctx, req)
-
-		if err != nil {
-			terr = txn.Rollback()
-			return nil, err
-		}
-
-		if terr = txn.Commit(); terr != nil {
-			return nil, status.Error(codes.Internal, "failed to commit transaction")
-		}
 
 		return resp, err
 	}

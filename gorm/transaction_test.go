@@ -27,11 +27,12 @@ func TestUnaryServerInterceptor_success(t *testing.T) {
 
 	interceptor := UnaryServerInterceptor(gdb)
 	_, err = interceptor(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
-		_, ok := FromContext(ctx)
+		txn, ok := FromContext(ctx)
 		if !ok {
 			t.Error("failed to extract transaction from context")
 		}
-		return nil, nil
+
+		return nil, txn.Begin().Error
 	})
 	if err != nil {
 		t.Errorf("unexpected error - %s", err)
@@ -47,6 +48,7 @@ func TestUnaryServerInterceptor_error(t *testing.T) {
 	if err != nil {
 		t.Fatalf("faliled to create sqlmock - %s", err)
 	}
+
 	mock.ExpectBegin()
 	mock.ExpectRollback().WillReturnError(errors.New("handler"))
 
@@ -57,10 +59,11 @@ func TestUnaryServerInterceptor_error(t *testing.T) {
 
 	interceptor := UnaryServerInterceptor(gdb)
 	_, err = interceptor(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
-		_, ok := FromContext(ctx)
+		txn, ok := FromContext(ctx)
 		if !ok {
 			t.Error("failed to extract transaction from context")
 		}
+		txn.Begin()
 		return nil, status.Error(codes.InvalidArgument, "handler")
 	})
 
@@ -92,6 +95,7 @@ func TestUnaryServerInterceptor_details(t *testing.T) {
 		if !ok {
 			t.Error("failed to extract transaction from context")
 		}
+		txn.Begin()
 		txn.current.Error = errors.New("internal")
 		return nil, nil
 	})

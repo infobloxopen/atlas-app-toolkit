@@ -90,6 +90,7 @@ The `gorm.Transaction` works as a singleton to prevent an application of creatin
 The `gorm.UnaryServerInterceptor` performs management on transactions. 
 Interceptor creates new transaction on each incoming request and commits it if request finishes without error, otherwise transaction is aborted.
 The created transaction is stored in `context.Context` and passed to the request handler as usual.
+**NOTE** Client is responsible to call `thx.Begin()` to open transaction.
 
 ```go
 // add gorm interceptor to the chain
@@ -115,7 +116,11 @@ func (s *MyService) MyMethod(ctx context.Context, req *MyMethodRequest) (*MyMeth
 	if !ok {
 		return panic("transaction is not opened") // don't panic in production!
 	}
+	// start transaction
 	gormDB := txn.Begin()
+	if err := gormDB.Error; err != nil {
+		return nil, err
+	}
 	// do stuff with *gorm.DB
 	return &MyMethodResponse{...}, nil
 }
