@@ -9,6 +9,8 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	pdp "github.com/infobloxopen/themis/pdp-service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 )
 
 // functional options for the defaultBuilder
@@ -67,9 +69,9 @@ func WithRequest(appID string) option {
 		}
 		operation := fmt.Sprintf("%s.%s", stripPackageName(service), method)
 		attributes := []*pdp.Attribute{
-			&pdp.Attribute{Id: "operation", Type: "string", Value: operation},
+			{Id: "operation", Type: "string", Value: operation},
 			// lowercase the appID to match PARG namespace
-			&pdp.Attribute{Id: "application", Type: "string", Value: strings.ToLower(appID)},
+			{Id: "application", Type: "string", Value: strings.ToLower(appID)},
 		}
 		return attributes, nil
 	}
@@ -93,9 +95,44 @@ func getRequestDetails(ctx context.Context) (string, string, error) {
 	return path.Dir(fullMethodString)[1:], path.Base(fullMethodString), nil
 }
 
+// WithTLS gathers metadata from a TLS-authenticated client
+func WithTLS() option {
+	f := func(ctx context.Context) ([]*pdp.Attribute, error) {
+		p, ok := peer.FromContext(ctx)
+		if !ok || p.AuthInfo == nil {
+			return []*pdp.Attribute{
+				{Id: tlsVerified, Type: "boolean", Value: "false"},
+			}, nil
+		}
+
+		t, ok := p.AuthInfo.(*credentials.TLSInfo)
+		if !ok || t.State.VerifiedChains == nil || len(t.State.VerifiedChains) == 0 || len(t.State.VerifiedChains[0]) == 0 {
+			return []*pdp.Attribute{
+				{Id: tlsVerified, Type: "boolean", Value: "false"},
+			}, nil
+		}
+
+		cert := t.State.VerifiedChains[0][0]
+		return []*pdp.Attribute{
+			{Id: tlsVerified, Type: "boolean", Value: "true"},
+			{Id: tlsIssuer, Type: "string", Value: cert.Issuer.CommonName},
+			{Id: tlsSubject, Type: "string", Value: cert.Subject.CommonName},
+		}, nil
+	}
+	return func(d *defaultBuilder) {
+		d.getters = append(d.getters, f)
+	}
+}
+
 func combineAttributes(first, second []*pdp.Attribute) []*pdp.Attribute {
 	for _, attr := range second {
 		first = append(first, attr)
 	}
 	return first
 }
+
+const (
+	tlsVerified = "tlsVerified"
+	tlsSubject  = "tlsSubject"
+	tlsIssuer   = "tlsIssuer"
+)
