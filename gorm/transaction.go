@@ -41,7 +41,7 @@ type Transaction struct {
 }
 
 // Begin starts new transaction by calling `*gorm.DB.Begin()`
-// Returns new instance of `*gorm.DB` (error can be checked by `*gotm.DB.Error`)
+// Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
 func (t *Transaction) Begin() *gorm.DB {
 	t.mu.Lock()
 	defer t.mu.Unlock()

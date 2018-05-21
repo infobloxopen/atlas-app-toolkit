@@ -102,7 +102,9 @@ The created transaction is stored in `context.Context` and passed to the request
       ),
     ),
   )
+```
 
+```go
 import (
 	"github.com/infobloxcopen/atlas-app-toolkit/gorm"
 )
