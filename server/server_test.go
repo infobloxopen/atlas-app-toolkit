@@ -11,6 +11,8 @@ import (
 
 	"io/ioutil"
 
+	"net"
+
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
 	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
@@ -24,29 +26,42 @@ func buildTestServer(t *testing.T, opts ...Option) (grpcAddr string, httpAddr st
 		t.Fatal(err)
 	}
 
-	grpcL, err := servertest.NewLocalListener()
-	if err != nil {
-		t.Fatal(err)
+	var grpcL, httpL net.Listener
+
+	if s.GRPCServer != nil {
+		grpcL, err = servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	httpL, err := servertest.NewLocalListener()
-	if err != nil {
-		t.Fatal(err)
+	if s.HTTPServer != nil {
+		httpL, err = servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	go s.Serve(grpcL, httpL)
 
-	close := func() {
+	if grpcL != nil {
+		grpcAddr = grpcL.Addr().String()
+	}
+	if httpL != nil {
+		httpAddr = fmt.Sprintf("http://%s", httpL.Addr().String())
+	}
+	cleanup = func() {
 		if err := s.Stop(); err != nil {
 			t.Fatal(err)
 		}
 	}
-	return grpcL.Addr().String(), fmt.Sprintf("http://%s", httpL.Addr().String()), close
+
+	return grpcAddr, httpAddr, cleanup
 }
 
 func TestNewServer(t *testing.T) {
 	t.Run("no options", func(t *testing.T) {
-		_, url, close := buildTestServer(t)
-		defer close()
+		_, url, cleanup := buildTestServer(t)
+		defer cleanup()
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -65,23 +80,6 @@ func TestNewServer(t *testing.T) {
 	})
 }
 
-func TestWithHandler(t *testing.T) {
-	h := http.NewServeMux()
-	h.HandleFunc("/test", func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(204)
-		writer.Write([]byte("test"))
-	})
-	_, url, close := buildTestServer(t, WithHandler(h))
-	defer close()
-	resp, err := http.Get(fmt.Sprint(url, "/test"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.StatusCode != 204 {
-		t.Errorf("expected status code 204, but got %d", resp.StatusCode)
-	}
-}
-
 func TestWithHealthChecks(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -90,16 +88,18 @@ func TestWithHealthChecks(t *testing.T) {
 		expected int
 	}{
 		{"liveness-pass", nil, "healthz", 200},
-		{"liveness-fail", errors.New(""), "healthz", 503},
+		{"liveness-pass", nil, "/healthz", 200},
+		{"liveness-fail", errors.New(""), "/healthz", 503},
 		{"readiness-pass", nil, "ready", 200},
+		{"readiness-pass", nil, "/ready", 200},
 		{"readiness-fail", errors.New(""), "ready", 503},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			checks := health.NewChecksHandler("healthz", "ready")
 			checks.AddLiveness("liveness-test", func() error { return test.checkErr })
-			_, url, close := buildTestServer(t, WithHealthChecks(checks))
-			defer close()
+			_, url, cleanup := buildTestServer(t, WithHealthChecks(checks))
+			defer cleanup()
 			resp, err := http.Get(fmt.Sprintf("%s/%s", url, test.testPath))
 			if err != nil {
 				t.Errorf("not expecting error, but got %v", err)
@@ -108,6 +108,22 @@ func TestWithHealthChecks(t *testing.T) {
 				t.Errorf("expected status code %d, but got %d", test.expected, resp.StatusCode)
 			}
 		})
+	}
+}
+
+func TestWithHandler(t *testing.T) {
+	h := http.NewServeMux()
+	h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(204)
+	})
+	_, url, cleanup := buildTestServer(t, WithHandler("/test/", h))
+	defer cleanup()
+	resp, err := http.Get(fmt.Sprint(url, "/test/204"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 204 {
+		t.Errorf("expected status code 204, but got %d", resp.StatusCode)
 	}
 }
 
@@ -166,7 +182,7 @@ func TestWithInitializer(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := s.Initialize(); err != ErrInitializeTimeout {
+		if err := s.initialize(); err != ErrInitializeTimeout {
 			t.Errorf("expected timeout error, but got %v", err)
 		}
 		if contextCanceled := <-ctxC; !contextCanceled {
@@ -180,7 +196,7 @@ func TestWithInitializer(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if actual := s.Initialize(); actual != expected {
+		if actual := s.initialize(); actual != expected {
 			t.Errorf("expected error %v, but got %v", expected, actual)
 		}
 	})
@@ -190,8 +206,8 @@ func TestWithGrpcServer(t *testing.T) {
 	gs := grpc.NewServer()
 	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
 
-	gURL, _, close := buildTestServer(t, WithGrpcServer(gs))
-	defer close()
+	gURL, _, cleanup := buildTestServer(t, WithGrpcServer(gs))
+	defer cleanup()
 
 	conn, err := grpc.Dial(gURL, grpc.WithInsecure())
 	if err != nil {
@@ -207,4 +223,82 @@ func TestWithGrpcServer(t *testing.T) {
 	if resp.Greeting != "hello, test!" {
 		t.Errorf("expected greeting %q, but got %q", "hello, test!", resp.Greeting)
 	}
+}
+
+func TestOnlyGrpcServer(t *testing.T) {
+	grpcL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gs := grpc.NewServer()
+	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
+
+	s, err := NewServer(WithGrpcServer(gs))
+
+	go s.Serve(grpcL, nil)
+	defer s.Stop()
+
+	conn, err := grpc.Dial(grpcL.Addr().String(), grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	client := server_test.NewHelloClient(conn)
+	resp, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Greeting != "hello, test!" {
+		t.Errorf("expected greeting %q, but got %q", "hello, test!", resp.Greeting)
+	}
+}
+
+func TestOnlyHttpServer(t *testing.T) {
+	h := http.NewServeMux()
+	h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(204)
+	})
+
+	httpL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := NewServer(WithHandler("/test/", h))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go s.Serve(nil, httpL)
+	defer s.Stop()
+
+	resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/test/204"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 204 {
+		t.Errorf("expected status code 204, but got %d\nresponse: %v", resp.StatusCode, resp)
+	}
+}
+
+func TestStop(t *testing.T) {
+	s, err := NewServer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doneC := make(chan bool)
+	go func() {
+		httpL, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.Serve(nil, httpL)
+		doneC <- true
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+	s.Stop()
+	<-doneC
 }

@@ -22,19 +22,50 @@ var (
 	DefaultInitializerTimeout = time.Minute
 )
 
+// Server is a wrapper struct that will allow you to stand up your GPRC server, API Gateway and health checks within
+// the same struct. The recommended way to initialize this is with the NewServer function.
 type Server struct {
 	initializers      []InitializerFunc
 	initializeTimeout time.Duration
+	registrars        []func(mux *http.ServeMux) error
 
+	// GRPCServer will be started whenever this is served
 	GRPCServer *grpc.Server
+
+	// HTTPServer will be started whenever this is served
 	HTTPServer *http.Server
-	mux        *http.ServeMux
 }
 
 type Option func(*Server) error
 
 type InitializerFunc func(context.Context) error
 
+// NewServer creates a Server from the given options. All options are processed in the order they are declared.
+func NewServer(opts ...Option) (*Server, error) {
+	s := &Server{
+		initializeTimeout: DefaultInitializerTimeout,
+		HTTPServer:        &http.Server{},
+		registrars:        []func(mux *http.ServeMux) error{},
+	}
+
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return nil, err
+		}
+	}
+
+	mux := http.NewServeMux()
+	for _, register := range s.registrars {
+		if err := register(mux); err != nil {
+			return nil, err
+		}
+	}
+	s.HTTPServer.Handler = mux
+
+	return s, nil
+}
+
+// WithInitializerTimeout set the duration initialization will wait before halting and returning an error
 func WithInitializerTimeout(timeout time.Duration) Option {
 	return func(s *Server) error {
 		s.initializeTimeout = timeout
@@ -42,6 +73,7 @@ func WithInitializerTimeout(timeout time.Duration) Option {
 	}
 }
 
+// WithInitializer adds an initialization function that will get called prior to serving.
 func WithInitializer(initializerFunc InitializerFunc) Option {
 	return func(s *Server) error {
 		s.initializers = append(s.initializers, initializerFunc)
@@ -49,6 +81,8 @@ func WithInitializer(initializerFunc InitializerFunc) Option {
 	}
 }
 
+// WithGrpcServer adds the given GRPC server to this server. There can only be one GRPC server within a given instance,
+// so multiple calls with this option will overwrite the previous ones.
 func WithGrpcServer(grpcServer *grpc.Server) Option {
 	return func(s *Server) error {
 		s.GRPCServer = grpcServer
@@ -56,71 +90,72 @@ func WithGrpcServer(grpcServer *grpc.Server) Option {
 	}
 }
 
-func WithHealthChecks(checker health.Checker) Option {
-	return WithHandler(checker.Handler())
-}
-
-func WithHandler(h http.Handler) Option {
+// WithHandler registers the given http handler to this server by registering the pattern at the root of the http server
+func WithHandler(pattern string, handler http.Handler) Option {
 	return func(s *Server) error {
-		s.mux.Handle("/", h)
+		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
+			mux.Handle(pattern, handler)
+			return nil
+		})
 		return nil
 	}
 }
 
+// WithHealthChecks registers the given health checker with this server by registering its endpoints at the root of the
+// http server.
+func WithHealthChecks(checker health.Checker) Option {
+	return func(s *Server) error {
+		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
+			checker.RegisterHandler(mux)
+			return nil
+		})
+		return nil
+	}
+}
+
+// WithGateway registers the given gateway options with this server
 func WithGateway(options ...gateway.Option) Option {
 	return func(s *Server) error {
-		gwMux, err := gateway.NewGateway(options...)
-		if err != nil {
+		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
+			_, err := gateway.NewGateway(append(options, gateway.WithMux(mux))...)
 			return err
-		}
-		return WithHandler(gwMux)(s)
-	}
-}
-
-func NewServer(opts ...Option) (*Server, error) {
-	s := &Server{
-		initializeTimeout: DefaultInitializerTimeout,
-		HTTPServer:        &http.Server{},
-		mux:               &http.ServeMux{},
-	}
-	for _, opt := range opts {
-		if err := opt(s); err != nil {
-			return nil, err
-		}
-	}
-	return s, nil
-}
-
-// Serve calls invokes all initializers then serves on the given listener
-func (s *Server) Serve(grpcL, httpL net.Listener) error {
-	if err := s.Initialize(); err != nil {
-		return err
-	}
-
-	doneC := make(chan bool)
-	errC := make(chan error)
-	go func() {
-		defer func() { doneC <- true }()
-		s.HTTPServer.Handler = s.mux
-		if err := s.HTTPServer.Serve(httpL); err != nil {
-			errC <- err
-		}
-	}()
-	go func() {
-		defer func() { doneC <- true }()
-		if s.GRPCServer != nil {
-			if err := s.GRPCServer.Serve(grpcL); err != nil {
-				errC <- err
-			}
-		}
-	}()
-
-	select {
-	case err := <-errC:
-		return err
-	case <-doneC:
+		})
 		return nil
 	}
+}
+
+// Serve invokes all initializers then serves on the given listeners.
+//
+// If a listener is left blank, then that particular part will not be served.
+//
+// If a listener is specified for a part that doesn't have a corresponding server, then an error will be returned. This
+// can happen, for instance, whenever a gRPC listener is provided but no gRPC server was set or no option was passed
+// into NewServer.
+func (s *Server) Serve(grpcL, httpL net.Listener) error {
+	if err := s.initialize(); err != nil {
+		return err
+	}
+	errC := make(chan error)
+
+	if httpL != nil {
+		if s.HTTPServer == nil {
+			return errors.New("httpL is specified, but no HTTPServer is provided")
+		}
+		go func() { errC <- s.HTTPServer.Serve(httpL) }()
+	} else {
+		s.HTTPServer = nil
+	}
+
+	if grpcL != nil {
+		if s.GRPCServer == nil {
+			return errors.New("grpcL is specified, but no GRPCServer is provided")
+		}
+		go func() { errC <- s.GRPCServer.Serve(grpcL) }()
+	} else {
+		s.GRPCServer = nil
+	}
+
+	return <-errC
 }
 
 func (s *Server) Stop() error {
@@ -149,17 +184,16 @@ func (s *Server) Stop() error {
 	}
 }
 
-func (s Server) Initialize() error {
+func (s Server) initialize() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.initializeTimeout)
 	defer cancel()
 	errC := make(chan error)
-	doneC := make(chan bool)
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(s.initializers))
 	go func() {
 		wg.Wait()
-		doneC <- true
+		errC <- nil
 	}()
 
 	for _, i := range s.initializers {
@@ -176,7 +210,5 @@ func (s Server) Initialize() error {
 		return err
 	case <-time.After(s.initializeTimeout):
 		return ErrInitializeTimeout
-	case <-doneC:
-		return nil
 	}
 }

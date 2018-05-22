@@ -24,6 +24,7 @@ type gateway struct {
 	serverAddress     string
 	serverDialOptions []grpc.DialOption
 	endpoints         map[string][]registerFunc
+	mux               *http.ServeMux
 }
 
 // NewGateway creates a gRPC REST gateway with HTTP handlers that have been
@@ -34,6 +35,7 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 		serverAddress:     DefaultServerAddress,
 		endpoints:         make(map[string][]registerFunc),
 		serverDialOptions: []grpc.DialOption{grpc.WithInsecure()},
+		mux:               http.NewServeMux(),
 	}
 	// apply functional options
 	for _, opt := range options {
@@ -45,7 +47,6 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 // registerEndpoints iterates through each prefix and registers its handlers
 // to the REST gateway
 func (g gateway) registerEndpoints() (*http.ServeMux, error) {
-	mux := http.ServeMux{}
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
 			runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
@@ -59,9 +60,9 @@ func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 			}
 		}
 		// strip prefix from testRequest URI, but leave the trailing "/"
-		mux.Handle(prefix, http.StripPrefix(prefix[:len(prefix)-1], gwmux))
+		g.mux.Handle(prefix, http.StripPrefix(prefix[:len(prefix)-1], gwmux))
 	}
-	return &mux, nil
+	return g.mux, nil
 }
 
 // WithDialOptions assigns a list of gRPC dial options to the REST gateway
@@ -85,5 +86,12 @@ func WithEndpointRegistration(prefix string, endpoints ...registerFunc) Option {
 func WithServerAddress(address string) Option {
 	return func(g *gateway) {
 		g.serverAddress = address
+	}
+}
+
+// WithMux will use the given http.ServeMux to register the gateway endpoints.
+func WithMux(mux *http.ServeMux) Option {
+	return func(g *gateway) {
+		g.mux = mux
 	}
 }
