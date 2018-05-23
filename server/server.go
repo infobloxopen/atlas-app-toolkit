@@ -159,23 +159,28 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 }
 
 func (s *Server) Stop() error {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 	doneC := make(chan bool)
 	errC := make(chan error)
 	go func() {
-		defer func() { doneC <- true }()
+		defer wg.Done()
 		if s.GRPCServer != nil {
 			s.GRPCServer.Stop()
 		}
 	}()
 	go func() {
-		defer func() { doneC <- true }()
+		defer wg.Done()
 		if s.HTTPServer != nil {
 			if err := s.HTTPServer.Close(); err != nil {
 				errC <- err
 			}
 		}
 	}()
-
+	go func() {
+		wg.Wait()
+		doneC <- true
+	}()
 	select {
 	case err := <-errC:
 		return err
