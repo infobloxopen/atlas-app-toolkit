@@ -282,6 +282,18 @@ func TestOnlyHttpServer(t *testing.T) {
 	}
 }
 
+func TestServe(t *testing.T) {
+	t.Run("both listeners are nil", func(t *testing.T) {
+		s, err := NewServer()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.Serve(nil, nil); err == nil {
+			t.Error("expected error, but got none")
+		}
+	})
+}
+
 func TestStop(t *testing.T) {
 	s, err := NewServer()
 	if err != nil {

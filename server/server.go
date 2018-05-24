@@ -18,7 +18,10 @@ import (
 )
 
 var (
-	ErrInitializeTimeout      = errors.New("initialization timed out")
+	// ErrInitializeTimeout is returned when an InitializerFunc takes too long to finish during Server.Serve
+	ErrInitializeTimeout = errors.New("initialization timed out")
+	// DefaultInitializerTimeout is the reasonable default amount of time one would expect initialization to take in the
+	// worst case
 	DefaultInitializerTimeout = time.Minute
 )
 
@@ -36,8 +39,10 @@ type Server struct {
 	HTTPServer *http.Server
 }
 
+// Option is a functional option for creating a Server
 type Option func(*Server) error
 
+// InitializerFunc is a handler that can be passed into WithInitializer to be executed prior to serving
 type InitializerFunc func(context.Context) error
 
 // NewServer creates a Server from the given options. All options are processed in the order they are declared.
@@ -131,7 +136,13 @@ func WithGateway(options ...gateway.Option) Option {
 // If a listener is specified for a part that doesn't have a corresponding server, then an error will be returned. This
 // can happen, for instance, whenever a gRPC listener is provided but no gRPC server was set or no option was passed
 // into NewServer.
+//
+// If both listeners are nil, then an error is returned
 func (s *Server) Serve(grpcL, httpL net.Listener) error {
+	if grpcL == nil && httpL == nil {
+		return errors.New("both grpcL and httpL are nil")
+	}
+
 	if err := s.initialize(); err != nil {
 		return err
 	}
@@ -158,6 +169,7 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 	return <-errC
 }
 
+// Stop immediately terminates the grpc and http servers, immediately closing their active listeners
 func (s *Server) Stop() error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -181,6 +193,7 @@ func (s *Server) Stop() error {
 		wg.Wait()
 		doneC <- true
 	}()
+
 	select {
 	case err := <-errC:
 		return err
@@ -201,13 +214,13 @@ func (s Server) initialize() error {
 		errC <- nil
 	}()
 
-	for _, i := range s.initializers {
-		go func() {
+	for _, initFunc := range s.initializers {
+		go func(init InitializerFunc) {
 			defer wg.Done()
-			if err := i(ctx); err != nil {
+			if err := init(ctx); err != nil {
 				errC <- err
 			}
-		}()
+		}(initFunc)
 	}
 
 	select {
