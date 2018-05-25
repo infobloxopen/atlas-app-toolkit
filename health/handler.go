@@ -6,9 +6,12 @@ import (
 )
 
 type checksHandler struct {
-	lock            sync.RWMutex
-	mux             *http.ServeMux
-	livenessChecks  map[string]Check
+	lock sync.RWMutex
+
+	livenessPath   string
+	livenessChecks map[string]Check
+
+	readinessPath   string
 	readinessChecks map[string]Check
 }
 
@@ -17,24 +20,25 @@ type Checker interface {
 	AddLiveness(name string, check Check)
 	AddReadiness(name string, check Check)
 	Handler() http.Handler
+	RegisterHandler(mux *http.ServeMux)
 }
 
 // NewChecksHandler accepts two strings: health and ready paths.
 // These paths will be used for liveness and readiness checks.
 func NewChecksHandler(healthPath, readyPath string) Checker {
-	ch := &checksHandler{
-		livenessChecks:  map[string]Check{},
-		readinessChecks: map[string]Check{},
-		mux:             &http.ServeMux{},
-	}
 	if healthPath[0] != '/' {
 		healthPath = "/" + healthPath
 	}
 	if readyPath[0] != '/' {
 		readyPath = "/" + readyPath
 	}
-	ch.mux.Handle(healthPath, http.HandlerFunc(ch.healthEndpoint))
-	ch.mux.Handle(readyPath, http.HandlerFunc(ch.readyEndpoint))
+	ch := &checksHandler{
+		livenessPath:    healthPath,
+		livenessChecks:  map[string]Check{},
+		readinessPath:   readyPath,
+		readinessChecks: map[string]Check{},
+	}
+
 	return ch
 }
 
@@ -52,8 +56,21 @@ func (ch *checksHandler) AddReadiness(name string, check Check) {
 	ch.readinessChecks[name] = check
 }
 
+// Handler returns a new http.Handler for the given health checker
 func (ch *checksHandler) Handler() http.Handler {
-	return ch.mux
+	mux := http.NewServeMux()
+	ch.registerMux(mux)
+	return mux
+}
+
+// RegisterHandler registers the given health and readiness patterns onto the given http.ServeMux
+func (ch *checksHandler) RegisterHandler(mux *http.ServeMux) {
+	ch.registerMux(mux)
+}
+
+func (ch *checksHandler) registerMux(mux *http.ServeMux) {
+	mux.HandleFunc(ch.readinessPath, ch.readyEndpoint)
+	mux.HandleFunc(ch.livenessPath, ch.healthEndpoint)
 }
 
 func (ch *checksHandler) healthEndpoint(rw http.ResponseWriter, r *http.Request) {

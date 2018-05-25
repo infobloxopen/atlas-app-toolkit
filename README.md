@@ -11,7 +11,8 @@
         5. [Documentation](#documentation)
         6. [Swagger](#swagger)
     2. [Build image](#build-image)
-    3. [Example](#example)
+    3. [Server Wrapper](#server-wrapper)
+    4. [Example](#example)
 2. [REST API Syntax Specification](#rest-api-syntax-specification)
     1. [Resources and Collections](#resources-and-collections)
     2. [HTTP Headers](#http-headers)
@@ -256,6 +257,28 @@ generated in a bit unusual way:
 
 For convenience purposes there is an atlas-gentool image available which contains a pre-installed set of often used plugins.
 For more details see [infobloxopen/atlas-gentool](https://github.com/infobloxopen/atlas-gentool) repository.
+
+### Server Wrapper
+
+You can package your gRPC server along with your REST gateway, health checks and any other http endpoints using [`server.NewServer`](server/server.go):
+```go
+s, err := server.NewServer(
+    server.WithGrpcServer(grpcServer),
+    server.WithHealthChecks(healthChecks),
+    server.WithGateway(
+        gateway.WithEndpointRegistration("/v1/", server_test.RegisterHelloHandlerFromEndpoint),
+        gateway.WithServerAddress(grpcL.Addr().String()),
+    ),
+)
+if err != nil {
+    log.Fatal(err)
+}
+// serve it by passing in net.Listeners for the respective servers
+if err := s.Serve(grpcListener, httpListener); err != nil {
+    log.Fatal(err)
+}
+```
+You can see a full example [here](server/server_example_test.go).
 
 ## Example
 
