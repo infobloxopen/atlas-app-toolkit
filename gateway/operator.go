@@ -31,6 +31,7 @@ const (
 	pageInfoSizeMetaKey      = "status-page-info-size"
 	pageInfoOffsetMetaKey    = "status-page-info-offset"
 	pageInfoPageTokenMetaKey = "status-page-info-page_token"
+	paginationContextKey     = "pagination-context"
 )
 
 // MetadataAnnotator is a function for passing metadata to a gRPC context
@@ -124,6 +125,10 @@ func Filtering(ctx context.Context) (*query.Filtering, error) {
 // `status.Error(codes.InvalidArgument, parser_error)`
 // See: `query.ParsePagination` for details.
 func Pagination(ctx context.Context) (*query.Pagination, error) {
+	if v, ok := ctx.Value(paginationContextKey).(*query.Pagination); ok {
+		return v, nil
+	}
+
 	l, lok := Header(ctx, limitMetaKey)
 	o, ook := Header(ctx, offsetMetaKey)
 	pt, ptok := Header(ctx, pageTokenMetaKey)
@@ -138,6 +143,12 @@ func Pagination(ctx context.Context) (*query.Pagination, error) {
 	}
 
 	return p, nil
+}
+
+// NewPaginationContext return the new `context.Context` that caries `*query.Pagination`
+// instance.
+func NewPaginationContext(ctx context.Context, p *query.Pagination) context.Context {
+	return context.WithValue(ctx, paginationContextKey, p)
 }
 
 // SetPagination sets page info to outgoing gRPC context.

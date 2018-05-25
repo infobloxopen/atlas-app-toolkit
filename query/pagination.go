@@ -56,9 +56,9 @@ func (p *Pagination) FirstPage() bool {
 
 // DefaultLimit returns DefaultLimit if limit was not specified otherwise
 // returns either requested or specified one.
-func (p *Pagination) DefaultLimit(dl ...int) int {
+func (p *Pagination) DefaultLimit(dl ...int32) int32 {
 	if l := p.GetLimit(); l != 0 {
-		return int(l)
+		return l
 	}
 	if len(dl) > 0 && dl[0] > 0 {
 		return dl[0]
