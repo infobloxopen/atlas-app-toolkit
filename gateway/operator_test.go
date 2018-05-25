@@ -125,15 +125,16 @@ func TestNewPaginationContext(t *testing.T) {
 	}
 
 	// change pagination
+	p = &query.Pagination{}
 	p.Offset, p.Limit = 19, 86
 	ctx = NewPaginationContext(ctx, p)
 
-	np, err := Pagination(ctx)
+	p, err = Pagination(ctx)
 	if err != nil {
 		t.Errorf("unexpected error %s", err)
 	}
 
-	if np.Offset != 19 || np.Limit != 86 {
-		t.Errorf("invalid pagination instance %v", np)
+	if p.Offset != 19 || p.Limit != 86 {
+		t.Errorf("invalid pagination instance %v", p)
 	}
 }
