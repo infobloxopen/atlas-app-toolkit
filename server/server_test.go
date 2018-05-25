@@ -292,6 +292,111 @@ func TestServe(t *testing.T) {
 			t.Error("expected error, but got none")
 		}
 	})
+	t.Run("grpc listener but no server", func(t *testing.T) {
+		l, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer l.Close()
+		s, err := NewServer()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.Serve(l, nil); err == nil {
+			t.Error("expected error, but got none")
+		}
+	})
+	t.Run("http listener but no server", func(t *testing.T) {
+		l, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer l.Close()
+		s, err := NewServer()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.HTTPServer = nil
+		if err := s.Serve(nil, l); err == nil {
+			t.Error("expected error, but got none")
+		}
+	})
+	// if one part fails, this whole server should go down. This test ensures that if the http server crashes for some
+	// reason (or is brought explicitly brought down), then the gRPC server will close, too
+	t.Run("closing http server closes grpc server", func(t *testing.T) {
+		// bunch of setup code
+		grpcL, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpL, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		grpcServer := grpc.NewServer()
+		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		s, err := NewServer(WithGrpcServer(grpcServer))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// start the server
+		go s.Serve(grpcL, httpL)
+
+		// demonstrate that we can reach the gRPC server
+		conn, err := grpc.Dial(grpcL.Addr().String(), grpc.WithInsecure())
+		if err != nil {
+			t.Fatal(err)
+		}
+		client := server_test.NewHelloClient(conn)
+		if _, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"}); err != nil {
+			t.Fatalf("expected no error, but got %v", err)
+		}
+		// now if we kill the HTTP server, the gRPC server should close, too
+		s.HTTPServer.Close()
+		if _, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"}); err == nil {
+			t.Fatal("expected grpc server to be closed, but request was successfully sent")
+		}
+	})
+	t.Run("closing grpc server closes http server", func(t *testing.T) {
+		// bunch of setup code
+		grpcL, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpL, err := servertest.NewLocalListener()
+		if err != nil {
+			t.Fatal(err)
+		}
+		grpcServer := grpc.NewServer()
+		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		h := http.NewServeMux()
+		h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(204)
+		})
+		s, err := NewServer(
+			WithGrpcServer(grpcServer),
+			WithHandler("/test/", h),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// start the server
+		go s.Serve(grpcL, httpL)
+
+		resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/test/204"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != 204 {
+			t.Errorf("expected status code 204, but got %d", resp.StatusCode)
+		}
+
+		s.GRPCServer.Stop()
+
+		if _, err = http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/test/204")); err == nil {
+			t.Fatal("expected http server to be closed, but request was successfully sent")
+		}
+	})
 }
 
 func TestStop(t *testing.T) {

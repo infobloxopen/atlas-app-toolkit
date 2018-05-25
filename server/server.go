@@ -165,7 +165,7 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 	} else {
 		s.GRPCServer = nil
 	}
-
+	defer s.Stop()
 	return <-errC
 }
 
