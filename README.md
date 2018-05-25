@@ -38,6 +38,10 @@ Tollkit approach provides following features:
 - REST API is presented by a separate service (gRPC Gateway) that serves as a reverse-proxy and
 forwards incoming HTTP requests to gRPC services
 
+### Initializing your Application
+
+To get started with the toolkit, check out the [Atlas CLI](https://github.com/infobloxopen/atlas-cli) repository. The Atlas CLI's "bootstrap command" can generate new applications that make use of the toolkit. For Atlas newcomers, this is a great way to get up-to-speed with toolkit best practices.
+
 ### Plugins
 
 API Toolkit is not a framework it is a set of plugins for Google Protocol Buffer compiler.
@@ -67,7 +71,7 @@ For this purpose `auth.GetAccountID(ctx, nil)` function can be used:
 func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	input := req.GetContact()
 
-	accountID, err := mw.GetAccountID(ctx, nil)
+	accountID, err := auth.GetAccountID(ctx, nil)
 	if err == nil {
 		input.AccountId = accountID
 	} else if input.GetAccountId() == "" {
@@ -84,6 +88,48 @@ func (s *contactsServer) Read(ctx context.Context, req *ReadRequest) (*ReadRespo
 
 When bootstrapping a gRPC server, add middleware that will extract the account_id token from the request context and set it in the request struct. The middleware will have to navigate the request struct via reflection, in the case that the account_id field is nested within the request (like if it's in a request wrapper as per our example above)
 
+##### Transaction Management
+
+We provide transaction management by offering `gorm.Transaction` wrapper and `gorm.UnaryServerInterceptor`.
+The `gorm.Transaction` works as a singleton to prevent an application of creating more than one transaction instance per incoming request.
+The `gorm.UnaryServerInterceptor` performs management on transactions. 
+Interceptor creates new transaction on each incoming request and commits it if request finishes without error, otherwise transaction is aborted.
+The created transaction is stored in `context.Context` and passed to the request handler as usual.
+**NOTE** Client is responsible to call `txn.Begin()` to open transaction.
+
+```go
+// add gorm interceptor to the chain
+  server := grpc.NewServer(
+    grpc.UnaryInterceptor(
+      grpc_middleware.ChainUnaryServer( // middleware chain
+        ...
+        gorm.UnaryServerInterceptor(), // transaction management
+        ...
+      ),
+    ),
+  )
+```
+
+```go
+import (
+	"github.com/infobloxopen/atlas-app-toolkit/gorm"
+)
+
+func (s *MyService) MyMethod(ctx context.Context, req *MyMethodRequest) (*MyMethodResponse, error) {
+	// extract gorm transaction from context
+	txn, ok := gorm.FromContext(ctx)
+	if !ok {
+		return panic("transaction is not opened") // don't panic in production!
+	}
+	// start transaction
+	gormDB := txn.Begin()
+	if err := gormDB.Error; err != nil {
+		return nil, err
+	}
+	// do stuff with *gorm.DB
+	return &MyMethodResponse{...}, nil
+}
+```
 
 #### Validation
 We recommend to use [this validation plugin](https://github.com/lyft/protoc-gen-validate) to generate
@@ -310,19 +356,19 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 }
 ```
 
-Also you can use our helper function `gw.Header()`
+Also you can use our helper function `gateway.Header()`
 
 ```golang
 import (
     "context"
 
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
     var userAgent string
 
-    if h, ok := gw.Header(ctx, "user-agent"); ok {
+    if h, ok := gateway.Header(ctx, "user-agent"); ok {
         userAgent = h
     }
 }
@@ -382,7 +428,7 @@ import (
 )
 
 func init() {
-	forward_App_ListObjects_0 = gw.ForwardResponseMessage
+	forward_App_ListObjects_0 = gateway.ForwardResponseMessage
 }
 ```
 
@@ -412,11 +458,11 @@ Also you may use shortcuts like: `SetCreated`, `SetUpdated` and `SetDeleted`.
 
 ```golang
 import (
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
-    err := gw.SetCreated(ctx, "created 1 item")
+    err := gateway.SetCreated(ctx, "created 1 item")
     return &MyResponse{Result: []*Item{item}}, err
 }
 ```
@@ -466,11 +512,11 @@ The Error JSON structure has the following format. The details tag is optional a
 
 #### How can I convert a gRPC error to a HTTP error response in accordance with REST API Syntax Specification?
 
-You can write your own `ProtoErrorHandler` or use `gw.DefaultProtoErrorHandler` one.
+You can write your own `ProtoErrorHandler` or use `gateway.DefaultProtoErrorHandler` one.
 
 How to handle error on gRPC-Gateway see [article](https://mycodesmells.com/post/grpc-gateway-error-handler)
 
-How to use [gw.DefaultProtoErrorHandler](gateway/errors.go#L25) see example below:
+How to use [gateway.DefaultProtoErrorHandler](gateway/errors.go#L25) see example below:
 
 ```golang
 import (
@@ -482,7 +528,7 @@ import (
 
 func main() {
     // create error handler option
-    errHandler := runtime.WithProtoErrorHandler(gw.DefaultProtoErrorHandler)
+    errHandler := runtime.WithProtoErrorHandler(gateway.DefaultProtoErrorHandler)
 
     // pass that option as a parameter
     mux := runtime.NewServeMux(errHandler)
@@ -532,7 +578,7 @@ func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 }
 ```
 
-With `gw.DefaultProtoErrorHandler` enabled JSON response will look like:
+With `gateway.DefaultProtoErrorHandler` enabled JSON response will look like:
 ```json
 {
   "error": {
@@ -562,19 +608,19 @@ to support these parameters in your application.
 #### How can I add support for collection operators in my gRPC-Gateway?
 
 You can enable support of collection operators in your gRPC-Gateway by adding
-a `runtime.ServeMuxOption` using `runtime.WithMetadata(gw.MetadataAnnotator)`.
+a `runtime.ServeMuxOption` using `runtime.WithMetadata(gateway.MetadataAnnotator)`.
 
 ```golang
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
 
     "github.com/yourrepo/yourapp"
 )
 
 func main() {
     // create collection operator handler
-    opHandler := runtime.WithMetadata(gw.MetadataAnnotator)
+    opHandler := runtime.WithMetadata(gateway.MetadataAnnotator)
 
     // pass that option as a parameter
     mux := runtime.NewServeMux(opHandler)
@@ -598,7 +644,7 @@ message MyRequest {
 ```
 
 After you declare one of collection operator in your `proto` message you need
-to add `mw.WithCollectionOperator` server interceptor to the chain in your
+to add `gateway.UnaryServerInterceptor` server interceptor to the chain in your
 gRPC service.
 
 ```golang
@@ -606,7 +652,7 @@ gRPC service.
     grpc.UnaryInterceptor(
       grpc_middleware.ChainUnaryServer( // middleware chain
         ...
-        mw.WithCollectionOperator(), // collection operators
+        gateway.UnaryServerInterceptor(), // collection operators
         ...
       ),
     ),
@@ -650,10 +696,10 @@ to access `_fields` from request, use them to perform data fetch operations and 
 appropriate metadata keys that will be handled by `grpc-gateway`. See example below:
 
 ```
-	fields := gw.FieldSelection(ctx)
+	fields := gateway.FieldSelection(ctx)
 	if fields != nil {
 		// ... work with fields
-		gw.SetFieldSelection(ctx, fields) //in case fields were changed comparing to what was in request
+		gateway.SetFieldSelection(ctx, fields) //in case fields were changed comparing to what was in request
 	}
 
 ```
@@ -688,19 +734,19 @@ message MyRequest {
 
 ##### How can I get sorting operator on my gRPC service?
 
-You may get it by using `gw.Sorting` function. Please note that if `_order_by`
-has not been specified in an incoming HTTP request `gw.Sorting` returns `nil, nil`.
+You may get it by using `gateway.Sorting` function. Please note that if `_order_by`
+has not been specified in an incoming HTTP request `gateway.Sorting` returns `nil, nil`.
 
 ```golang
 import (
     "context"
 
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
-    "github.com/infobloxopen/atlas-app-toolkit/op"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
+    "github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
-    if sort, err := gw.Sorting(ctx); err != nil {
+    if sort, err := gateway.Sorting(ctx); err != nil {
         return nil, err
     // check if sort has been specified!!!
     } else if sort != nil {
@@ -714,9 +760,9 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 
 Also you may want to declare sorting parameter in your `proto` message.
 In this case it will be populated automatically if you using
-`mw.WithCollectionOperator` server interceptor.
+`gateway.UnaryServerInterceptor` server interceptor.
 
-See documentation in [op package](query/sorting.go)
+See documentation in [query package](query/sorting.go)
 
 #### Filtering
 

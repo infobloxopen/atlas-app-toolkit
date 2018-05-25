@@ -2,12 +2,17 @@ package auth
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	pdp "github.com/infobloxopen/themis/pdp-service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 )
 
 func TestWithJWT(t *testing.T) {
@@ -24,8 +29,8 @@ func TestWithJWT(t *testing.T) {
 				"department": "engineering",
 			}, t),
 			expected: []*pdp.Attribute{
-				&pdp.Attribute{Id: "department", Type: "string", Value: "engineering"},
-				&pdp.Attribute{Id: "username", Type: "string", Value: "john"},
+				{Id: "department", Type: "string", Value: "engineering"},
+				{Id: "username", Type: "string", Value: "john"},
 			},
 			keyfunc: func(token *jwt.Token) (interface{}, error) {
 				return []byte(TestSecret), nil
@@ -91,8 +96,8 @@ func TestWithCallback(t *testing.T) {
 		{
 			callback: func(ctx context.Context) ([]*pdp.Attribute, error) {
 				attributes := []*pdp.Attribute{
-					&pdp.Attribute{Id: "fruit", Type: "string", Value: "apple"},
-					&pdp.Attribute{Id: "vegetable", Type: "string", Value: "carrot"},
+					{Id: "fruit", Type: "string", Value: "apple"},
+					{Id: "vegetable", Type: "string", Value: "carrot"},
 				}
 				return attributes, nil
 			},
@@ -218,4 +223,55 @@ func hasMatchingAttributes(first, second []*pdp.Attribute) bool {
 		}
 	}
 	return true
+}
+
+func makePeer(issuer, subject string) *peer.Peer {
+	c := &x509.Certificate{Issuer: pkix.Name{CommonName: issuer}, Subject: pkix.Name{CommonName: subject}}
+	t := &credentials.TLSInfo{State: tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{c}}}}
+	return &peer.Peer{AuthInfo: t}
+}
+
+func TestWithTLS(t *testing.T) {
+	var tests = []struct {
+		peer     *peer.Peer
+		expected []*pdp.Attribute
+	}{
+		{
+			peer: nil,
+			expected: []*pdp.Attribute{
+				{Id: "tlsVerified", Type: "boolean", Value: "false"},
+			},
+		},
+		{
+			peer: &peer.Peer{AuthInfo: nil},
+			expected: []*pdp.Attribute{
+				{Id: "tlsVerified", Type: "boolean", Value: "false"},
+			},
+		},
+		{
+			peer: &peer.Peer{AuthInfo: &credentials.TLSInfo{State: tls.ConnectionState{VerifiedChains: nil}}},
+			expected: []*pdp.Attribute{
+				{Id: "tlsVerified", Type: "boolean", Value: "false"},
+			},
+		},
+		{
+			peer: makePeer("minikubeCA", "client-service"),
+			expected: []*pdp.Attribute{
+				{Id: "tlsVerified", Type: "boolean", Value: "true"},
+				{Id: "tlsIssuer", Type: "string", Value: "minikubeCA"},
+				{Id: "tlsSubject", Type: "string", Value: "client-service"},
+			},
+		},
+	}
+	for _, test := range tests {
+		ctx := context.Background()
+		if test.peer != nil {
+			ctx = peer.NewContext(ctx, test.peer)
+		}
+		builder := NewBuilder(WithTLS())
+		req, _ := builder.build(ctx)
+		if !hasMatchingAttributes(req.Attributes, test.expected) {
+			t.Errorf("Invalid request attributes: %v - expected %v", req.GetAttributes(), test.expected)
+		}
+	}
 }

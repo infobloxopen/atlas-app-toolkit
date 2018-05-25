@@ -111,3 +111,30 @@ func TestPagination(t *testing.T) {
 		t.Errorf("invalid status error code: %d", s.Code())
 	}
 }
+
+func TestNewPaginationContext(t *testing.T) {
+	ctx := context.Background()
+
+	p, err := Pagination(ctx)
+	if err != nil {
+		t.Fatalf("unexpected error %s", err)
+	}
+
+	if p.GetOffset() != 0 || p.DefaultLimit() != query.DefaultLimit {
+		t.Errorf("invalid pagination instance %v", p)
+	}
+
+	// change pagination
+	p = &query.Pagination{}
+	p.Offset, p.Limit = 19, 86
+	ctx = NewPaginationContext(ctx, p)
+
+	p, err = Pagination(ctx)
+	if err != nil {
+		t.Errorf("unexpected error %s", err)
+	}
+
+	if p.Offset != 19 || p.Limit != 86 {
+		t.Errorf("invalid pagination instance %v", p)
+	}
+}
