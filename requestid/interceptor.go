@@ -28,10 +28,10 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-func FromContext(ctx context.Context) (exists bool, reqId string) {
+func FromContext(ctx context.Context) (reqId string, exists bool) {
 	reqId, exists = ctx.Value(requestIDKey{}).(string)
 	if !exists {
-		return false, ""
+		return "", false
 	}
-	return true, reqId
+	return reqId, true
 }
