@@ -2,10 +2,11 @@ package requestid
 
 import (
 	"context"
+	"testing"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/transport"
-	"testing"
 )
 
 type testRequest struct{}
@@ -33,16 +34,16 @@ func TestUnaryServerInterceptorWithoutRequestId(t *testing.T) {
 }
 
 func TestUnaryServerInterceptorWithDummyRequestId(t *testing.T) {
-	dummyRequestId := newRequestId()
+	dummyRequestID := newRequestID()
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		reqID, exists := FromContext(ctx)
-		if exists && reqID != dummyRequestId {
-			t.Errorf("expected requestID: %q, returned requestId: %q", dummyRequestId, reqID)
+		if exists && reqID != dummyRequestID {
+			t.Errorf("expected requestID: %q, returned requestId: %q", dummyRequestID, reqID)
 		}
 		return &testResponse{}, nil
 	}
 	ctx := DummyContextWithServerTransportStream()
-	md := metadata.Pairs(DefaultRequestIDKey, dummyRequestId)
+	md := metadata.Pairs(DefaultRequestIDKey, dummyRequestID)
 	newCtx := metadata.NewIncomingContext(ctx, md)
 	_, err := UnaryServerInterceptor()(newCtx, testRequest{}, nil, handler)
 	if err != nil {
@@ -51,7 +52,7 @@ func TestUnaryServerInterceptorWithDummyRequestId(t *testing.T) {
 }
 
 func TestUnaryServerInterceptorWithEmptyRequestId(t *testing.T) {
-	emptyRequestId := ""
+	emptyRequestID := ""
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		reqID, exists := FromContext(ctx)
 		if exists && reqID == "" {
@@ -60,7 +61,7 @@ func TestUnaryServerInterceptorWithEmptyRequestId(t *testing.T) {
 		return &testResponse{}, nil
 	}
 	ctx := DummyContextWithServerTransportStream()
-	md := metadata.Pairs(DefaultRequestIDKey, emptyRequestId)
+	md := metadata.Pairs(DefaultRequestIDKey, emptyRequestID)
 	newCtx := metadata.NewIncomingContext(ctx, md)
 	_, err := UnaryServerInterceptor()(newCtx, testRequest{}, nil, handler)
 	if err != nil {

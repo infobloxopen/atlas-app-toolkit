@@ -2,6 +2,7 @@ package requestid
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"google.golang.org/grpc"
@@ -11,26 +12,26 @@ import (
 // DefaultRequestIDKey is the metadata key name for request ID
 var DefaultRequestIDKey = "Request-Id"
 
-func HandleRequestId(ctx context.Context) (reqId string) {
-	reqId, exists := gateway.Header(ctx, DefaultRequestIDKey)
+func handleRequestID(ctx context.Context) (reqID string) {
+	reqID, exists := gateway.Header(ctx, DefaultRequestIDKey)
 	if !exists {
-		reqId := newRequestId()
-		return reqId
+		reqID := newRequestID()
+		return reqID
 	}
 
-	if reqId == "" {
-		reqId := newRequestId()
-		return reqId
+	if reqID == "" {
+		reqID := newRequestID()
+		return reqID
 	}
 
-	return reqId
+	return reqID
 }
 
-func newRequestId() string {
+func newRequestID() string {
 	return uuid.New().String()
 }
 
-func UpdateHeader(ctx context.Context, reqId string) error {
-	md := metadata.Pairs(DefaultRequestIDKey, reqId)
+func updateHeader(ctx context.Context, reqID string) error {
+	md := metadata.Pairs(DefaultRequestIDKey, reqID)
 	return grpc.SetHeader(ctx, md)
 }
