@@ -574,6 +574,7 @@ import (
 func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
     s := status.New(codes.Unimplemented, "MyMethod is not implemented")
     s = s.WithDetails(errdetails.New(codes.Internal), "myservice", "in progress")
+    s = s.WithDetails(errdetails.New(codes.Internal), "myservice", "more details")
     return nil, s.Err()
 }
 ```
@@ -590,6 +591,11 @@ With `gateway.DefaultProtoErrorHandler` enabled JSON response will look like:
     {
       "code": "INTERNAL",
       "message": "in progress",
+      "target": "myservice"
+    },
+    {
+      "code": "INTERNAL",
+      "message": "more details",
       "target": "myservice"
     }
   ]
