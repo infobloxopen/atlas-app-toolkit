@@ -10,7 +10,7 @@ import (
 )
 
 // DefaultRequestIDKey is the metadata key name for request ID
-var DefaultRequestIDKey = "Request-Id"
+const DefaultRequestIDKey = "Request-Id"
 
 func handleRequestID(ctx context.Context) (reqID string) {
 	reqID, exists := gateway.Header(ctx, DefaultRequestIDKey)

@@ -31,16 +31,17 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 		reqID := handleRequestID(ctx)
 
+		errd := updateHeader(ctx, reqID)
+		if errd != nil {
+			errd = status.Errorf(codes.Internal, "request id interceptor: unable to update metadata - %s", errd)
+			grpclog.Errorln(errd)
+		}
+
 		newCtx := NewContext(ctx, reqID)
 
 		// returning from the request call
 		res, err = handler(newCtx, req)
 
-		errd := updateHeader(newCtx, reqID)
-		if errd != nil {
-			errd = status.Errorf(codes.Internal, "request id interceptor: unable to update outgoing metadata - %s", errd)
-			grpclog.Errorln(errd)
-		}
 		return
 	}
 }
