@@ -9,8 +9,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type requestIDKey struct{}
-
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor
 // that should be used as a middleware to generate/include Request-Id in headers and context
 // for tracing and tracking user's request.
@@ -31,31 +29,11 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 		reqID := handleRequestID(ctx)
 
-		errd := updateHeader(ctx, reqID)
-		if errd != nil {
-			errd = status.Errorf(codes.Internal, "request id interceptor: unable to update metadata - %s", errd)
-			grpclog.Errorln(errd)
-		}
-
-		newCtx := NewContext(ctx, reqID)
+		ctx = NewContext(ctx, reqID)
 
 		// returning from the request call
-		res, err = handler(newCtx, req)
+		res, err = handler(ctx, req)
 
 		return
 	}
-}
-
-// FromContext returns the Request-Id information from ctx if it exists.
-func FromContext(ctx context.Context) (reqID string, exists bool) {
-	reqID, exists = ctx.Value(requestIDKey{}).(string)
-	if !exists {
-		return "", false
-	}
-	return reqID, true
-}
-
-// NewContext creates a new context with Request-Id attached.
-func NewContext(ctx context.Context, reqID string) context.Context {
-	return context.WithValue(ctx, requestIDKey{}, reqID)
 }
