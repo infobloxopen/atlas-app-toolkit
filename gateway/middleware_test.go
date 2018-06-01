@@ -55,7 +55,7 @@ func TestWithCollectionOperatorSorting(t *testing.T) {
 }
 
 func TestWithCollectionOperatorPagination(t *testing.T) {
-	hreq, err := http.NewRequest(http.MethodGet, "http://app.com?_limit=10&_offset=20", nil)
+	hreq, err := http.NewRequest(http.MethodGet, "http://app.com?_limit=10&_offset=20&_order_by=name asc", nil)
 	if err != nil {
 		t.Fatalf("failed to build new http testRequest: %s", err)
 	}
@@ -127,5 +127,47 @@ func TestUnsetOp(t *testing.T) {
 	}
 	if err.Error() != "response value is not a struct - int" {
 		t.Errorf("invalid error: %s - expected: %s", err, "response value is not a struct - int")
+	}
+}
+
+func TestValidationOfCollectionOperatorPagination(t *testing.T) {
+	expectedErr := "rpc error: code = InvalidArgument desc = collection operator interceptor: failed to set pagination without sorting"
+	data := map[string]string{
+		// invalid cases
+		"http://app.com?_limit=10":            expectedErr,
+		"http://app.com?_offset=20":           expectedErr,
+		"http://app.com?_limit=10&_offset=20": expectedErr,
+		// valida cases
+		"http://app.com?_limit=10&_order_by=name asc":            "",
+		"http://app.com?_offset=20&_order_by=name asc":           "",
+		"http://app.com?_limit=10&_offset=20&_order_by=name asc": "",
+		"http://app.com?_order_by=name asc":                      "",
+		"http://app.com":                                         "",
+	}
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return &testResponse{}, nil
+	}
+
+	for url, expected := range data {
+		hreq, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatalf("failed to build new http testRequest: %s", err)
+		}
+
+		md := MetadataAnnotator(context.Background(), hreq)
+
+		ctx := metadata.NewIncomingContext(context.Background(), md)
+		req := &testRequest{Pagination: nil}
+		interceptor := UnaryServerInterceptor()
+
+		errMsg := ""
+		_, err = interceptor(ctx, req, nil, handler)
+		if err != nil {
+			errMsg = err.Error()
+		}
+		if expected != errMsg {
+			t.Fatalf("for url '%s' expecxted error '%s', got '%s'", url, expected, errMsg)
+		}
 	}
 }

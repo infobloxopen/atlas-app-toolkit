@@ -79,6 +79,11 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			if err := setOp(req, pagination); err != nil {
 				grpclog.Errorf("collection operator interceptor: failed to set pagination operator - %s", err)
 			}
+			if (pagination.GetLimit() > 0 || pagination.GetOffset() > 0) && sorting == nil {
+				err = status.Error(codes.InvalidArgument, "collection operator interceptor: failed to set pagination without sorting")
+				grpclog.Errorln(err)
+				return nil, err
+			}
 		}
 
 		res, err = handler(ctx, req)
