@@ -18,14 +18,14 @@ import (
 const (
 	filterQueryKey           = "_filter"
 	filterMetaKey            = "operator-filter"
-	sortQueryKey             = "_order_by"
-	sortMetaKey              = "operator-sort"
+	SortQueryKey             = "_order_by"
+	SortMetaKey              = "operator-sort"
 	fieldsQueryKey           = "_fields"
 	fieldsMetaKey            = "operator-fields"
-	limitQueryKey            = "_limit"
-	limitMetaKey             = "operator-limit"
-	offsetQueryKey           = "_offset"
-	offsetMetaKey            = "operator-offset"
+	LimitQueryKey            = "_limit"
+	LimitMetaKey             = "operator-limit"
+	OffsetQueryKey           = "_offset"
+	OffsetMetaKey            = "operator-offset"
 	pageTokenQueryKey        = "_page_token"
 	pageTokenMetaKey         = "operator-page-token"
 	pageInfoSizeMetaKey      = "status-page-info-size"
@@ -51,8 +51,8 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 	vals := req.URL.Query()
 	mdmap := make(map[string]string)
 
-	if v := vals.Get(sortQueryKey); v != "" {
-		mdmap[runtime.MetadataPrefix+sortMetaKey] = v
+	if v := vals.Get(SortQueryKey); v != "" {
+		mdmap[runtime.MetadataPrefix+SortMetaKey] = v
 	}
 	if v := vals.Get(fieldsQueryKey); v != "" {
 		mdmap[runtime.MetadataPrefix+fieldsMetaKey] = v
@@ -62,12 +62,12 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 		mdmap[runtime.MetadataPrefix+filterMetaKey] = v
 	}
 
-	if v := vals.Get(offsetQueryKey); v != "" {
-		mdmap[runtime.MetadataPrefix+offsetMetaKey] = v
+	if v := vals.Get(OffsetQueryKey); v != "" {
+		mdmap[runtime.MetadataPrefix+OffsetMetaKey] = v
 	}
 
-	if v := vals.Get(limitQueryKey); v != "" {
-		mdmap[runtime.MetadataPrefix+limitMetaKey] = v
+	if v := vals.Get(LimitQueryKey); v != "" {
+		mdmap[runtime.MetadataPrefix+LimitMetaKey] = v
 	}
 
 	if v := vals.Get(pageTokenQueryKey); v != "" {
@@ -84,7 +84,7 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 // `status.Error(codes.InvalidArgument, parser_error)`
 // See: `query.ParseSorting` for details.
 func Sorting(ctx context.Context) (*query.Sorting, error) {
-	raw, ok := Header(ctx, sortMetaKey)
+	raw, ok := Header(ctx, SortMetaKey)
 	if !ok {
 		return nil, nil
 	}
@@ -129,8 +129,8 @@ func Pagination(ctx context.Context) (*query.Pagination, error) {
 		return v, nil
 	}
 
-	l, lok := Header(ctx, limitMetaKey)
-	o, ook := Header(ctx, offsetMetaKey)
+	l, lok := Header(ctx, LimitMetaKey)
+	o, ook := Header(ctx, OffsetMetaKey)
 	pt, ptok := Header(ctx, pageTokenMetaKey)
 
 	if !lok && !ook && !ptok {
