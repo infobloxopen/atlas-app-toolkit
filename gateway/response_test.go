@@ -23,6 +23,18 @@ type result struct {
 	Users []*user `json"users"`
 }
 
+type userWithPtr struct {
+	PtrValue *int `json:"ptr_value"`
+}
+
+type userWithPtrResult struct {
+	Success []*userWithPtr `json:"success"`
+}
+
+func (m *userWithPtrResult) Reset()         {}
+func (m *userWithPtrResult) ProtoMessage()  {}
+func (m *userWithPtrResult) String() string { return "" }
+
 func (m *result) Reset()         {}
 func (m *result) ProtoMessage()  {}
 func (m *result) String() string { return "" }
@@ -88,6 +100,28 @@ func TestForwardResponseMessage(t *testing.T) {
 
 	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
 		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+	}
+}
+
+func TestForwardResponseMessageWithNil(t *testing.T) {
+	ctx := runtime.NewServerMetadataContext(context.Background(), runtime.ServerMetadata{})
+
+	rw := httptest.NewRecorder()
+	ForwardResponseMessage(
+		ctx, nil, &runtime.JSONBuiltin{}, rw, nil,
+		&userWithPtrResult{Success: []*userWithPtr{{nil}, {new(int)}}},
+	)
+
+	var v map[string][]*userWithPtr
+	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
+		t.Fatalf("failed to unmarshal response: %s", err)
+	}
+	l, ok := v["success"]
+	if !ok {
+		t.Fatal("invalid response: missing 'success' field")
+	}
+	if len(l) != 2 {
+		t.Fatalf("invalid number of items in response: %d - expected: %d", len(l), 2)
 	}
 }
 
