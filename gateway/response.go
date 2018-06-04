@@ -91,6 +91,12 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 
 	retainFields(ctx, req, dynmap)
 
+	// FIXME: standard grpc JSON marshaller doesn't handle
+	// nil values inside maps.
+	for k := range dynmap {
+		dynmap[k] = fixNilValues(dynmap[k])
+	}
+
 	// Here we set "Location" header which contains a url to a long running task
 	// Using it we can retrieve its status
 	rst := Status(ctx, nil)
@@ -225,4 +231,21 @@ func handleForwardResponseOptions(ctx context.Context, rw http.ResponseWriter, r
 		}
 	}
 	return nil
+}
+
+// fixNilValues function walks v tree and removes
+// map keys that have value nil.
+func fixNilValues(v interface{}) interface{} {
+	switch v := v.(type) {
+	case map[string]interface{}:
+		for k := range v {
+			if v[k] == nil {
+				delete(v, k)
+			} else {
+				v[k] = fixNilValues(v[k])
+			}
+		}
+	}
+
+	return v
 }

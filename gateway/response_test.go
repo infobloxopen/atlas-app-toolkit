@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -22,6 +23,22 @@ type user struct {
 type result struct {
 	Users []*user `json"users"`
 }
+
+type userWithPtr struct {
+	PtrValue *wrappers.Int64Value `json:"ptr_value"`
+}
+
+func (m *userWithPtr) Reset()         {}
+func (m *userWithPtr) ProtoMessage()  {}
+func (m *userWithPtr) String() string { return "" }
+
+type userWithPtrResult struct {
+	Results *userWithPtr `json:"results"`
+}
+
+func (m *userWithPtrResult) Reset()         {}
+func (m *userWithPtrResult) ProtoMessage()  {}
+func (m *userWithPtrResult) String() string { return "" }
 
 func (m *result) Reset()         {}
 func (m *result) ProtoMessage()  {}
@@ -88,6 +105,26 @@ func TestForwardResponseMessage(t *testing.T) {
 
 	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
 		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+	}
+}
+
+func TestForwardResponseMessageWithNil(t *testing.T) {
+	ctx := runtime.NewServerMetadataContext(context.Background(), runtime.ServerMetadata{})
+
+	rw := httptest.NewRecorder()
+	ForwardResponseMessage(
+		ctx, nil, &runtime.JSONPb{OrigName: true, EmitDefaults: true}, rw, nil,
+		&userWithPtrResult{Results: &userWithPtr{PtrValue: nil}},
+	)
+
+	var v map[string]interface{}
+
+	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
+		t.Fatalf("failed to unmarshal JSON response: %s", err)
+	}
+
+	if len(v["Results"].(map[string]interface{})) != 0 {
+		t.Errorf("invalid result item: %+v - expected %+v", v["Results"], map[string]interface{}{})
 	}
 }
 
