@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -40,4 +42,8 @@ func FromContext(ctx context.Context) (reqID string, exists bool) {
 func NewContext(ctx context.Context, reqID string) context.Context {
 	md := metadata.Pairs(DefaultRequestIDKey, reqID)
 	return metadata.NewOutgoingContext(ctx, md)
+}
+
+func addRequestIDToLogger(ctx context.Context, reqID string) {
+	ctxlogrus.AddFields(ctx, logrus.Fields{DefaultRequestIDKey: reqID})
 }

@@ -28,6 +28,8 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		}()
 
 		reqID := handleRequestID(ctx)
+		// add request id to logger
+		addRequestIDToLogger(ctx, reqID)
 
 		ctx = NewContext(ctx, reqID)
 
