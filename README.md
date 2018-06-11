@@ -239,8 +239,8 @@ message MyMessage {
 
 For more Swagger options see [this scheme](https://github.com/grpc-ecosystem/grpc-gateway/blob/master/protoc-gen-swagger/options/openapiv2.proto)
 
-See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.proto).
-Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.swagger.json).
+See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.proto).
+Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.swagger.json).
 
 **NOTE** [Well Known Types](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf) are
 generated in a bit unusual way:
