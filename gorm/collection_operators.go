@@ -11,34 +11,26 @@ import (
 
 func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error) {
 	// ApplyCollectionOperators applies query operators taken from context ctx to gorm instance db.
-	f, err := gateway.Filtering(ctx)
-	if err != nil {
-		return nil, err
-	}
-	db, err = ApplyFiltering(db, f)
-	if err != nil {
-		return nil, err
+	var err error
+
+	if f := gateway.CtxGetFiltering(ctx); f != nil {
+		db, err = ApplyFiltering(db, f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var s *query.Sorting
-	s, err = gateway.Sorting(ctx)
-	if err != nil {
-		return nil, err
+	if s := gateway.CtxGetSorting(ctx); s != nil {
+		db = ApplySorting(db, s)
 	}
-	db = ApplySorting(db, s)
 
-	var p *query.Pagination
-	p, err = gateway.Pagination(ctx)
-	if err != nil {
-		return nil, err
+	if p := gateway.CtxGetPagination(ctx); p != nil {
+		db = ApplyPagination(db, p)
 	}
-	db = ApplyPagination(db, p)
 
-	fs := gateway.FieldSelection(ctx)
-	if err != nil {
-		return nil, err
+	if fs := gateway.CtxGetFieldSelection(ctx); fs != nil {
+		db = ApplyFieldSelection(db, fs)
 	}
-	db = ApplyFieldSelection(db, fs)
 
 	return db, nil
 }

@@ -2,8 +2,6 @@ package gateway
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
@@ -12,12 +10,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var (
+	sortingCollection   = "sorting_collection"
+	filteringCollection = "filtering_collection"
+	pagingCollection    = "paging_collection"
+	fieldCollection     = "field_collection"
+)
+
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor
-// that should be used as a middleware if an user's testRequest message
+// that should be used as a middleware if an user's request message
 // defines any of collection operators.
 //
-// Returned middleware populates collection operators from gRPC metadata if
-// they defined in a testRequest message.
+// Returned middleware parse collection operators from gRPC metadata if
+// they defined and stores in context.
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 		// handle panic
@@ -29,12 +34,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			}
 		}()
 
-		if req == nil {
-			grpclog.Warningf("collection operator interceptor: empty testRequest %+v", req)
-			return handler(ctx, req)
-		}
-
-		// looking for op.Sorting
+		// looking for Sorting
 		sorting, err := Sorting(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid sorting operator - %s", err)
@@ -42,20 +42,10 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			return nil, err
 		}
 		if sorting != nil {
-			if err := setOp(req, sorting); err != nil {
-				grpclog.Errorf("collection operator interceptor: failed to set sorting operator - %s", err)
-			}
+			ctx = CtxSetSorting(ctx, sorting)
 		}
 
-		// looking for op.FieldSelection
-		fieldSelection := FieldSelection(ctx)
-		if fieldSelection != nil {
-			if err := setOp(req, fieldSelection); err != nil {
-				grpclog.Errorf("collection operator interceptor: failed to set field selection operator - %s", err)
-			}
-		}
-
-		// looking for op.Filtering
+		// looking for Filtering
 		filtering, err := Filtering(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid filtering operator - %s", err)
@@ -63,12 +53,10 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			return nil, err
 		}
 		if filtering != nil {
-			if err := setOp(req, filtering); err != nil {
-				grpclog.Errorf("collection operator interceptor: failed to set filtering operator - %s", err)
-			}
+			ctx = CtxSetFiltering(ctx, filtering)
 		}
 
-		// looking for op.ClientDrivenPagination
+		// looking for ClientDrivenPagination
 		pagination, err := Pagination(ctx)
 		if err != nil {
 			err = status.Errorf(codes.InvalidArgument, "collection operator interceptor: invalid pagination operator - %s", err)
@@ -76,96 +64,74 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			return nil, err
 		}
 		if pagination != nil {
-			if err := setOp(req, pagination); err != nil {
-				grpclog.Errorf("collection operator interceptor: failed to set pagination operator - %s", err)
-			}
+			ctx = CtxSetPagination(ctx, pagination)
+		}
+
+		// looking for FieldSelection
+		fieldSelection := FieldSelection(ctx)
+		if fieldSelection != nil {
+			ctx = CtxSetFieldSelection(ctx, fieldSelection)
 		}
 
 		res, err = handler(ctx, req)
-		if err != nil {
-			return res, err
-		}
-
-		// looking for op.PageInfo
-		page := new(query.PageInfo)
-		if err := unsetOp(res, page); err != nil {
-			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
-		}
-
-		if err := SetPageInfo(ctx, page); err != nil {
-			grpclog.Errorf("collection operator interceptor: failed to set page info - %s", err)
-			return nil, err
-		}
-
 		return
 	}
 }
 
-func setOp(req, op interface{}) error {
-	reqval := reflect.ValueOf(req)
+//
+// Collection operators setters
+//
+func CtxSetFiltering(ctx context.Context, f *query.Filtering) context.Context {
+	return context.WithValue(ctx, filteringCollection, f)
+}
 
-	if reqval.Kind() != reflect.Ptr {
-		return fmt.Errorf("testRequest is not a pointer - %s", reqval.Kind())
-	}
+func CtxSetSorting(ctx context.Context, s *query.Sorting) context.Context {
+	return context.WithValue(ctx, sortingCollection, s)
+}
 
-	reqval = reqval.Elem()
+func CtxSetPagination(ctx context.Context, p *query.Pagination) context.Context {
+	return context.WithValue(ctx, pagingCollection, p)
+}
 
-	if reqval.Kind() != reflect.Struct {
-		return fmt.Errorf("testRequest value is not a struct - %s", reqval.Kind())
-	}
+func CtxSetFieldSelection(ctx context.Context, f *query.FieldSelection) context.Context {
+	return context.WithValue(ctx, fieldCollection, f)
+}
 
-	for i := 0; i < reqval.NumField(); i++ {
-		f := reqval.FieldByIndex([]int{i})
-
-		if f.Type() != reflect.TypeOf(op) {
-			continue
+//
+// Collection operators getters
+//
+func CtxGetFiltering(ctx context.Context) *query.Filtering {
+	if v := ctx.Value(filteringCollection); v != nil {
+		if f, ok := v.(*query.Filtering); ok {
+			return f
 		}
-
-		if !f.IsValid() || !f.CanSet() {
-			return fmt.Errorf("operation field %+v in testRequest %+v is invalid or cannot be set", op, req)
-		}
-
-		if vop := reflect.ValueOf(op); vop.IsValid() {
-			f.Set(vop)
-		}
 	}
-
 	return nil
 }
 
-func unsetOp(res, op interface{}) error {
-	resval := reflect.ValueOf(res)
-	if resval.Kind() != reflect.Ptr {
-		return fmt.Errorf("response is not a pointer - %s", resval.Kind())
-	}
-
-	resval = resval.Elem()
-	if resval.Kind() != reflect.Struct {
-		return fmt.Errorf("response value is not a struct - %s", resval.Kind())
-	}
-
-	opval := reflect.ValueOf(op)
-	if opval.Kind() != reflect.Ptr {
-		return fmt.Errorf("operator is not a pointer - %s", opval.Kind())
-	}
-
-	for i := 0; i < resval.NumField(); i++ {
-		f := resval.FieldByIndex([]int{i})
-
-		if f.Type() != opval.Type() {
-			continue
+func CtxGetSorting(ctx context.Context) *query.Sorting {
+	if v := ctx.Value(sortingCollection); v != nil {
+		if f, ok := v.(*query.Sorting); ok {
+			return f
 		}
-
-		if !f.IsValid() || !f.CanSet() || f.Kind() != reflect.Ptr {
-			return fmt.Errorf("operation field %T in response %+v is invalid or cannot be set", op, res)
-		}
-
-		if o := opval.Elem(); o.IsValid() && o.CanSet() && f.Elem().IsValid() {
-			o.Set(f.Elem())
-		}
-
-		f.Set(reflect.Zero(f.Type()))
 	}
+	return nil
+}
 
+func CtxGetPagination(ctx context.Context) *query.Pagination {
+	if v := ctx.Value(pagingCollection); v != nil {
+		if f, ok := v.(*query.Pagination); ok {
+			return f
+		}
+	}
+	return nil
+}
+
+func CtxGetFieldSelection(ctx context.Context) *query.FieldSelection {
+	if v := ctx.Value(fieldCollection); v != nil {
+		if f, ok := v.(*query.FieldSelection); ok {
+			return f
+		}
+	}
 	return nil
 }
