@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package infoblox.rpc;
+
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb;resourcepb";
+
+message Identifier {
+    string application_name = 1;
+    string resource_type = 2;
+    string resource_id = 3;
+}
