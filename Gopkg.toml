@@ -7,7 +7,7 @@
   name = "github.com/dgrijalva/jwt-go"
 
 [[constraint]]
-  branch = "master"
+  version = "v1.1.0"
   name = "github.com/golang/protobuf"
 
 [[constraint]]
