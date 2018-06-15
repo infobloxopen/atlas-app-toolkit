@@ -33,6 +33,12 @@ func TestParseString(t *testing.T) {
 			"",
 			"c",
 		},
+		{
+			"",
+			"",
+			"",
+			"",
+		},
 	}
 
 	for _, tc := range tcases {

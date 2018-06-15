@@ -1,4 +1,4 @@
-package resource
+package resourceext
 
 import (
 	"database/sql/driver"

@@ -1,8 +1,6 @@
-package resource
+package resource //import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 
 import (
-	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"sync"
 
@@ -11,92 +9,106 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
 )
 
-const externalResource = "<external>"
+const defaultResource = "<default>"
 
 var (
 	mu       sync.RWMutex
-	registry = make(map[string]*struct {
-		Manager
-	})
+	registry = make(map[string]Codec)
 )
 
+// Identifier defines an interface to represent RPC Identifier.
 type Identifier interface {
-	fmt.Stringer
-	sql.Scanner
-	driver.Valuer
-
+	// ApplicationName is an application identifier that will be used among
+	// other infrastructure services to identify the application
 	ApplicationName() string
+
+	// ResourceType is an application specific type name of a resource
 	ResourceType() string
+
+	// ResourceID is an application specific resource identity of a resource
 	ResourceID() string
 
-	IsExternal() bool
-	IsNil() bool
+	// External is a flag indicates whether the identifier represents
+	// an external resource or holds an identity of a resource that is belongs
+	// to an application itself.
+	External() bool
+
+	// Valid is a flag indicates whether the identifier is a valid or not.
+	// The criteria is up to an implementation.
+	Valid() bool
 }
 
-type Manager interface {
-	Build(*resourcepb.Identifier) (Identifier, error)
-	Resolve(Identifier) (*resourcepb.Identifier, error)
+// Codec defines the interface package uses to encode and decode RPC Identifier
+// to an Identifier interface implementation.
+// Note that implementation must be thread safe.
+type Codec interface {
+	// Encode returns RPC representation of Identifier interface
+	Encode(Identifier) (*resourcepb.Identifier, error)
+	// Decode returns implementation of Identifier interface based on RPC representation
+	Decode(*resourcepb.Identifier) (Identifier, error)
 }
 
-func RegisterManager(manager Manager, message proto.Message) {
+// RegisterCodec registers codec for a given pb.
+// If pb is nil the codec is registered as default.
+// If codec is nil or registered twice for the same resource
+// the panic is raised.
+func RegisterCodec(codec Codec, pb proto.Message) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	var name string
-	if message == nil {
-		name = externalResource
+	if pb == nil {
+		name = defaultResource
 	} else {
-		name = proto.MessageName(message)
+		name = proto.MessageName(pb)
 	}
 
-	if manager == nil {
-		panic("resource: register nil manager for resource " + name)
+	if codec == nil {
+		panic("resource: register nil codec for resource " + name)
 	}
 
-	v, ok := registry[name]
-	if !ok {
-		registry[name] = &struct {
-			Manager
-		}{Manager: manager}
+	_, ok := registry[name]
+	if ok {
+		panic("resource: register codec called twice for resource " + name)
 	}
-	if v.Manager != nil {
-		panic("resource: register manager called twice for resource " + name)
-	}
-	v.Manager = manager
+	registry[name] = codec
 }
 
-func Build(message proto.Message, identifier *resourcepb.Identifier) (Identifier, error) {
+// Decode decodes identifier using a codec registered for pb.
+// If codec has not been registered the error is returned.
+func Decode(pb proto.Message, identifier *resourcepb.Identifier) (Identifier, error) {
+	codec, err := lookupCodec(pb)
+	if err != nil {
+		return nil, err
+	}
+
+	return codec.Decode(identifier)
+}
+
+// Encode encodes identifier using a codec registered for pb.
+// If codec has not been registered the error is returned.
+func Encode(pb proto.Message, identifier Identifier) (*resourcepb.Identifier, error) {
+	codec, err := lookupCodec(pb)
+	if err != nil {
+		return nil, err
+	}
+
+	return codec.Encode(identifier)
+}
+
+func lookupCodec(pb proto.Message) (Codec, error) {
 	mu.RLock()
 	defer mu.RUnlock()
 
 	var name string
-	if message == nil {
-		name = externalResource
+	if pb == nil {
+		name = defaultResource
 	} else {
-		name = proto.MessageName(message)
+		name = proto.MessageName(pb)
 	}
-	v, ok := registry[name]
-	if !ok || v == nil || v.Manager == nil {
-		return nil, fmt.Errorf("resource: manager is not registered for resource %s", name)
+	codec, ok := registry[name]
+	if !ok || codec == nil {
+		return nil, fmt.Errorf("resource: codec is not registered for resource %s", name)
 	}
-
-	return v.Manager.Build(identifier)
-}
-
-func Resolve(message proto.Message, identifier Identifier) (*resourcepb.Identifier, error) {
-	mu.RLock()
-	defer mu.RUnlock()
-
-	var name string
-	if message == nil {
-		name = externalResource
-	} else {
-		name = proto.MessageName(message)
-	}
-	v, ok := registry[name]
-	if !ok || v == nil || v.Manager == nil {
-		return nil, fmt.Errorf("resource: manager is not registered for resource %s", name)
-	}
-
-	return v.Manager.Resolve(identifier)
+	return codec, nil
 }

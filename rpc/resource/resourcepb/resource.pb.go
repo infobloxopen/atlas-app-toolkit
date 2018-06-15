@@ -18,9 +18,18 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+// A number of these application services require a mechanism to
+// encode the identity of a particular resource across applications.
+// The resource identifiers consist of the application ID,
+// an application-defined resource type,
+// and an application-defined ID for that resource
 type Identifier struct {
-	ApplicationName      string   `protobuf:"bytes,1,opt,name=application_name,json=applicationName" json:"application_name,omitempty"`
-	ResourceType         string   `protobuf:"bytes,2,opt,name=resource_type,json=resourceType" json:"resource_type,omitempty"`
+	// An application identifier that will be used among
+	// other infrastructure services to identify the application
+	ApplicationName string `protobuf:"bytes,1,opt,name=application_name,json=applicationName" json:"application_name,omitempty"`
+	// An application specific type name of a resource
+	ResourceType string `protobuf:"bytes,2,opt,name=resource_type,json=resourceType" json:"resource_type,omitempty"`
+	// An application specific resource identity of a resource
 	ResourceId           string   `protobuf:"bytes,3,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -31,7 +40,7 @@ func (m *Identifier) Reset()         { *m = Identifier{} }
 func (m *Identifier) String() string { return proto.CompactTextString(m) }
 func (*Identifier) ProtoMessage()    {}
 func (*Identifier) Descriptor() ([]byte, []int) {
-	return fileDescriptor_resource_481427d8f234aa68, []int{0}
+	return fileDescriptor_resource_1b44b0585c58007b, []int{0}
 }
 func (m *Identifier) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Identifier.Unmarshal(m, b)
@@ -76,9 +85,9 @@ func init() {
 	proto.RegisterType((*Identifier)(nil), "infoblox.rpc.Identifier")
 }
 
-func init() { proto.RegisterFile("resource.proto", fileDescriptor_resource_481427d8f234aa68) }
+func init() { proto.RegisterFile("resource.proto", fileDescriptor_resource_1b44b0585c58007b) }
 
-var fileDescriptor_resource_481427d8f234aa68 = []byte{
+var fileDescriptor_resource_1b44b0585c58007b = []byte{
 	// 195 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8f, 0xbf, 0x4b, 0xc6, 0x30,
 	0x10, 0x40, 0xa9, 0x82, 0x60, 0xac, 0x3f, 0xc8, 0xd4, 0x4d, 0xd1, 0x45, 0x87, 0x36, 0x83, 0xa3,
