@@ -32,6 +32,9 @@ const (
 	pageInfoOffsetMetaKey    = "status-page-info-offset"
 	pageInfoPageTokenMetaKey = "status-page-info-page_token"
 	paginationContextKey     = "pagination-context"
+	sortingContextKey        = "sorting-context"
+	filteringContextKey      = "filtering-context"
+	fieldSelectionContextKey = "field-selection-context"
 )
 
 // MetadataAnnotator is a function for passing metadata to a gRPC context
@@ -149,6 +152,64 @@ func Pagination(ctx context.Context) (*query.Pagination, error) {
 // instance.
 func NewPaginationContext(ctx context.Context, p *query.Pagination) context.Context {
 	return context.WithValue(ctx, paginationContextKey, p)
+}
+
+// NewFilteringContext return the new `context.Context` that caries `*query.Filtering`
+// instance.
+func NewFilteringContext(ctx context.Context, f *query.Filtering) context.Context {
+	return context.WithValue(ctx, filteringContextKey, f)
+}
+
+// NewSortingContext return the new `context.Context` that caries `*query.Sorting`
+// instance.
+func NewSortingContext(ctx context.Context, s *query.Sorting) context.Context {
+	return context.WithValue(ctx, sortingContextKey, s)
+}
+
+// NewFieldSelectionContext return the new `context.Context` that caries `*query.FieldSelection`
+// instance.
+func NewFieldSelectionContext(ctx context.Context, f *query.FieldSelection) context.Context {
+	return context.WithValue(ctx, fieldSelectionContextKey, f)
+}
+
+// CtxGetFiltering return *query.Filtering if it saved in context or nil
+func CtxGetFiltering(ctx context.Context) *query.Filtering {
+	if v := ctx.Value(filteringContextKey); v != nil {
+		if f, ok := v.(*query.Filtering); ok {
+			return f
+		}
+	}
+	return nil
+}
+
+// CtxGetSorting return *query.Sorting if it saved in context or nil
+func CtxGetSorting(ctx context.Context) *query.Sorting {
+	if v := ctx.Value(sortingContextKey); v != nil {
+		if f, ok := v.(*query.Sorting); ok {
+			return f
+		}
+	}
+	return nil
+}
+
+// CtxGetPagination return *query.Pagination if it saved in context or nil
+func CtxGetPagination(ctx context.Context) *query.Pagination {
+	if v := ctx.Value(paginationContextKey); v != nil {
+		if f, ok := v.(*query.Pagination); ok {
+			return f
+		}
+	}
+	return nil
+}
+
+// CtxGetFieldSelection return *query.FieldSelection if it saved in context or nil
+func CtxGetFieldSelection(ctx context.Context) *query.FieldSelection {
+	if v := ctx.Value(fieldSelectionContextKey); v != nil {
+		if f, ok := v.(*query.FieldSelection); ok {
+			return f
+		}
+	}
+	return nil
 }
 
 // SetPagination sets page info to outgoing gRPC context.
