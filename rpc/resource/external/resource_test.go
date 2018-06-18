@@ -31,7 +31,6 @@ func TestCodec_Decode(t *testing.T) {
 			ResourceID:      "ext",
 			Valid:           true,
 			External:        true,
-			ExpectedError:   "",
 		},
 		{
 			PB:       nil,
@@ -52,8 +51,8 @@ func TestCodec_Decode(t *testing.T) {
 
 	for n, tc := range tcases {
 		id, err := codec.Decode(tc.PB)
-		if err != nil && tc.ExpectedError != err.Error() {
-			t.Errorf("tc %d:invalid error message %s, expected %s", n, err, tc.ExpectedError)
+		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
+			t.Errorf("tc %d:invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
 		if id == nil {
 			continue
@@ -124,8 +123,8 @@ func TestCodec_Encode(t *testing.T) {
 
 	for n, tc := range tcases {
 		pb, err := codec.Encode(tc.ID)
-		if err != nil && tc.ExpectedError != err.Error() {
-			t.Errorf("tc %d:invalid error message %s, expected %s", n, err, tc.ExpectedError)
+		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
+			t.Errorf("tc %d:invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
 		if pb == nil {
 			continue
@@ -160,7 +159,6 @@ func TestIdentifier_Scan(t *testing.T) {
 			ApplicationName: "app",
 			ResourceType:    "res",
 			ResourceID:      "ext",
-			ExpectedError:   "",
 		},
 		{
 			Value:    nil,
@@ -176,7 +174,7 @@ func TestIdentifier_Scan(t *testing.T) {
 	for n, tc := range tcases {
 		var id identifier
 		if err := id.Scan(tc.Value); err != nil && tc.ExpectedError != err.Error() {
-			t.Errorf("tc %d: invalid error message %s, expected %s", n, err, tc.ExpectedError)
+			t.Errorf("tc %d: invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
 		if id.Valid() != tc.Valid {
 			t.Errorf("tc %d: resource valid is %t, expected %t", n, id.Valid(), tc.Valid)
@@ -213,16 +211,15 @@ func TestIdentifier_Value(t *testing.T) {
 			ExpectedError: "",
 		},
 		{
-			Identifier:    &identifier{},
-			Value:         nil,
-			ExpectedError: "",
+			Identifier: &identifier{},
+			Value:      nil,
 		},
 	}
 
 	for n, tc := range tcases {
 		v, err := tc.Identifier.Value()
-		if err != nil && err.Error() != tc.ExpectedError {
-			t.Errorf("tc %d: invalid error message %s, expected %s", n, err, tc.ExpectedError)
+		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
+			t.Errorf("tc %d: invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
 		if v != tc.Value {
 			t.Errorf("tc %d: invalid value %s, expected %s", n, v, tc.Value)
