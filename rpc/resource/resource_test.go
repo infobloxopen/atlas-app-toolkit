@@ -1,38 +1,35 @@
-package resource
+package resource_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
 )
 
 type TestCodec struct{}
 
-func (TestCodec) Decode(id *resourcepb.Identifier) (Identifier, error) {
+func (TestCodec) Decode(id *resourcepb.Identifier) (resource.Identifier, error) {
 	if id.ResourceType == "test_resource" {
 		return nil, errors.New("test_resource error")
 	}
 	return nil, nil
 }
-func (TestCodec) Encode(Identifier) (*resourcepb.Identifier, error) {
+func (TestCodec) Encode(resource.Identifier) (*resourcepb.Identifier, error) {
 	return nil, errors.New("test_resource error")
 
 }
 
-type TestMessage struct{}
+type TestProtoMessage struct{}
 
-func (TestMessage) XXX_MessageName() string { return "test_resource" }
-func (TestMessage) Reset()                  {}
-func (TestMessage) String() string          { return "test_resource" }
-func (TestMessage) ProtoMessage()           {}
+func (TestProtoMessage) XXX_MessageName() string { return "TestProtoMessage" }
+func (TestProtoMessage) Reset()                  {}
+func (TestProtoMessage) String() string          { return "TestProtoMessage" }
+func (TestProtoMessage) ProtoMessage()           {}
 
-func init() {
-	RegisterCodec(TestCodec{}, &TestMessage{})
-}
-
-func HandlePanic(t *testing.T, codec Codec, pb proto.Message) (err error) {
+func HandlePanic(t *testing.T, codec resource.Codec, pb proto.Message) (err error) {
 	t.Helper()
 
 	defer func() {
@@ -43,25 +40,27 @@ func HandlePanic(t *testing.T, codec Codec, pb proto.Message) (err error) {
 		err = errors.New(v)
 	}()
 
-	RegisterCodec(codec, pb)
+	resource.RegisterCodec(codec, pb)
 	return
 }
 
 func TestRegisterCodec(t *testing.T) {
+	resource.RegisterCodec(TestCodec{}, &TestProtoMessage{})
+
 	tcases := []struct {
-		Codec         Codec
+		Codec         resource.Codec
 		Message       proto.Message
 		ExpectedError string
 	}{
 		{
 			Codec:         nil,
 			Message:       nil,
-			ExpectedError: "resource: register nil codec for resource " + defaultResource,
+			ExpectedError: "resource: register nil codec for resource <default>",
 		},
 		{
 			Codec:         TestCodec{},
-			Message:       &TestMessage{},
-			ExpectedError: "resource: register codec called twice for resource " + TestMessage{}.XXX_MessageName(),
+			Message:       &TestProtoMessage{},
+			ExpectedError: "resource: register codec called twice for resource " + TestProtoMessage{}.XXX_MessageName(),
 		},
 	}
 
@@ -84,7 +83,7 @@ func TestDecode(t *testing.T) {
 				ResourceType:    "test_resource",
 				ResourceId:      "",
 			},
-			Message:       &TestMessage{},
+			Message:       &TestProtoMessage{},
 			ExpectedError: "test_resource error",
 		},
 		{
@@ -94,12 +93,12 @@ func TestDecode(t *testing.T) {
 				ResourceId:      "",
 			},
 			Message:       nil,
-			ExpectedError: "resource: codec is not registered for resource " + defaultResource,
+			ExpectedError: "resource: codec is not registered for resource <default>",
 		},
 	}
 
 	for _, tc := range tcases {
-		_, err := Decode(tc.Message, tc.Identifier)
+		_, err := resource.Decode(tc.Message, tc.Identifier)
 		if err != nil && err.Error() != tc.ExpectedError {
 			t.Fatalf("invalid error %s, expected %s", err, tc.ExpectedError)
 		}
@@ -109,24 +108,24 @@ func TestDecode(t *testing.T) {
 
 func TestEncode(t *testing.T) {
 	tcases := []struct {
-		Identifier    Identifier
+		Identifier    resource.Identifier
 		Message       proto.Message
 		ExpectedError string
 	}{
 		{
 			Identifier:    nil,
-			Message:       &TestMessage{},
+			Message:       &TestProtoMessage{},
 			ExpectedError: "test_resource error",
 		},
 		{
 			Identifier:    nil,
 			Message:       nil,
-			ExpectedError: "resource: codec is not registered for resource " + defaultResource,
+			ExpectedError: "resource: codec is not registered for resource <default>",
 		},
 	}
 
 	for _, tc := range tcases {
-		_, err := Encode(tc.Message, tc.Identifier)
+		_, err := resource.Encode(tc.Message, tc.Identifier)
 		if err != nil && err.Error() != tc.ExpectedError {
 			t.Fatalf("invalid error %s, expected %s", err, tc.ExpectedError)
 		}

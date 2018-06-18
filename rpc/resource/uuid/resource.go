@@ -38,19 +38,19 @@ func (m codec) String() string {
 func (m codec) Decode(pb *resourcepb.Identifier) (resource.Identifier, error) {
 	var id identifier
 
-	if pb == nil || (pb.ApplicationName == "" && pb.ResourceType == "" && pb.ResourceId == "") {
+	if pb == nil {
 		return &id, nil
 	}
 
 	if pb.ApplicationName != "" && pb.ApplicationName != m.applicationName {
 		return nil, fmt.Errorf("uuid: invalid application name %s of %s", pb.ApplicationName, m)
 	}
-	id.applicationName = pb.ApplicationName
+	id.applicationName = m.applicationName
 
 	if pb.ResourceType != "" && pb.ResourceType != m.resourceType {
 		return nil, fmt.Errorf("uuid: invalid resource type %s of %s", pb.ResourceType, m)
 	}
-	id.resourceType = pb.ResourceType
+	id.resourceType = m.resourceType
 
 	if pb.ResourceId == "" {
 		v, err := uuid.NewUUID()

@@ -4,7 +4,7 @@ package infoblox.rpc;
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb;resourcepb";
 
-// A number of these application services require a mechanism to
+// A number of application services require a mechanism to
 // encode the identity of a particular resource across applications.
 // The resource identifiers consist of the application ID,
 // an application-defined resource type,

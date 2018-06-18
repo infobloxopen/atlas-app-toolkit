@@ -36,7 +36,11 @@ func TestCodec_Decode(t *testing.T) {
 			PB: nil,
 		},
 		{
-			PB: &resourcepb.Identifier{},
+			PB:              &resourcepb.Identifier{},
+			ApplicationName: "app",
+			ResourceType:    "res",
+			Valid:           true,
+			NotEmpty:        true,
 		},
 		{
 			PB: &resourcepb.Identifier{
