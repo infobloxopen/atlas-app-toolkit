@@ -1,4 +1,4 @@
-package resourceuuid
+package uuid
 
 import (
 	"database/sql/driver"
@@ -6,116 +6,119 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/internal"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
 )
 
-func NewUUIDManager(applicationID, resourceType string) *UUIDManager {
-	return &UUIDManager{
-		applicationName: applicationID,
+// NewCodec returns new resource.Codec that encodes and decodes RPC representation
+// of Identifier by treating them as references to an internal resource with
+// Resource ID in UUID format.
+// Internal means a resource that belongs to current application.
+// If ResourceID of decoded RPC identifier is empty the codec populates it with
+// new id in UUID format.
+// Internal Identifier implements sql.Scanner and driver.Valuer interfaces by
+// storing only the Resource ID part of itself.
+func NewCodec(applicationName, resourceType string) resource.Codec {
+	return &codec{
+		applicationName: applicationName,
 		resourceType:    resourceType,
 	}
 }
 
-type UUIDManager struct {
+type codec struct {
 	applicationName string
 	resourceType    string
 }
 
-func (m UUIDManager) String() string {
-	return fmt.Sprintf("uuid manager of %s/%s", m.applicationName, m.resourceType)
+func (m codec) String() string {
+	return fmt.Sprintf("uuid codec of %s/%s", m.applicationName, m.resourceType)
 }
 
-func (m UUIDManager) Build(id *resourcepb.Identifier) (Identifier, error) {
-	var uid uuidIdentifier
+func (m codec) Decode(pb *resourcepb.Identifier) (resource.Identifier, error) {
+	var id identifier
 
-	if id == nil || (id.ApplicationName == "" && id.ResourceType == "" && id.ResourceId == "") {
-		return &uid, nil
+	if pb == nil || (pb.ApplicationName == "" && pb.ResourceType == "" && pb.ResourceId == "") {
+		return &id, nil
 	}
 
-	if id.ApplicationName != "" && id.ApplicationName != m.applicationName {
-		return nil, fmt.Errorf("resource: invalid application name %s in %s", id.ApplicationName, m)
+	if pb.ApplicationName != "" && pb.ApplicationName != m.applicationName {
+		return nil, fmt.Errorf("uuid: invalid application name %s of %s", pb.ApplicationName, m)
 	}
-	uid.applicationName = id.ApplicationName
+	id.applicationName = pb.ApplicationName
 
-	if id.ResourceType != "" && id.ResourceType != m.resourceType {
-		return nil, fmt.Errorf("resource: invalid resource type %s in %s", id.ResourceType, m)
+	if pb.ResourceType != "" && pb.ResourceType != m.resourceType {
+		return nil, fmt.Errorf("uuid: invalid resource type %s of %s", pb.ResourceType, m)
 	}
-	uid.resourceType = id.ResourceType
+	id.resourceType = pb.ResourceType
 
-	if id.ResourceId == "" {
+	if pb.ResourceId == "" {
 		v, err := uuid.NewUUID()
 		if err != nil {
 			return nil, err
 		}
-		uid.resourceID = v.String()
+		id.resourceID = v.String()
 	} else {
-		uid.resourceID = id.ResourceId
+		id.resourceID = pb.ResourceId
 	}
+	id.valid = true
 
-	return &uid, nil
+	return &id, nil
 }
 
-func (m UUIDManager) Resolve(id Identifier) (*resourcepb.Identifier, error) {
-	var pbid resourcepb.Identifier
+func (m codec) Encode(id resource.Identifier) (*resourcepb.Identifier, error) {
+	var pb resourcepb.Identifier
 
-	uid, ok := id.(*uuidIdentifier)
+	if id == nil {
+		return &pb, nil
+	}
+
+	uid, ok := id.(*identifier)
 	if !ok {
-		return nil, fmt.Errorf("resource: invalid type of Identifier in %s", m)
+		return nil, fmt.Errorf("uuid: invalid type of identifier in %s", m)
 	}
 
-	if !uid.valid || uid.resourceID == "" {
-		return &pbid, nil
+	if uid == nil || !uid.valid || uid.resourceID == "" {
+		return &pb, nil
 	}
 
-	if uid.applicationName != "" && uid.applicationName != m.applicationName {
-		return nil, fmt.Errorf("resource: invalid application name %s in %s", uid.applicationName, m)
-	} else {
-		uid.applicationName = m.applicationName
-	}
-	pbid.ApplicationName = uid.applicationName
-
-	if uid.resourceType != "" && uid.resourceType != m.resourceType {
-		return nil, fmt.Errorf("resource: invalid resource type %s in %s", uid.resourceType, m)
-	} else {
-		uid.resourceType = m.resourceType
-	}
-	pbid.ResourceType = uid.resourceType
+	pb.ApplicationName = m.applicationName
+	pb.ResourceType = m.resourceType
 
 	v, err := uuid.Parse(uid.resourceID)
 	if err != nil {
-		return nil, fmt.Errorf("resource: invalid resource id %s in %s", uid.resourceID, m)
+		return nil, fmt.Errorf("uuid: invalid resource id %s in %s - %s", uid.resourceID, m, err)
 	}
-	pbid.ResourceId = v.String()
+	pb.ResourceId = v.String()
 
-	return &pbid, nil
+	return &pb, nil
 }
 
-type uuidIdentifier struct {
+type identifier struct {
 	applicationName string
 	resourceType    string
 	resourceID      string
 	valid           bool
 }
 
-func (i uuidIdentifier) String() string {
+func (i identifier) String() string {
 	return internal.BuildString(i.applicationName, i.resourceType, i.resourceID)
 }
 
-func (i uuidIdentifier) Value() (driver.Value, error) {
+func (i identifier) Value() (driver.Value, error) {
 	if !i.valid {
 		return nil, nil
 	}
 	return i.resourceID, nil
 }
 
-func (i *uuidIdentifier) Scan(v interface{}) error {
+func (i *identifier) Scan(v interface{}) error {
 	if v == nil {
 		return nil
 	}
 	s, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("uuid identifier: invalid type of resource id %T", v)
+		return fmt.Errorf("uuid: invalid sql type of resource id %T", v)
 	}
 	i.resourceID = s
 	i.valid = true
@@ -123,22 +126,22 @@ func (i *uuidIdentifier) Scan(v interface{}) error {
 	return nil
 }
 
-func (i uuidIdentifier) ApplicationName() string {
+func (i identifier) ApplicationName() string {
 	return i.applicationName
 }
 
-func (i uuidIdentifier) ResourceType() string {
+func (i identifier) ResourceType() string {
 	return i.resourceType
 }
 
-func (i uuidIdentifier) ResourceID() string {
+func (i identifier) ResourceID() string {
 	return i.resourceID
 }
 
-func (i uuidIdentifier) IsExternal() bool {
+func (i identifier) External() bool {
 	return false
 }
 
-func (i uuidIdentifier) IsNil() bool {
-	return !i.valid
+func (i identifier) Valid() bool {
+	return i.valid
 }
