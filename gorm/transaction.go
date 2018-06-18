@@ -21,11 +21,10 @@ type ctxKey int
 // instead of using this key directly.
 var txnKey ctxKey
 
-type CtxTxnMissingError struct{}
-
-func (e *CtxTxnMissingError) Error() string {
-	return "Database transaction for request missing in context"
-}
+var (
+	ErrCtxTxnMissing = errors.New("Database transaction for request missing in context")
+	ErrCtxTxnNoDB    = errors.New("Transaction in context, but DB is nil")
+)
 
 // NewContext returns a new Context that carries value txn.
 func NewContext(parent context.Context, txn *Transaction) context.Context {
@@ -50,10 +49,10 @@ type Transaction struct {
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	txn, ok := FromContext(ctx)
 	if !ok {
-		return nil, &CtxTxnMissingError{}
+		return nil, ErrCtxTxnMissing
 	}
 	if txn.parent == nil {
-		return nil, errors.New("Transaction in context, but DB is nil")
+		return nil, ErrCtxTxnNoDB
 	}
 	db := txn.Begin()
 	if db.Error != nil {

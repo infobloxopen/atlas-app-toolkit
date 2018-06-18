@@ -272,7 +272,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 
 	// Case: Transaction missing from context
 	txn1, err := BeginFromContext(ctx)
-	if _, ok := err.(*CtxTxnMissingError); !ok {
+	if err != ErrCtxTxnMissing {
 		t.Error("Did not receive a CtxTxnError when no context transaction was present")
 	}
 	if txn1 != nil {
@@ -303,7 +303,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 	if txn3 != nil {
 		t.Error("Got some txn returned when nil was expected")
 	}
-	if err == nil {
+	if err != ErrCtxTxnNoDB {
 		t.Error("Did not receive an error opening a txn with nil DB")
 	}
 
