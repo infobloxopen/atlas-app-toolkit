@@ -34,7 +34,7 @@ There are also some common implementations.
 The [fq](fq/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
 identifiers to and from `Identifier`.
 The implementation of `identifier` supports `sql.Scanner` and `driver.Valuer` interfaces
-so it could be stored in SQL DB as a single string delimited by `/` (in **f**ully **q**ualified from).
+so it could be stored in SQL DB as a single string delimited by `/` (in **f**ully **q**ualified form).
 
 The [uuid](uuid/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
 identifiers to and from `Identifier`.
