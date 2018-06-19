@@ -13,34 +13,34 @@ type Mapper struct {
 
 // Map function performs a mapping from error given following a chain of
 // mappings that were defined prior to the Map call.
-func (m *Mapper) Map(err error) error {
-	for _, mapFunc := range mapFuncs {
-		if resErr, ok := mapFunc(err); ok {
+func (m *Mapper) Map(ctx context.Context, err error) error {
+	for _, mapFunc := range m.mapFuncs {
+		if resErr, ok := mapFunc(ctx, err); ok {
 			return resErr
 		}
 	}
-	return NewContainer()
+	return InitContainer()
 }
 
 // AddMapping function appends a list of mapping functions to a mapping chain.
-func (m *Mapper) AddMapping(mf ...MapFunc) Mapper {
+func (m *Mapper) AddMapping(mf ...MapFunc) {
 	if m.mapFuncs == nil {
 		m.mapFuncs = []MapFunc{}
 	}
 
 	m.mapFuncs = append(m.mapFuncs, mf...)
-
-	return m
 }
 
 // MapCond function takes an error and returns flag that indicates whether the
 // map condition was met.
 type MapCond func(error) bool
+
 func (mc MapCond) Error() string { return "MapCond" }
 
 // MapFunc function takes an error and returns mapped error and flag that
 // indicates whether the mapping was performed successfully.
-type MapFunc func(error) (error, bool)
+type MapFunc func(context.Context, error) (error, bool)
+
 func (mc MapFunc) Error() string { return "MapFunc" }
 
 // NewMapping function ...
@@ -57,14 +57,14 @@ func NewMapping(src error, dst error) MapFunc {
 	if v, ok := dst.(MapFunc); ok {
 		mapFunc = v
 	} else {
-		mapFunc = func(err error) (error, bool) {
+		mapFunc = func(ctx context.Context, err error) (error, bool) {
 			return dst, true
 		}
 	}
 
-	return func(err error) (error, bool) {
+	return func(ctx context.Context, err error) (error, bool) {
 		if mapCond(err) {
-			return mapFunc(err)
+			return mapFunc(ctx, err)
 		}
 
 		return nil, false

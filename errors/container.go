@@ -34,10 +34,17 @@ type Container struct {
 	// errSet flag indicates whether the error was set by calling one of
 	// following methods: Set, WithDetail(s), WithField(s).
 	errSet bool
+
+	// Mapper structure performs necessary mappings.
+	Mapper
 }
 
 // NewContainer function returns a new entity of error container.
-func NewContainer() *Container {
+func NewContainer(code codes.Code, format string, args ...interface{}) *Container {
+	return (&Container{}).New(code, format, args...)
+}
+
+func InitContainer() *Container {
 	return (&Container{}).New(codes.Unknown, "Unknown")
 }
 
@@ -46,12 +53,14 @@ func (c Container) Error() string { return "Unknown" }
 
 // GRPCStatus function returns an error container as GRPC status.
 func (c *Container) GRPCStatus() *status.Status {
-	protoArr := make([]proto.Message, len(c.details)+1)
+	protoArr := []proto.Message{}
 
-	protoArr[0] = proto.Message(c.fields)
+	if c.fields != nil {
+		protoArr = append(protoArr, proto.Message(c.fields))
+	}
 
-	for i, d := range c.details {
-		protoArr[i+1] = proto.Message(d)
+	for _, d := range c.details {
+		protoArr = append(protoArr, proto.Message(d))
 	}
 
 	if s, err := status.New(c.errCode, c.errMessage).WithDetails(protoArr...); err != nil {
@@ -59,6 +68,19 @@ func (c *Container) GRPCStatus() *status.Status {
 	}
 
 	return nil
+}
+
+// New function instantinates general error code and error message for error
+// container.
+func (c *Container) New(code codes.Code, format string, args ...interface{}) *Container {
+	c.errCode = code
+	c.errMessage = fmt.Sprintf(format, args...)
+
+	c.details = nil
+	c.fields = nil
+	c.errSet = false
+
+	return c
 }
 
 // IsSet function returns flag that determines whether the main error code and
@@ -70,7 +92,7 @@ func (c *Container) IsSet() bool {
 // Set function initializes general error code and error message for error
 // container and also appends a detail with the same content to a an error
 // container's 'details' section.
-func (c *Container) Set(code codes.Code, target string, format string, args ...interface{}) *Container {
+func (c *Container) Set(target string, code codes.Code, format string, args ...interface{}) *Container {
 	c.errCode = code
 	c.errMessage = fmt.Sprintf(format, args...)
 	c.errSet = true
@@ -85,20 +107,12 @@ func (c *Container) Set(code codes.Code, target string, format string, args ...i
 // WithField(s), WithDetail(s).
 func (c *Container) IfSet(code codes.Code, format string, args ...interface{}) error {
 	if c.errSet {
-		c.New(code, format, args...)
+		c.errCode = code
+		c.errMessage = fmt.Sprintf(format, args...)
 		return c
 	}
 
 	return nil
-}
-
-// New function instantinates general error code and error message for error
-// container.
-func (c *Container) New(code codes.Code, format string, args ...interface{}) *Container {
-	c.errCode = code
-	c.errMessage = fmt.Sprintf(format, args...)
-
-	return c
 }
 
 // WithDetail function appends a new Detail to an error container's 'details'
@@ -147,15 +161,25 @@ func (c *Container) WithField(target string, format string, args ...interface{})
 
 // WithFields function appends a several fields error details to an error
 // container's 'fields' section.
-func (c *Container) WithFields(fields map[string]string) *Container {
+func (c *Container) WithFields(fields map[string][]string) *Container {
 	if len(fields) == 0 {
 		return c
 	}
 
-	c.errSet = true
+	var hasDesc bool
+
 
 	for k, v := range fields {
-		c.WithField(k, v)
+		for _, vVal := range v {
+			if vVal != "" && k != "" {
+				c.WithField(k, vVal)
+				hasDesc = true
+			}
+		}
+	}
+
+	if hasDesc {
+		c.errSet = true
 	}
 
 	return c
