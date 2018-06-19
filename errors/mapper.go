@@ -35,15 +35,18 @@ func (m *Mapper) AddMapping(mf ...MapFunc) {
 // map condition was met.
 type MapCond func(error) bool
 
+// Error function ...
 func (mc MapCond) Error() string { return "MapCond" }
 
 // MapFunc function takes an error and returns mapped error and flag that
 // indicates whether the mapping was performed successfully.
 type MapFunc func(context.Context, error) (error, bool)
 
+// Error function ...
 func (mc MapFunc) Error() string { return "MapFunc" }
 
-// NewMapping function ...
+// NewMapping function creates a mapping function based on error interfaces
+// passed to it. src can be either MapCond and dst can be MapFunc.
 func NewMapping(src error, dst error) MapFunc {
 	var mapCond MapCond
 	var mapFunc MapFunc
