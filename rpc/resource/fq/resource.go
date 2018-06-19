@@ -1,4 +1,4 @@
-package external
+package fq
 
 import (
 	"database/sql/driver"
@@ -10,7 +10,7 @@ import (
 )
 
 // NewCodec returns new resource.Codec that encodes and decodes RPC representation
-// of Identifier by treating them as references to an external resource.
+// of Identifier by treating them as references to an fq resource.
 // External Identifier implements sql.Scanner and driver.Valuer interfaces by
 // storing itself in a format specified for Atlas References.
 func NewCodec() resource.Codec {
@@ -27,7 +27,7 @@ func (codec) Decode(pb *resourcepb.Identifier) (resource.Identifier, error) {
 	}
 
 	if pb.ApplicationName == "" || pb.ResourceType == "" || pb.ResourceId == "" {
-		return nil, fmt.Errorf("external: identifier is not fully qualified - %s", pb)
+		return nil, fmt.Errorf("fq: identifier is not fully qualified - %s", pb)
 	}
 
 	id.applicationName, id.resourceType, id.resourceID = pb.ApplicationName, pb.ResourceType, pb.ResourceId
@@ -45,7 +45,7 @@ func (codec) Encode(id resource.Identifier) (*resourcepb.Identifier, error) {
 
 	eid, ok := id.(*identifier)
 	if !ok {
-		return nil, fmt.Errorf("external: invalid type of identifier - %T", id)
+		return nil, fmt.Errorf("fq: invalid type of identifier - %T", id)
 	}
 
 	if eid == nil || !eid.valid {
@@ -53,7 +53,7 @@ func (codec) Encode(id resource.Identifier) (*resourcepb.Identifier, error) {
 	}
 
 	if eid.applicationName == "" || eid.resourceType == "" || eid.resourceID == "" {
-		return nil, fmt.Errorf("external: resolved identifier is not fully qualified - %s", eid)
+		return nil, fmt.Errorf("fq: resolved identifier is not fully qualified - %s", eid)
 	}
 	pb.ApplicationName, pb.ResourceType, pb.ResourceId = eid.applicationName, eid.resourceType, eid.resourceID
 
@@ -84,7 +84,7 @@ func (i *identifier) Scan(v interface{}) error {
 	}
 	s, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("external: invalid sql type of resource id %T", v)
+		return fmt.Errorf("fq: invalid sql type of resource id %T", v)
 	}
 	i.applicationName, i.resourceType, i.resourceID = internal.ParseString(s)
 	i.valid = true

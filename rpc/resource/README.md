@@ -31,10 +31,10 @@ message MyMessage {
 The common interfaces and helper functions to work with identifiers are defined in [resource](resource.go) file.
 There are also some common implementations. 
 
-The [external](external/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
+The [fq](fq/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
 identifiers to and from `Identifier`.
 The implementation of `identifier` supports `sql.Scanner` and `driver.Valuer` interfaces
-so that could be stored in SQL DB as a string in a single string delimited by `/`.
+so it could be stored in SQL DB as a single string delimited by `/` (in **f**ully **q**ualified from).
 
 The [uuid](uuid/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
 identifiers to and from `Identifier`.

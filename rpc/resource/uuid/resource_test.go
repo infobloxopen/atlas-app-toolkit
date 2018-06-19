@@ -80,7 +80,7 @@ func TestCodec_Decode(t *testing.T) {
 			t.Errorf("tc %d: resource valid is %t, expected %t", n, id.Valid(), tc.Valid)
 		}
 		if id.External() != tc.External {
-			t.Errorf("tc %d: resource external is %t, expected %t", n, id.External(), tc.External)
+			t.Errorf("tc %d: resource fq is %t, expected %t", n, id.External(), tc.External)
 		}
 		if id.ApplicationName() != tc.ApplicationName {
 			t.Errorf("tc %d: invalid application name %s, expected %s", n, id.ApplicationName(), tc.ApplicationName)
@@ -193,7 +193,7 @@ func TestIdentifier_Scan(t *testing.T) {
 			t.Errorf("tc %d: resource valid is %t, expected %t", n, id.Valid(), tc.Valid)
 		}
 		if id.External() != tc.External {
-			t.Errorf("tc %d: resource external is %t, expected %t", n, id.External(), tc.External)
+			t.Errorf("tc %d: resource fq is %t, expected %t", n, id.External(), tc.External)
 		}
 		if id.ApplicationName() != tc.ApplicationName {
 			t.Errorf("tc %d: invalid application name %s, expected %s", n, id.ApplicationName(), tc.ApplicationName)

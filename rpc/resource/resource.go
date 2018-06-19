@@ -29,7 +29,7 @@ type Identifier interface {
 	ResourceID() string
 
 	// External is a flag indicates whether the identifier represents
-	// an external resource or holds an identity of a resource that is belongs
+	// an fq resource or holds an identity of a resource that is belongs
 	// to an application itself.
 	External() bool
 

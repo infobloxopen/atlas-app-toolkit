@@ -1,4 +1,4 @@
-package external
+package fq
 
 import (
 	"database/sql/driver"
@@ -45,7 +45,7 @@ func TestCodec_Decode(t *testing.T) {
 				ApplicationName: "app",
 			},
 			External:      true,
-			ExpectedError: "external: identifier is not fully qualified - application_name:\"app\" ",
+			ExpectedError: "fq: identifier is not fully qualified - application_name:\"app\" ",
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestCodec_Decode(t *testing.T) {
 			t.Errorf("tc %d: resource valid is %t, expected %t", n, id.Valid(), tc.Valid)
 		}
 		if id.External() != tc.External {
-			t.Errorf("tc %d: resource external is %t, expected %t", n, id.External(), tc.External)
+			t.Errorf("tc %d: resource fq is %t, expected %t", n, id.External(), tc.External)
 		}
 		if id.ApplicationName() != tc.ApplicationName {
 			t.Errorf("tc %d: invalid application name %s, expected %s", n, id.ApplicationName(), tc.ApplicationName)
@@ -99,7 +99,7 @@ func TestCodec_Encode(t *testing.T) {
 				applicationName: "app",
 				valid:           true,
 			},
-			ExpectedError: "external: resolved identifier is not fully qualified - app",
+			ExpectedError: "fq: resolved identifier is not fully qualified - app",
 		},
 		{
 			ID: &identifier{
@@ -167,7 +167,7 @@ func TestIdentifier_Scan(t *testing.T) {
 		{
 			Value:         1986,
 			External:      true,
-			ExpectedError: "external: invalid sql type of resource id int",
+			ExpectedError: "fq: invalid sql type of resource id int",
 		},
 	}
 
@@ -180,7 +180,7 @@ func TestIdentifier_Scan(t *testing.T) {
 			t.Errorf("tc %d: resource valid is %t, expected %t", n, id.Valid(), tc.Valid)
 		}
 		if id.External() != tc.External {
-			t.Errorf("tc %d: resource external is %t, expected %t", n, id.External(), tc.External)
+			t.Errorf("tc %d: resource fq is %t, expected %t", n, id.External(), tc.External)
 		}
 		if id.ApplicationName() != tc.ApplicationName {
 			t.Errorf("tc %d: invalid application name %s, expected %s", n, id.ApplicationName(), tc.ApplicationName)

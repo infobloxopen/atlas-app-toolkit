@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/external"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/fq"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/uuid"
 )
@@ -27,8 +27,8 @@ func (ExampleProtoMessage) String() string          { return "ExampleProtoMessag
 func (ExampleProtoMessage) ProtoMessage()           {}
 
 func Example() {
-	// register external codec for default resources
-	resource.RegisterCodec(external.NewCodec(), nil)
+	// register fq codec for default resources
+	resource.RegisterCodec(fq.NewCodec(), nil)
 	// register uuid codec for TestProtoMessage resources
 	resource.RegisterCodec(uuid.NewCodec("simpleapp", "examples"), &ExampleProtoMessage{})
 
@@ -82,9 +82,9 @@ func Example() {
 	fmt.Printf("application name of internal id: %s\n", val.ID.ApplicationName())
 	fmt.Printf("resource type of internal id: %s\n", val.ID.ResourceType())
 	//fmt.Printf("resource id of internal id: %s\n", val.ID.ResourceID())
-	fmt.Printf("application name of external id: %s\n", val.ExternalID.ApplicationName())
-	fmt.Printf("resource type of external id: %s\n", val.ExternalID.ResourceType())
-	fmt.Printf("resource id of external id: %s\n", val.ExternalID.ResourceID())
+	fmt.Printf("application name of fq id: %s\n", val.ExternalID.ApplicationName())
+	fmt.Printf("resource type of fq id: %s\n", val.ExternalID.ResourceType())
+	fmt.Printf("resource id of fq id: %s\n", val.ExternalID.ResourceID())
 
 	// so now you want to convert it back to PB representation
 	toPBMessageFunc := func(v *ExampleGoType) (*ExampleProtoMessage, error) {
@@ -100,7 +100,7 @@ func Example() {
 			pb.Id = id
 		}
 
-		// convert external id to RPC representation using registerd External codec
+		// convert fq id to RPC representation using registerd External codec
 		if id, err := resource.Encode(nil, v.ExternalID); err != nil {
 			return nil, err
 		} else {
@@ -118,19 +118,19 @@ func Example() {
 	fmt.Printf("application name of internal id: %s\n", pb.Id.GetApplicationName())
 	fmt.Printf("resource type of internal id: %s\n", pb.Id.GetResourceType())
 	//fmt.Printf("resource id of internal id: %s\n", pb.Id.GetResourceId())
-	fmt.Printf("application name of external id: %s\n", pb.ExternalId.GetApplicationName())
-	fmt.Printf("resource type of external id: %s\n", pb.ExternalId.GetResourceType())
-	fmt.Printf("resource id of external id: %s\n", pb.ExternalId.GetResourceId())
+	fmt.Printf("application name of fq id: %s\n", pb.ExternalId.GetApplicationName())
+	fmt.Printf("resource type of fq id: %s\n", pb.ExternalId.GetResourceType())
+	fmt.Printf("resource id of fq id: %s\n", pb.ExternalId.GetResourceId())
 
 	// Output:
 	// application name of internal id: simpleapp
 	// resource type of internal id: examples
-	// application name of external id: externalapp
-	// resource type of external id: external_resource
-	// resource id of external id: 1
+	// application name of fq id: externalapp
+	// resource type of fq id: external_resource
+	// resource id of fq id: 1
 	// application name of internal id: simpleapp
 	// resource type of internal id: examples
-	// application name of external id: externalapp
-	// resource type of external id: external_resource
-	// resource id of external id: 1
+	// application name of fq id: externalapp
+	// resource type of fq id: external_resource
+	// resource id of fq id: 1
 }
