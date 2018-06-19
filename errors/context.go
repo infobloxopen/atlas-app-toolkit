@@ -2,7 +2,6 @@ package errors
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 )
@@ -41,8 +40,8 @@ func Field(ctx context.Context, target string, format string, args ...interface{
 // Set function initializes a general error code and error message for context
 // stored error container and also appends a details with the same content to
 // an error container's 'details' section.
-func Set(ctx context.Context, code codes.Code, target string, format string, args ...interface{}) *Container {
-	return FromContext(ctx).Set(code, target, format, args...)
+func Set(ctx context.Context, target string, code codes.Code, format string, args ...interface{}) *Container {
+	return FromContext(ctx).Set(target, code, format, args...)
 }
 
 // IfSet function intializes general error code and error message for context
@@ -60,4 +59,8 @@ func ContextError(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func Map(ctx context.Context, err error) error {
+	return FromContext(ctx).Mapper.Map(ctx, err)
 }
