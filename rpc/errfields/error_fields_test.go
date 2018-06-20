@@ -1,8 +1,8 @@
 package errfields
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestAddFields(t *testing.T) {

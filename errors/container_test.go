@@ -1,8 +1,8 @@
 package errors
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 
 	"google.golang.org/grpc/codes"
 
@@ -38,11 +38,11 @@ func TestInitContainer(t *testing.T) {
 	c := InitContainer()
 
 	checkContainer(t, c, &Container{
-		details: nil,
-		fields: nil,
-		errCode: codes.Unknown,
+		details:    nil,
+		fields:     nil,
+		errCode:    codes.Unknown,
 		errMessage: "Unknown",
-		errSet: false,
+		errSet:     false,
 	})
 }
 
@@ -63,8 +63,7 @@ func TestSet(t *testing.T) {
 		t.Errorf("Invalid IfSet result: expected nil, got %+v", res)
 	}
 
-
-	// Check that error details are appended and errCode and errMessage 
+	// Check that error details are appended and errCode and errMessage
 	// are initialized accordingly.
 
 	c = c.Set("test:object", codes.InvalidArgument, "<invalid arg error %d>", 1)
@@ -72,10 +71,10 @@ func TestSet(t *testing.T) {
 	checkContainer(t, c, &Container{
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1)},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<invalid arg error 1>",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Check IsSet returning errSet
@@ -93,10 +92,10 @@ func TestSet(t *testing.T) {
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
 			errdetails.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
-		fields: nil,
-		errCode: codes.AlreadyExists,
+		fields:     nil,
+		errCode:    codes.AlreadyExists,
 		errMessage: "<already exists error>",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Check that ifset overwrites errCode and errMessage.
@@ -105,10 +104,10 @@ func TestSet(t *testing.T) {
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
 			errdetails.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general error>",
-		errSet: true,
+		errSet:     true,
 	})
 
 }
@@ -117,14 +116,13 @@ func TestNewContainer(t *testing.T) {
 	c := NewContainer(codes.InvalidArgument, "<invalid arg error %d>", 1)
 
 	checkContainer(t, c, &Container{
-		details: nil,
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		details:    nil,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<invalid arg error 1>",
-		errSet: false,
+		errSet:     false,
 	})
 }
-
 
 func TestNew(t *testing.T) {
 	c := InitContainer()
@@ -140,11 +138,11 @@ func TestNew(t *testing.T) {
 	c = c.New(codes.InvalidArgument, "<invalid arg error %d>", 1)
 
 	checkContainer(t, c, &Container{
-		details: nil,
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		details:    nil,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<invalid arg error 1>",
-		errSet: false,
+		errSet:     false,
 	})
 
 	// Check IsSet returning errSet
@@ -158,11 +156,11 @@ func TestNew(t *testing.T) {
 	c = c.New(codes.InvalidArgument, "<invalid arg error %d>", 2)
 
 	checkContainer(t, c, &Container{
-		details: nil,
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		details:    nil,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<invalid arg error 2>",
-		errSet: false,
+		errSet:     false,
 	})
 
 	// Check that errCode and errMessage are not overwritten.
@@ -178,15 +176,15 @@ func TestWithDetail(t *testing.T) {
 	// Check WithDetail method.
 
 	c = c.New(codes.InvalidArgument, "<general arg err %d>", 1).
-	WithDetail(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)
+		WithDetail(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)
 
 	checkContainer(t, c, &Container{
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Append one more item to details.
@@ -197,10 +195,10 @@ func TestWithDetail(t *testing.T) {
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1),
 			errdetails.Newf(codes.InvalidArgument, "target2", "<specific invalid arg err %d>", 2)},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
-		errSet: true,
+		errSet:     true,
 	})
 
 }
@@ -213,11 +211,11 @@ func TestWithDetails(t *testing.T) {
 	c.WithDetails()
 
 	checkContainer(t, c, &Container{
-		details: nil,
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		details:    nil,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
-		errSet: false,
+		errSet:     false,
 	})
 
 	// Check IfSet returning nil.
@@ -237,10 +235,10 @@ func TestWithDetails(t *testing.T) {
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
 			errdetails.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Check that ifset overwrites errCode and errMessage.
@@ -249,10 +247,10 @@ func TestWithDetails(t *testing.T) {
 		details: []*errdetails.TargetInfo{
 			errdetails.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
 			errdetails.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
-		fields: nil,
-		errCode: codes.InvalidArgument,
+		fields:     nil,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general error>",
-		errSet: true,
+		errSet:     true,
 	})
 
 }
@@ -273,9 +271,9 @@ func TestWithField(t *testing.T) {
 				},
 			},
 		},
-		errCode: codes.Unknown,
+		errCode:    codes.Unknown,
 		errMessage: "Unknown",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Check IsSet returning errSet
@@ -306,9 +304,9 @@ func TestWithField(t *testing.T) {
 				},
 			},
 		},
-		errCode: codes.Unknown,
+		errCode:    codes.Unknown,
 		errMessage: "Unknown",
-		errSet: true,
+		errSet:     true,
 	})
 
 	if c.IsSet() != true {
@@ -329,11 +327,11 @@ func TestWithFields(t *testing.T) {
 		c = c.WithFields(v)
 
 		checkContainer(t, c, &Container{
-			details: nil,
-			fields: nil,
-			errCode: codes.Unknown,
+			details:    nil,
+			fields:     nil,
+			errCode:    codes.Unknown,
 			errMessage: "Unknown",
-			errSet: false,
+			errSet:     false,
 		})
 
 		// Check IsSet returning errSet
@@ -359,9 +357,9 @@ func TestWithFields(t *testing.T) {
 				},
 			},
 		},
-		errCode: codes.Unknown,
+		errCode:    codes.Unknown,
 		errMessage: "Unknown",
-		errSet: true,
+		errSet:     true,
 	})
 
 	// Check WithFields append multiple fields.
@@ -388,9 +386,9 @@ func TestWithFields(t *testing.T) {
 				},
 			},
 		},
-		errCode: codes.Unknown,
+		errCode:    codes.Unknown,
 		errMessage: "Unknown",
-		errSet: true,
+		errSet:     true,
 	})
 
 	if c.IsSet() != true {
@@ -409,9 +407,9 @@ func TestErrorReturn(t *testing.T) {
 				},
 			},
 		},
-		errCode: codes.InvalidArgument,
+		errCode:    codes.InvalidArgument,
 		errMessage: "<general error>",
-		errSet: true,
+		errSet:     true,
 	})
 }
 

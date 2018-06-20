@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"reflect"
+	"testing"
 
 	"github.com/infobloxopen/atlas-app-toolkit/errors"
 
@@ -113,13 +113,13 @@ func TestWriteErrorContainer(t *testing.T) {
 
 	details := []interface{}{
 		map[string]interface{}{
-			"code": "INVALID_ARGUMENT",
-			"target": "resource",
+			"code":    "INVALID_ARGUMENT",
+			"target":  "resource",
 			"message": "x could be one of.",
 		},
 		map[string]interface{}{
-			"code": "ALREADY_EXISTS",
-			"target": "resource",
+			"code":    "ALREADY_EXISTS",
+			"target":  "resource",
 			"message": "x btw already exists.",
 		},
 	}

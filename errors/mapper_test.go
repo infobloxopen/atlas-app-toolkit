@@ -1,14 +1,13 @@
 package errors
 
 import (
-	"testing"
+	"context"
 	"fmt"
 	"reflect"
-	"context"
 	"strings"
+	"testing"
 
 	"google.golang.org/grpc/codes"
-
 )
 
 func testCond(t *testing.T, cnd MapCond, input error, e bool) {
@@ -117,7 +116,7 @@ func TestNewMapping(t *testing.T) {
 
 	mf = NewMapping(
 		CondReMatch(`^pg_sql:`),
-		MapFunc(func (ctx context.Context, err error) (error, bool) {
+		MapFunc(func(ctx context.Context, err error) (error, bool) {
 			return NewContainer(codes.InvalidArgument, strings.TrimPrefix(err.Error(), "pg_sql:")), true
 		}),
 	)
@@ -150,10 +149,10 @@ func TestMapper(t *testing.T) {
 		NewMapping(fmt.Errorf("Err1"), err1),
 		NewMapping(
 			CondReMatch(`^Err[^1]{3}$`),
-			MapFunc(func (ctx context.Context, err error) (error, bool) {
+			MapFunc(func(ctx context.Context, err error) (error, bool) {
 				return NewContainer(
 					codes.Internal,
-					"Internal Error " + strings.TrimPrefix(err.Error(), "Err"),
+					"Internal Error "+strings.TrimPrefix(err.Error(), "Err"),
 				), true
 			}),
 		),

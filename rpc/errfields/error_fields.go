@@ -50,4 +50,3 @@ func (fi *FieldInfo) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
-

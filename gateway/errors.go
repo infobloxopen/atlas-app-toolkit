@@ -25,7 +25,7 @@ type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, 
 type RestError struct {
 	Status  *RestStatus   `json:"error,omitempty"`
 	Details []interface{} `json:"details,omitempty"`
-	Fields interface{} `json:"fields,omitempty"`
+	Fields  interface{}   `json:"fields,omitempty"`
 }
 
 var (
@@ -109,7 +109,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	restErr := &RestError{
 		Status:  Status(ctx, st),
 		Details: details,
-		Fields: fields,
+		Fields:  fields,
 	}
 
 	if !headerWritten {
