@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package infoblox.rpc;
 
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb;resourcepb";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;resource";
 
 // A number of application services require a mechanism to
 // encode the identity of a particular resource across applications.

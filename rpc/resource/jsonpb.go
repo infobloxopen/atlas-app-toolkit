@@ -1,11 +1,9 @@
-package resourcepb
+package resource
 
 import (
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/internal"
 )
 
 // MarshalJSONPB implements jsonpb.JSONPBMarshaler interface by marshal
@@ -13,7 +11,7 @@ import (
 // 		<application_name>/<resource_type>/<resource_id>
 // Support "null" value.
 func (m Identifier) MarshalJSONPB(*jsonpb.Marshaler) ([]byte, error) {
-	v := internal.BuildString(m.ApplicationName, m.ResourceType, m.ResourceId)
+	v := BuildString(m.ApplicationName, m.ResourceType, m.ResourceId)
 	if v == "" {
 		v = "null"
 	}
@@ -29,6 +27,6 @@ func (m *Identifier) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
 	if v == "null" {
 		v = ""
 	}
-	m.ApplicationName, m.ResourceType, m.ResourceId = internal.ParseString(v)
+	m.ApplicationName, m.ResourceType, m.ResourceId = ParseString(v)
 	return nil
 }

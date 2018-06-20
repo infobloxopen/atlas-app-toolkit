@@ -1,23 +1,22 @@
-package resource_test
+package resource
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
+	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 type TestCodec struct{}
 
-func (TestCodec) Decode(id *resourcepb.Identifier) (resource.Identifier, error) {
+func (TestCodec) Decode(id *resourcepb.Identifier) (*Identifier, error) {
 	if id.ResourceType == "test_resource" {
 		return nil, errors.New("test_resource error")
 	}
 	return nil, nil
 }
-func (TestCodec) Encode(resource.Identifier) (*resourcepb.Identifier, error) {
+func (TestCodec) Encode(*Identifier) (*resourcepb.Identifier, error) {
 	return nil, errors.New("test_resource error")
 
 }
@@ -29,7 +28,7 @@ func (TestProtoMessage) Reset()                  {}
 func (TestProtoMessage) String() string          { return "TestProtoMessage" }
 func (TestProtoMessage) ProtoMessage()           {}
 
-func HandlePanic(t *testing.T, codec resource.Codec, pb proto.Message) (err error) {
+func HandlePanic(t *testing.T, codec Codec, pb proto.Message) (err error) {
 	t.Helper()
 
 	defer func() {
@@ -40,15 +39,15 @@ func HandlePanic(t *testing.T, codec resource.Codec, pb proto.Message) (err erro
 		err = errors.New(v)
 	}()
 
-	resource.RegisterCodec(codec, pb)
+	RegisterCodec(codec, pb)
 	return
 }
 
 func TestRegisterCodec(t *testing.T) {
-	resource.RegisterCodec(TestCodec{}, &TestProtoMessage{})
+	RegisterCodec(TestCodec{}, &TestProtoMessage{})
 
 	tcases := []struct {
-		Codec         resource.Codec
+		Codec         Codec
 		Message       proto.Message
 		ExpectedError string
 	}{
@@ -98,7 +97,7 @@ func TestDecode(t *testing.T) {
 	}
 
 	for _, tc := range tcases {
-		_, err := resource.Decode(tc.Message, tc.Identifier)
+		_, err := Decode(tc.Message, tc.Identifier)
 		if err != nil && err.Error() != tc.ExpectedError {
 			t.Fatalf("invalid error %s, expected %s", err, tc.ExpectedError)
 		}
@@ -108,7 +107,7 @@ func TestDecode(t *testing.T) {
 
 func TestEncode(t *testing.T) {
 	tcases := []struct {
-		Identifier    resource.Identifier
+		Identifier    *Identifier
 		Message       proto.Message
 		ExpectedError string
 	}{
@@ -125,7 +124,7 @@ func TestEncode(t *testing.T) {
 	}
 
 	for _, tc := range tcases {
-		_, err := resource.Encode(tc.Message, tc.Identifier)
+		_, err := Encode(tc.Message, tc.Identifier)
 		if err != nil && err.Error() != tc.ExpectedError {
 			t.Fatalf("invalid error %s, expected %s", err, tc.ExpectedError)
 		}

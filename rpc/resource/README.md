@@ -10,35 +10,24 @@ The reference format captures the same information as the three-tuple format, in
 # How to define in Proto?
 
 The common representation of resource identifiers defined in Protocol Buffer format
-you could find in [resource.proto](resourcepb/resource.proto) file.
+you could find in [resource.proto](../../rpc/resource/resource.proto) file.
 The `message Identifier` implements `jsonpb.JSONPBMarshaler` and `jsonpb.JSONPBUnmarshaler`
 interfaces so that it renders itself in JSON as a string in a single string delimited by `/`.
 
 You could use it to define identifiers in your proto messages, e.g
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/rpc/resouce/resourcepb/resource.proto"
+syntax = "proto3";
+
+import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
 
 message MyMessage {
     infoblox.rpc.Identifier id = 1;
     string some_data = 2;
-    infoblox.rpc.Identifier external_resource = 3;
+    infoblox.rpc.Identifier reference_on_external_resource = 3;
+    infoblox.rpc.Identifier foreign_id_of_internal_resource = 4;
 }
 ```
 
-# How to use in Golang?
-
-The common interfaces and helper functions to work with identifiers are defined in [resource](resource.go) file.
-There are also some common implementations. 
-
-The [fq](fq/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
-identifiers to and from `Identifier`.
-The implementation of `identifier` supports `sql.Scanner` and `driver.Valuer` interfaces
-so it could be stored in SQL DB as a single string delimited by `/` (in **f**ully **q**ualified form).
-
-The [uuid](uuid/resource.go) package provides a codec to encode and decode [Protocol Buffer representation](resourcepb/resource.proto) of 
-identifiers to and from `Identifier`.
-The implementation of `identifier` supports `sql.Scanner` and `driver.Valuer` interfaces
-so that could be stored in SQL DB as a string with **ONLY** Resource ID.
-
-Please see [example](example_test.go) to see how to register codecs and encode/decode identifiers based on resource types of proto messages.
+Please give a read to [README](../../gorm/resource/README.md) of `gorm/resource`
+package to see how it could be used with gorm and `protoc-gen-gorm` generated code. 

@@ -3,15 +3,15 @@ package resource_test
 import (
 	"fmt"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/fq"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resourcepb"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource/uuid"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource/fqstring"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource/uuid"
+	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 type ExampleGoType struct {
-	ID         resource.Identifier
-	ExternalID resource.Identifier
+	ID         *resource.Identifier
+	ExternalID *resource.Identifier
 	VarName    string
 }
 
@@ -27,8 +27,8 @@ func (ExampleProtoMessage) String() string          { return "ExampleProtoMessag
 func (ExampleProtoMessage) ProtoMessage()           {}
 
 func Example() {
-	// register fq codec for default resources
-	resource.RegisterCodec(fq.NewCodec(), nil)
+	// register fqstring codec for default resources
+	resource.RegisterCodec(fqstring.NewCodec(), nil)
 	// register uuid codec for TestProtoMessage resources
 	resource.RegisterCodec(uuid.NewCodec("simpleapp", "examples"), &ExampleProtoMessage{})
 
@@ -57,12 +57,9 @@ func Example() {
 	// let's create PB message
 	pb := &ExampleProtoMessage{
 		Id: &resourcepb.Identifier{
-			// application name is empty because Id field stores internal identifier
-			ApplicationName: "",
-			// resource type is empty as well
-			ResourceType: "",
-			// resource id is empty because we want to create new TestProtoMessage
-			ResourceId: "",
+			ApplicationName: "simpleapp",
+			ResourceType:    "examples",
+			ResourceId:      "00000000-0000-0000-0000-000000000000",
 		},
 		// ExternalId stores data about "external_resource" that belongs to
 		// "externalapp" and has id "1"
@@ -76,15 +73,12 @@ func Example() {
 
 	val, err := toGoTypeFunc(pb)
 	if err != nil {
-		fmt.Println("failed to convert TestProtoMessage to TestGoType")
+		fmt.Printf("failed to convert TestProtoMessage to TestGoType: %s\n", err)
+		return
 	}
 
-	fmt.Printf("application name of internal id: %s\n", val.ID.ApplicationName())
-	fmt.Printf("resource type of internal id: %s\n", val.ID.ResourceType())
-	//fmt.Printf("resource id of internal id: %s\n", val.ID.ResourceID())
-	fmt.Printf("application name of fq id: %s\n", val.ExternalID.ApplicationName())
-	fmt.Printf("resource type of fq id: %s\n", val.ExternalID.ResourceType())
-	fmt.Printf("resource id of fq id: %s\n", val.ExternalID.ResourceID())
+	//fmt.Printf("application name of internal id: %s\n", val.ID.ResourceID)
+	fmt.Printf("application name of fqstring id: %s\n", val.ExternalID.ResourceID)
 
 	// so now you want to convert it back to PB representation
 	toPBMessageFunc := func(v *ExampleGoType) (*ExampleProtoMessage, error) {
@@ -100,7 +94,7 @@ func Example() {
 			pb.Id = id
 		}
 
-		// convert fq id to RPC representation using registerd External codec
+		// convert fqstring id to RPC representation using registered External codec
 		if id, err := resource.Encode(nil, v.ExternalID); err != nil {
 			return nil, err
 		} else {
@@ -118,19 +112,15 @@ func Example() {
 	fmt.Printf("application name of internal id: %s\n", pb.Id.GetApplicationName())
 	fmt.Printf("resource type of internal id: %s\n", pb.Id.GetResourceType())
 	//fmt.Printf("resource id of internal id: %s\n", pb.Id.GetResourceId())
-	fmt.Printf("application name of fq id: %s\n", pb.ExternalId.GetApplicationName())
-	fmt.Printf("resource type of fq id: %s\n", pb.ExternalId.GetResourceType())
-	fmt.Printf("resource id of fq id: %s\n", pb.ExternalId.GetResourceId())
+	fmt.Printf("application name of fqstring id: %s\n", pb.ExternalId.GetApplicationName())
+	fmt.Printf("resource type of fqstring id: %s\n", pb.ExternalId.GetResourceType())
+	fmt.Printf("resource id of fqstring id: %s\n", pb.ExternalId.GetResourceId())
 
 	// Output:
-	// application name of internal id: simpleapp
-	// resource type of internal id: examples
-	// application name of fq id: externalapp
-	// resource type of fq id: external_resource
-	// resource id of fq id: 1
-	// application name of internal id: simpleapp
-	// resource type of internal id: examples
-	// application name of fq id: externalapp
-	// resource type of fq id: external_resource
-	// resource id of fq id: 1
+	//application name of fqstring id: externalapp/external_resource/1
+	//application name of internal id: simpleapp
+	//resource type of internal id: examples
+	//application name of fqstring id: externalapp
+	//resource type of fqstring id: external_resource
+	//resource id of fqstring id: 1
 }

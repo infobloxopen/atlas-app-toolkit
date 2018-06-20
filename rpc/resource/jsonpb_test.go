@@ -1,4 +1,4 @@
-package resourcepb
+package resource
 
 import (
 	"testing"
