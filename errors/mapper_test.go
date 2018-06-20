@@ -99,6 +99,10 @@ func TestNewMapping(t *testing.T) {
 
 	mf = NewMapping(fmt.Errorf("some error"), someError)
 
+	if mf.Error() != "MapFunc" {
+		t.Errorf("Invalid Error() result: expected 'MapFunc', got %q.", mf.Error())
+	}
+
 	testMapping(t, mf, fmt.Errorf("some error"), someError, true)
 	testMapping(t, mf, fmt.Errorf("some other error"), nil, false)
 

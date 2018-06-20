@@ -63,7 +63,7 @@ func (c *Container) GRPCStatus() *status.Status {
 		protoArr = append(protoArr, proto.Message(d))
 	}
 
-	if s, err := status.New(c.errCode, c.errMessage).WithDetails(protoArr...); err != nil {
+	if s, err := status.New(c.errCode, c.errMessage).WithDetails(protoArr...); err == nil {
 		return s
 	}
 

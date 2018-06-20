@@ -51,6 +51,12 @@ func Fields(ctx context.Context, fields map[string][]string) *Container {
 	return FromContext(ctx).WithFields(fields)
 }
 
+// New function resets any error that was inside context stored error container
+// and replaces it with a new error.
+func New(ctx context.Context, code codes.Code, format string, args ...interface{}) *Container {
+	return FromContext(ctx).New(code, format, args...)
+}
+
 // Set function initializes a general error code and error message for context
 // stored error container and also appends a details with the same content to
 // an error container's 'details' section.
@@ -65,9 +71,10 @@ func IfSet(ctx context.Context, code codes.Code, format string, args ...interfac
 	return FromContext(ctx).IfSet(code, format, args...)
 }
 
-// ContextError function returns an error container if any error field, detail
-// or message was set, else it returns nil.
-func ContextError(ctx context.Context) error {
+// Error function returns an error container if any error field, detail
+// or message was set, else it returns nil. Use New to define and return
+// error message in place.
+func Error(ctx context.Context) error {
 	if FromContext(ctx).IsSet() {
 		return FromContext(ctx)
 	}
@@ -78,5 +85,5 @@ func ContextError(ctx context.Context) error {
 // Map function performs mapping based on context stored error container's
 // mapping configuration.
 func Map(ctx context.Context, err error) error {
-	return FromContext(ctx).Mapper.Map(ctx, err)
+	return FromContext(ctx).Map(ctx, err)
 }

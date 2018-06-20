@@ -419,3 +419,7 @@ func testErrFunc() error {
 	return NewContainer(codes.InvalidArgument, "<general error>").
 		WithDetail(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1).WithField("foo", "bar")
 }
+
+func TestGRPCStatus(t *testing.T) {
+	// FIXME
+}

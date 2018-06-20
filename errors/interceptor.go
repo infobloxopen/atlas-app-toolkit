@@ -11,7 +11,7 @@ import (
 
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor
 // that should be used as a middleware to generate Error Messages
-// with Details and Field Information.
+// with Details and Field Information with Mapping given.
 func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
@@ -27,7 +27,7 @@ func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 
 		// Initialize container with mapping.
 		container := InitContainer()
-		container.Mapper.AddMapping(mapFuncs...)
+		container.AddMapping(mapFuncs...)
 
 		// Save container in mapper.
 		ctx = NewContext(ctx, container)
