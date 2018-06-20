@@ -3,6 +3,8 @@ package errors
 import (
 	"context"
 
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+
 	"google.golang.org/grpc/codes"
 )
 
@@ -31,10 +33,22 @@ func Detail(ctx context.Context, code codes.Code, target string, format string, 
 	return FromContext(ctx).WithDetail(code, target, format, args...)
 }
 
+// Details function appends a list of details to a context stored error container's
+// 'details' section.
+func Details(ctx context.Context, details ...*errdetails.TargetInfo) *Container {
+	return FromContext(ctx).WithDetails(details...)
+}
+
 // Field function appends a field error detail to a context stored error
 // container's 'fields' section.
 func Field(ctx context.Context, target string, format string, args ...interface{}) *Container {
 	return FromContext(ctx).WithField(target, format, args...)
+}
+
+// Fields function appends a multiple fields error details to a context stored
+// error container's 'fields' section.
+func Fields(ctx context.Context, fields map[string][]string) *Container {
+	return FromContext(ctx).WithFields(fields)
 }
 
 // Set function initializes a general error code and error message for context
@@ -61,6 +75,8 @@ func ContextError(ctx context.Context) error {
 	return nil
 }
 
+// Map function performs mapping based on context stored error container's
+// mapping configuration.
 func Map(ctx context.Context, err error) error {
 	return FromContext(ctx).Mapper.Map(ctx, err)
 }

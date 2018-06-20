@@ -168,7 +168,6 @@ func (c *Container) WithFields(fields map[string][]string) *Container {
 
 	var hasDesc bool
 
-
 	for k, v := range fields {
 		for _, vVal := range v {
 			if vVal != "" && k != "" {
