@@ -27,7 +27,7 @@ func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 
 		// Initialize container with mapping.
 		container := InitContainer()
-		container.AddMapping(mapFuncs...)
+		mapper := container.AddMapping(mapFuncs...)
 
 		// Save container in context.
 		ctx = NewContext(ctx, container)
@@ -37,12 +37,12 @@ func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 
 		if err != nil {
 			// Return container as-is.
-			if v, ok := err.(Container); ok {
+			if v, ok := err.(*Container); ok {
 				return nil, v
 			}
 
 			// Perform mapping and return error if not nil.
-			if err := container.Mapper.Map(ctx, err); err != nil {
+			if err := mapper.Map(ctx, err); err != nil {
 				return nil, err
 			}
 		}

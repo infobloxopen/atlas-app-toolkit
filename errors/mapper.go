@@ -23,12 +23,14 @@ func (m *Mapper) Map(ctx context.Context, err error) error {
 }
 
 // AddMapping function appends a list of mapping functions to a mapping chain.
-func (m *Mapper) AddMapping(mf ...MapFunc) {
+func (m *Mapper) AddMapping(mf ...MapFunc) *Mapper {
 	if m.mapFuncs == nil {
 		m.mapFuncs = []MapFunc{}
 	}
 
 	m.mapFuncs = append(m.mapFuncs, mf...)
+
+	return m
 }
 
 // MapCond function takes an error and returns flag that indicates whether the
