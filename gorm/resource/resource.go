@@ -19,7 +19,7 @@ var (
 	// Default is a Identifier with "DEFAULT" (SQL) value,
 	Default = Identifier{
 		Valid:      true,
-		ResourceID: "DEFAULT",
+		ResourceID: int64(0),
 	}
 
 	mu       sync.RWMutex
