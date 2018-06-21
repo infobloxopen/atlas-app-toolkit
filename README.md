@@ -269,8 +269,8 @@ message MyMessage {
 
 For more Swagger options see [this scheme](https://github.com/grpc-ecosystem/grpc-gateway/blob/master/protoc-gen-swagger/options/openapiv2.proto)
 
-See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.proto).
-Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/proto/contacts.swagger.json).
+See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.proto).
+Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.swagger.json).
 
 **NOTE** [Well Known Types](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf) are
 generated in a bit unusual way:
@@ -513,6 +513,108 @@ The Success JSON structure has the following format. The results tag is optional
     "message": <message-text>
   },
   "results": <service-response>
+}
+```
+
+`results` content follows the [Google model](https://cloud.google.com/apis/design/standard_methods): an object is returned for Get, Create and Update operations and list of objects for List operation.
+
+To allow compatibility with existing systems, the results tag name can be changed to a service-defined tag. In this way the success data becomes just a tag added to an existing structure.
+
+#### Examples:
+
+Response with no results:
+```
+{
+  "success": {
+    "status": 201, 
+    "message": "Account provisioned", 
+    "code": "CREATED"
+  }
+}
+```
+
+Response with results:
+```
+{
+  "success": {
+    "status": 200, 
+    "message": "Found 2 items", 
+    "code": "OK"
+  },
+  "results": [
+    {
+      "account_id": 4, 
+      "created_at": "2018-01-06T03:53:27.651Z", 
+      "updated_at": "2018-01-06T03:53:27.651Z", 
+      "account_number": null, 
+      "sfdc_account_id": "3", 
+      "id": 5
+    }, 
+    {
+      "account_id": 31, 
+      "created_at": "2018-01-06T04:38:32.572Z", 
+      "updated_at": "2018-01-06T04:38:32.572Z", 
+      "account_number": null, 
+      "sfdc_account_id": "1", 
+      "id": 9
+    }
+  ]
+}
+```
+
+Response for get by id operation:
+```
+{
+  "success": {
+    "status": 200, 
+    "message": "object found", 
+    "code": "OK"
+  },
+  "results": {
+      "account_id": 4, 
+      "created_at": "2018-05-06T03:53:27.651Z", 
+      "updated_at": "2018-05-06T03:53:27.651Z", 
+      "id": 5
+   }
+}
+```
+
+Response with results and service-defined results tag “rpz_hits”:
+```
+{
+  "success": {
+    "status": 200, 
+    "message": "Read 360 items", 
+    "code": "OK"
+  },
+  "rpz_hits": [
+    {
+      "pid": "default", 
+      "rip": "10.35.205.4", 
+      "policy_name": "Default", 
+      "ttl": -1, 
+      "qtype": 1, 
+      "qip": "10.120.20.247", 
+      "confidence": 3, 
+      "network": "on-prem", 
+      "event_time": "2017-12-13T07:07:50.000Z", 
+      "feed_name": "rpz", 
+      "dsource": 1, 
+      "rcode": 3, 
+      "timestamp": "11e7-dfd4-54e564f0-0000-0000287cd227", 
+      "company": "302002|0", 
+      "feed_type": "0", 
+      "user": "unknown", 
+      "device": "10.120.20.247", 
+      "severity": 3, 
+      "country": "unknown", 
+      "policy_action": "Block", 
+      "qname": "barfywyjgx.com", 
+      "tproperty": "A", 
+      "tclass": "UNKNOWN"
+    }, 
+    ...
+  ]
 }
 ```
 

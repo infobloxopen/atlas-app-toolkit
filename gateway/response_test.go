@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -24,11 +25,15 @@ type result struct {
 }
 
 type userWithPtr struct {
-	PtrValue *int `json:"ptr_value"`
+	PtrValue *wrappers.Int64Value `json:"ptr_value"`
 }
 
+func (m *userWithPtr) Reset()         {}
+func (m *userWithPtr) ProtoMessage()  {}
+func (m *userWithPtr) String() string { return "" }
+
 type userWithPtrResult struct {
-	Success []*userWithPtr `json:"success"`
+	Results *userWithPtr `json:"results"`
 }
 
 func (m *userWithPtrResult) Reset()         {}
@@ -108,20 +113,18 @@ func TestForwardResponseMessageWithNil(t *testing.T) {
 
 	rw := httptest.NewRecorder()
 	ForwardResponseMessage(
-		ctx, nil, &runtime.JSONBuiltin{}, rw, nil,
-		&userWithPtrResult{Success: []*userWithPtr{{nil}, {new(int)}}},
+		ctx, nil, &runtime.JSONPb{OrigName: true, EmitDefaults: true}, rw, nil,
+		&userWithPtrResult{Results: &userWithPtr{PtrValue: nil}},
 	)
 
-	var v map[string][]*userWithPtr
+	var v map[string]interface{}
+
 	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
-		t.Fatalf("failed to unmarshal response: %s", err)
+		t.Fatalf("failed to unmarshal JSON response: %s", err)
 	}
-	l, ok := v["success"]
-	if !ok {
-		t.Fatal("invalid response: missing 'success' field")
-	}
-	if len(l) != 2 {
-		t.Fatalf("invalid number of items in response: %d - expected: %d", len(l), 2)
+
+	if len(v["Results"].(map[string]interface{})) != 0 {
+		t.Errorf("invalid result item: %+v - expected %+v", v["Results"], map[string]interface{}{})
 	}
 }
 
