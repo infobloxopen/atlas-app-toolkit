@@ -37,8 +37,13 @@ func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 
 		if err != nil {
 			// Return container as-is.
-			if v, ok := err.(*Container); ok {
-				return nil, v
+			if _, ok := err.(*Container); ok {
+				return nil, err
+			}
+
+			// Pass protobuf status.
+			if _, ok := status.FromError(err); ok {
+				return nil, err
 			}
 
 			// Perform mapping and return error if not nil.
