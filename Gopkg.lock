@@ -20,6 +20,7 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -32,8 +33,7 @@
     "ptypes/timestamp",
     "ptypes/wrappers"
   ]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "9f81198da99b79e14d70ca2c3cc1bbe44c6e69b6"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -225,6 +225,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7634af82b91f2dc821ec6814c7714411c273837b4892b0826ac4f36ae0b73291"
+  inputs-digest = "cee6723c36c5f32db168e643c101b260417baea9a9027301689ef631dd6627cb"
   solver-name = "gps-cdcl"
   solver-version = 1
