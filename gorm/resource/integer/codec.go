@@ -32,10 +32,10 @@ func (c codec) String() string {
 }
 
 func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
-	if pb.GetApplicationName() != c.applicationName {
+	if v := pb.GetApplicationName(); v != "" && v != c.applicationName {
 		return nil, fmt.Errorf("integer: invalid application name %s of %s", pb.GetApplicationName(), c)
 	}
-	if pb.GetResourceType() != c.resourceType {
+	if v := pb.GetResourceType(); v != "" && v != c.resourceType {
 		return nil, fmt.Errorf("integer: invalid resource type %s of %s", pb.GetResourceType(), c)
 	}
 

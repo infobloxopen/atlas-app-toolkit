@@ -27,21 +27,26 @@ func TestCodec_Decode(t *testing.T) {
 			},
 		},
 		{
-			PB:            nil,
-			ID:            nil,
-			ExpectedError: "integer: invalid application name  of codec: app/res",
+			PB: nil,
+			ID: nil,
 		},
 		{
-			PB:            &resourcepb.Identifier{},
-			ID:            nil,
-			ExpectedError: "integer: invalid application name  of codec: app/res",
+			PB: &resourcepb.Identifier{},
+			ID: nil,
 		},
 		{
 			PB: &resourcepb.Identifier{
-				ApplicationName: "app",
+				ApplicationName: "bad",
 			},
 			ID:            nil,
-			ExpectedError: "integer: invalid resource type  of codec: app/res",
+			ExpectedError: "integer: invalid application name bad of codec: app/res",
+		},
+		{
+			PB: &resourcepb.Identifier{
+				ResourceType: "bad",
+			},
+			ID:            nil,
+			ExpectedError: "integer: invalid resource type bad of codec: app/res",
 		},
 		{
 			PB: &resourcepb.Identifier{
