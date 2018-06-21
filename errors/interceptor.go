@@ -29,7 +29,7 @@ func UnaryServerInterceptor(mapFuncs ...MapFunc) grpc.UnaryServerInterceptor {
 		container := InitContainer()
 		container.AddMapping(mapFuncs...)
 
-		// Save container in mapper.
+		// Save container in context.
 		ctx = NewContext(ctx, container)
 
 		// Execute handler.
