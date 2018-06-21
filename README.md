@@ -692,22 +692,27 @@ func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 }
 ```
 
-To attach details to your error you have to use `grpc/status` package.
-You can use our default implementation of error details (`rpc/errdetails`) or your own one.
+#### errors package
+
+To attach details and field info to your error you can
+use atlas-app-toolkit/errors package. For further details you can check a README
+in appropriate package, the base case is mentioned below.
+
 
 ```golang
 import (
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
 
-    "github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+    "github.com/infobloxopen/atlas-app-toolkit/errors"
 )
 
 func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
-    s := status.New(codes.Unimplemented, "MyMethod is not implemented")
-    s = s.WithDetails(errdetails.New(codes.Internal), "myservice", "in progress")
-    s = s.WithDetails(errdetails.New(codes.Internal), "myservice", "more details")
-    return nil, s.Err()
+
+    return nil, errros.New(codes.Unimplemented, "MyMethod is not implemented."
+	).WithDetail(codes.Internal, "myservice", "in progress",
+	).WithDetail(codes.Internal, "myservice", "more details",
+	).WithField("status", "status of this field is unknown")
 }
 ```
 
@@ -730,9 +735,27 @@ With `gateway.DefaultProtoErrorHandler` enabled JSON response will look like:
       "message": "more details",
       "target": "myservice"
     }
-  ]
+  ],
+  "fields": {
+      "status": ["status of this field is unknown"]
+  }
 }
 ```
+
+#### error mapping
+
+To avoid burden of mapping errors returned from 3-rd party libraries
+you can gather all error mappings in one place and put an interceptor
+provided by atlas-app-toolkit package in a middleware chain as following:
+
+interceptor := errros.UnaryServerInterceptor(
+	// List of mappings
+	
+	// Base case: simply map error to an error container.
+	errors.NewMapping(fmt.Errorf("Some Error"), errors.NewContainer(/* ... */).WithDetail(/* ... */)),
+)
+
+See README in errors package for further details.
 
 ### Collection Operators
 
