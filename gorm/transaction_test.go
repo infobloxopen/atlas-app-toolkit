@@ -15,7 +15,7 @@ import (
 func TestUnaryServerInterceptor_success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -46,7 +46,7 @@ func TestUnaryServerInterceptor_success(t *testing.T) {
 func TestUnaryServerInterceptor_error(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 
 	mock.ExpectBegin()
@@ -79,7 +79,7 @@ func TestUnaryServerInterceptor_error(t *testing.T) {
 func TestUnaryServerInterceptor_details(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -121,7 +121,7 @@ func TestUnaryServerInterceptor_details(t *testing.T) {
 func TestTransaction_Begin(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 	mock.ExpectBegin()
 
@@ -151,7 +151,7 @@ func TestTransaction_Begin(t *testing.T) {
 func TestTransaction_Commit(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -183,7 +183,7 @@ func TestTransaction_Commit(t *testing.T) {
 func TestTransaction_Rollback(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("faliled to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectRollback()
@@ -228,4 +228,83 @@ func TestContext(t *testing.T) {
 	if ftxn != txn {
 		t.Error("unknown transaction instance")
 	}
+}
+
+func TestBeginFromContext_Good(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	mock.ExpectBegin()
+
+	// Case: All good
+	ctxtxn := &Transaction{parent: gdb}
+	ctx = NewContext(ctx, ctxtxn)
+
+	txn1, err := BeginFromContext(ctx)
+	if txn1 == nil {
+		t.Error("Did not receive a transaction from context")
+	}
+	if err != nil {
+		t.Error("Received an error beginning transaction")
+	}
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to begin transaction - %s", err)
+	}
+
+	// Case: Transaction begin is idempotent
+	txn2, err := BeginFromContext(ctx)
+	if txn2 != txn1 {
+		t.Error("Got a different txn than was opened before")
+	}
+	if err != nil {
+		t.Error("Received an error opening transaction")
+	}
+}
+
+func TestBeginFromContext_Bad(t *testing.T) {
+	ctx := context.Background()
+
+	// Case: Transaction missing from context
+	txn1, err := BeginFromContext(ctx)
+	if err != ErrCtxTxnMissing {
+		t.Error("Did not receive a CtxTxnError when no context transaction was present")
+	}
+	if txn1 != nil {
+		t.Error("Got some txn returned when nil was expected")
+	}
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	mock.ExpectBegin().WillReturnError(errors.New(""))
+
+	// Case: Transaction fails to open
+	txn2, err := BeginFromContext(NewContext(ctx, &Transaction{parent: gdb}))
+	if txn2 != nil {
+		t.Error("Got some txn returned when nil was expected")
+	}
+	if err == nil {
+		t.Error("Did not receive an error when transaction begin returned error")
+	}
+
+	// Case: DB Missing from Transaction in Context
+	txn3, err := BeginFromContext(NewContext(ctx, &Transaction{}))
+	if txn3 != nil {
+		t.Error("Got some txn returned when nil was expected")
+	}
+	if err != ErrCtxTxnNoDB {
+		t.Error("Did not receive an error opening a txn with nil DB")
+	}
+
 }
