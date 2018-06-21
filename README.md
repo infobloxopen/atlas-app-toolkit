@@ -638,7 +638,10 @@ The Error JSON structure has the following format. The details tag is optional a
       "target": <resource-name>,
     },
     ...
-  ]
+  ],
+  "fields": {
+      "field1": [<message-1>, <message-2>, ...],
+      "field2": ...,
 }
 ```
 
@@ -692,10 +695,11 @@ func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 }
 ```
 
-#### errors package
+#### Errors Package
 
 To attach details and field info to your error you can
-use atlas-app-toolkit/errors package. For further details you can check a README
+use atlas-app-toolkit/errors package. For further details you can check a 
+[README](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/errors/README.md)
 in appropriate package, the base case is mentioned below.
 
 
@@ -709,7 +713,7 @@ import (
 
 func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 
-    return nil, errros.New(codes.Unimplemented, "MyMethod is not implemented."
+    return nil, errors.NewContainer(codes.Unimplemented, "MyMethod is not implemented.",
 	).WithDetail(codes.Internal, "myservice", "in progress",
 	).WithDetail(codes.Internal, "myservice", "more details",
 	).WithField("status", "status of this field is unknown")
