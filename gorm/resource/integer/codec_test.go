@@ -63,7 +63,7 @@ func TestCodec_Decode(t *testing.T) {
 				ResourceType:    "res",
 				ResourceId:      "",
 			},
-			ID: resource.Default,
+			ID: &resource.Default,
 		},
 	}
 
@@ -92,7 +92,7 @@ func TestCodec_Encode(t *testing.T) {
 			ExpectedError: "integer: the resource id of codec: app/res cannot be NULL",
 		},
 		{
-			ID:            resource.Nil,
+			ID:            &resource.Nil,
 			PB:            nil,
 			ExpectedError: "integer: the resource id of codec: app/res cannot be NULL",
 		},

@@ -32,7 +32,7 @@ func TestCodec_Decode(t *testing.T) {
 		},
 		{
 			PB: &resourcepb.Identifier{},
-			ID: resource.Nil,
+			ID: &resource.Nil,
 		},
 		{
 			PB: &resourcepb.Identifier{
@@ -67,7 +67,7 @@ func TestCodec_Encode(t *testing.T) {
 			PB: &resourcepb.Identifier{},
 		},
 		{
-			ID: resource.Nil,
+			ID: &resource.Nil,
 			PB: &resourcepb.Identifier{},
 		},
 		{

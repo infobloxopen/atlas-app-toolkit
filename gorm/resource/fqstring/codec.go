@@ -20,7 +20,7 @@ type codec struct{}
 
 func (codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	if pb == nil || (pb.ApplicationName == "" && pb.ResourceType == "" && pb.ResourceId == "") {
-		return resource.Nil, nil
+		return &resource.Nil, nil
 	}
 
 	if pb.ApplicationName == "" || pb.ResourceType == "" || pb.ResourceId == "" {

@@ -15,9 +15,9 @@ const defaultResource = "<default>"
 
 var (
 	// Nil is an empty Identifier
-	Nil = &Identifier{}
+	Nil = Identifier{}
 	// Default is a Identifier with "DEFAULT" (SQL) value,
-	Default = &Identifier{
+	Default = Identifier{
 		Valid:      true,
 		ResourceID: "DEFAULT",
 	}

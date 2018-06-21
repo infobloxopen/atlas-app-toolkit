@@ -42,7 +42,7 @@ func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	}
 
 	if pb.GetResourceId() == "" {
-		return resource.Default, nil
+		return &resource.Default, nil
 	}
 	v, err := uuid.Parse(pb.GetResourceId())
 	if err != nil {

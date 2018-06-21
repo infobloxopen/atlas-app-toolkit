@@ -40,7 +40,7 @@ func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	}
 
 	if pb.GetResourceId() == "" {
-		return resource.Default, nil
+		return &resource.Default, nil
 	}
 	i, err := strconv.ParseInt(pb.ResourceId, 10, 64)
 	if err != nil {
