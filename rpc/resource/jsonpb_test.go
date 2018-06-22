@@ -19,7 +19,7 @@ func TestIdentifier_MarshalJSONPB(t *testing.T) {
 				ResourceType:    "resource",
 				ResourceId:      "res1",
 			},
-			"app/resource/res1",
+			`"app/resource/res1"`,
 		},
 		{
 			&Identifier{
@@ -27,7 +27,7 @@ func TestIdentifier_MarshalJSONPB(t *testing.T) {
 				ResourceType:    "",
 				ResourceId:      "",
 			},
-			"null",
+			`"null"`,
 		},
 	}
 

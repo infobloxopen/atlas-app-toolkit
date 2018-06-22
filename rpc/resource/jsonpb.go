@@ -11,7 +11,7 @@ import (
 // 		<application_name>/<resource_type>/<resource_id>
 // Support "null" value.
 func (m Identifier) MarshalJSONPB(*jsonpb.Marshaler) ([]byte, error) {
-	v := BuildString(m.ApplicationName, m.ResourceType, m.ResourceId)
+	v := BuildString(m.GetApplicationName(), m.GetResourceType(), m.GetResourceId())
 	if v == "" {
 		v = "null"
 	}

@@ -5,13 +5,13 @@ import (
 
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource/fqstring"
-	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource/uuid"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource/integer"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 type ExampleGoType struct {
-	ID         *resource.Identifier
-	ExternalID *resource.Identifier
+	ID         int64
+	ExternalID string
 	VarName    string
 }
 
@@ -30,7 +30,7 @@ func Example() {
 	// register fqstring codec for default resources
 	resource.RegisterCodec(fqstring.NewCodec(), nil)
 	// register uuid codec for TestProtoMessage resources
-	resource.RegisterCodec(uuid.NewCodec("simpleapp", "examples"), &ExampleProtoMessage{})
+	resource.RegisterCodec(integer.NewCodec("simpleapp", "examples"), &ExampleProtoMessage{})
 
 	// and you want to convert PB type to your application type
 	toGoTypeFunc := func(msg *ExampleProtoMessage) (*ExampleGoType, error) {
@@ -43,13 +43,13 @@ func Example() {
 		if id, err := resource.Decode(msg, msg.Id); err != nil {
 			return nil, err
 		} else {
-			v.ID = id
+			v.ID = id.(int64)
 		}
 		// convert RPC identifier using External Codec for default resource type
 		if id, err := resource.Decode(nil, msg.ExternalId); err != nil {
 			return nil, err
 		} else {
-			v.ExternalID = id
+			v.ExternalID = id.(string)
 		}
 		return &v, nil
 	}
@@ -59,14 +59,14 @@ func Example() {
 		Id: &resourcepb.Identifier{
 			ApplicationName: "simpleapp",
 			ResourceType:    "examples",
-			ResourceId:      "00000000-0000-0000-0000-000000000000",
+			ResourceId:      "12",
 		},
 		// ExternalId stores data about "external_resource" that belongs to
 		// "externalapp" and has id "1"
 		ExternalId: &resourcepb.Identifier{
 			ApplicationName: "externalapp",
 			ResourceType:    "external_resource",
-			ResourceId:      "1",
+			ResourceId:      "12",
 		},
 		VarName: "somename",
 	}
@@ -77,8 +77,8 @@ func Example() {
 		return
 	}
 
-	//fmt.Printf("application name of internal id: %s\n", val.ID.ResourceID)
-	fmt.Printf("application name of fqstring id: %s\n", val.ExternalID.ResourceID)
+	fmt.Printf("application name of integer id: %v\n", val.ID)
+	fmt.Printf("application name of fqstring id: %v\n", val.ExternalID)
 
 	// so now you want to convert it back to PB representation
 	toPBMessageFunc := func(v *ExampleGoType) (*ExampleProtoMessage, error) {
@@ -111,16 +111,18 @@ func Example() {
 
 	fmt.Printf("application name of internal id: %s\n", pb.Id.GetApplicationName())
 	fmt.Printf("resource type of internal id: %s\n", pb.Id.GetResourceType())
-	//fmt.Printf("resource id of internal id: %s\n", pb.Id.GetResourceId())
+	fmt.Printf("resource id of internal id: %s\n", pb.Id.GetResourceId())
 	fmt.Printf("application name of fqstring id: %s\n", pb.ExternalId.GetApplicationName())
 	fmt.Printf("resource type of fqstring id: %s\n", pb.ExternalId.GetResourceType())
 	fmt.Printf("resource id of fqstring id: %s\n", pb.ExternalId.GetResourceId())
 
 	// Output:
-	//application name of fqstring id: externalapp/external_resource/1
+	//application name of integer id: 12
+	//application name of fqstring id: externalapp/external_resource/12
 	//application name of internal id: simpleapp
 	//resource type of internal id: examples
+	//resource id of internal id: 12
 	//application name of fqstring id: externalapp
 	//resource type of fqstring id: external_resource
-	//resource id of fqstring id: 1
+	//resource id of fqstring id: 12
 }

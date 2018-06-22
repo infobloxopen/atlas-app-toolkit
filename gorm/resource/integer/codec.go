@@ -11,12 +11,11 @@ import (
 )
 
 // NewCodec returns new resource.Codec that encodes and decodes Protocol Buffer
-// representation of infoblox.rpc.Identifier by  by encoding/decoding it to be
-// stored in SQL DB as an internal resource with Resource ID converted to int64 type.
-// Internal means a resource that belongs to current application.
-// If the ResourceId of infoblox.rpc.Identifier is empty the value of
-// the resource.Default will be returned.
-// Does not support NULL values
+// representation of Identifier to/from int64 type.
+//
+// The only resource_id part is encoded/decoded.
+//
+// Does not support NULL values. Could be used for "serial" primary keys.
 func NewCodec(applicationName, resourceType string) resource.Codec {
 	return &codec{
 		applicationName: applicationName,

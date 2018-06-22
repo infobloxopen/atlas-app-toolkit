@@ -4,19 +4,21 @@ import (
 	"errors"
 	"testing"
 
+	"database/sql/driver"
+
 	"github.com/golang/protobuf/proto"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 type TestCodec struct{}
 
-func (TestCodec) Decode(id *resourcepb.Identifier) (*Identifier, error) {
+func (TestCodec) Decode(id *resourcepb.Identifier) (driver.Value, error) {
 	if id.ResourceType == "test_resource" {
 		return nil, errors.New("test_resource error")
 	}
 	return nil, nil
 }
-func (TestCodec) Encode(*Identifier) (*resourcepb.Identifier, error) {
+func (TestCodec) Encode(value driver.Value) (*resourcepb.Identifier, error) {
 	return nil, errors.New("test_resource error")
 
 }
@@ -107,24 +109,24 @@ func TestDecode(t *testing.T) {
 
 func TestEncode(t *testing.T) {
 	tcases := []struct {
-		Identifier    *Identifier
+		Value         driver.Value
 		Message       proto.Message
 		ExpectedError string
 	}{
 		{
-			Identifier:    nil,
+			Value:         nil,
 			Message:       &TestProtoMessage{},
 			ExpectedError: "test_resource error",
 		},
 		{
-			Identifier:    nil,
+			Value:         nil,
 			Message:       nil,
 			ExpectedError: "resource: codec is not registered for resource <default>",
 		},
 	}
 
 	for _, tc := range tcases {
-		_, err := Encode(tc.Message, tc.Identifier)
+		_, err := Encode(tc.Message, tc.Value)
 		if err != nil && err.Error() != tc.ExpectedError {
 			t.Fatalf("invalid error %s, expected %s", err, tc.ExpectedError)
 		}

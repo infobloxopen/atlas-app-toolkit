@@ -10,10 +10,13 @@ import (
 )
 
 // NewCodec returns new resource.Codec that encodes and decodes Protocol Buffer
-// representation of infoblox.rpc.Identifier by encoding/decoding it to be
-// stored in SQL DB as a fully qualified string value in a format specified for Atlas References.
-// If the infoblox.rpc.Identifier is empty the resource.Nil is returned, it it has
-// missing one of the part the error is returned.
+// representation of Identifier to/from a fully qualified string value
+// in a format specified for Atlas References.
+//
+// If the Identifier is empty the empty string is returned.
+// If the Identifier is not fully qualified an error is returned.
+//
+// Support NULL values. Could be used for references from external services.
 func NewCodec() resource.Codec {
 	return codec{}
 }

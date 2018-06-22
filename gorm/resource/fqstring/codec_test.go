@@ -1,9 +1,9 @@
 package fqstring
 
 import (
+	"database/sql/driver"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
@@ -11,45 +11,42 @@ func TestCodec_Decode(t *testing.T) {
 	codec := NewCodec()
 
 	tcases := []struct {
-		PB            *resourcepb.Identifier
-		ID            *resource.Identifier
+		Identifier    *resourcepb.Identifier
+		Value         driver.Value
 		ExpectedError string
 	}{
 		{
-			PB: &resourcepb.Identifier{
+			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
 				ResourceType:    "res",
 				ResourceId:      "ext",
 			},
-			ID: &resource.Identifier{
-				Valid:      true,
-				ResourceID: "app/res/ext",
-			},
+			Value: "app/res/ext",
 		},
 		{
-			PB: nil,
-			ID: nil,
+			Identifier: nil,
+			Value:      nil,
 		},
 		{
-			PB: &resourcepb.Identifier{},
-			ID: &resource.Nil,
+			Identifier: &resourcepb.Identifier{},
+			Value:      nil,
 		},
 		{
-			PB: &resourcepb.Identifier{
+			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
 			},
-			ID:            nil,
+			Value:         nil,
 			ExpectedError: "fqstring: identifier is not fully qualified - application_name:\"app\" ",
 		},
 	}
 
 	for n, tc := range tcases {
-		id, err := codec.Decode(tc.PB)
+		value, err := codec.Decode(tc.Identifier)
 		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
 			t.Errorf("tc %d: invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
-		if id != nil && tc.ID != nil && (id.Valid != tc.ID.Valid || id.ResourceID != tc.ID.ResourceID) {
-			t.Errorf("tc: %d: invalid identifier %v, expected %v", n, id, tc.ID)
+		if value != nil && tc.Value != nil && value != tc.Value {
+			t.Errorf("tc: %d: invalid identifier %v, expected %v", n, value, tc.Value)
 		}
 	}
 }
@@ -58,32 +55,27 @@ func TestCodec_Encode(t *testing.T) {
 	codec := NewCodec()
 
 	tcases := []struct {
-		ID            *resource.Identifier
-		PB            *resourcepb.Identifier
+		Value         driver.Value
+		Identifier    *resourcepb.Identifier
 		ExpectedError string
 	}{
 		{
-			ID: nil,
-			PB: &resourcepb.Identifier{},
+			Value:      nil,
+			Identifier: &resourcepb.Identifier{},
 		},
 		{
-			ID: &resource.Nil,
-			PB: &resourcepb.Identifier{},
+			Value:         true,
+			Identifier:    nil,
+			ExpectedError: "fqstring: invalid resource id type bool",
 		},
 		{
-			ID: &resource.Identifier{
-				Valid:      true,
-				ResourceID: "app",
-			},
-			PB:            &resourcepb.Identifier{},
+			Value:         "app",
+			Identifier:    &resourcepb.Identifier{},
 			ExpectedError: "fqstring: resolved identifier is not fully qualified - app",
 		},
 		{
-			ID: &resource.Identifier{
-				Valid:      true,
-				ResourceID: "app/res/ext",
-			},
-			PB: &resourcepb.Identifier{
+			Value: "app/res/ext",
+			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
 				ResourceType:    "res",
 				ResourceId:      "ext",
@@ -92,19 +84,19 @@ func TestCodec_Encode(t *testing.T) {
 	}
 
 	for n, tc := range tcases {
-		pb, err := codec.Encode(tc.ID)
+		pb, err := codec.Encode(tc.Value)
 		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
 			t.Errorf("tc %d:invalid error message %q, expected %q", n, err, tc.ExpectedError)
 		}
 
-		if v := pb.GetApplicationName(); v != tc.PB.ApplicationName {
-			t.Errorf("tc %d: invalid application name %s, expected %s", n, v, tc.PB.ApplicationName)
+		if v := pb.GetApplicationName(); v != tc.Identifier.GetApplicationName() {
+			t.Errorf("tc %d: invalid application name %s, expected %s", n, v, tc.Identifier.GetApplicationName())
 		}
-		if v := pb.GetResourceType(); v != tc.PB.ResourceType {
-			t.Errorf("tc %d: invalid resource type %s, expected %s", n, v, tc.PB.ResourceType)
+		if v := pb.GetResourceType(); v != tc.Identifier.GetResourceType() {
+			t.Errorf("tc %d: invalid resource type %s, expected %s", n, v, tc.Identifier.GetResourceType())
 		}
-		if v := pb.GetResourceId(); v != tc.PB.ResourceId {
-			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.PB.ResourceId)
+		if v := pb.GetResourceId(); v != tc.Identifier.GetResourceId() {
+			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.Identifier.GetResourceId())
 		}
 	}
 }

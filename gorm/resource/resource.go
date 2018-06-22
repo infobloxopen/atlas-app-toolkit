@@ -19,12 +19,12 @@ var (
 )
 
 // Codec defines the interface package uses to encode and decode Protocol Buffer
-// infoblox.rpc.Identifier to an Identifier value.
+// Identifier to the driver.Value.
 // Note that implementation must be thread safe.
 type Codec interface {
 	// Encode encodes value to Protocol Buffer representation
 	Encode(driver.Value) (*resourcepb.Identifier, error)
-	// Decode decodes Protocol Buffer representation to a SQL driver value
+	// Decode decodes Protocol Buffer representation to the driver.Value
 	Decode(*resourcepb.Identifier) (driver.Value, error)
 }
 
