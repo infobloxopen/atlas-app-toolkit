@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/genproto/googleapis/rpc/code"
@@ -74,4 +77,67 @@ func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 	if v.Status.Message != "service not implemented" {
 		t.Errorf("invalid message: %s", v.Status.Message)
 	}
+}
+
+func TestWriteErrorContainer(t *testing.T) {
+	err := errors.
+		NewContainer(codes.InvalidArgument, "Invalid 'x' value.").
+		WithDetail(codes.InvalidArgument, "resource", "x could be one of.").
+		WithDetail(codes.AlreadyExists, "resource", "x btw already exists.").
+		WithField("x", "Check correct value of 'x'.")
+
+	v := new(RestError)
+
+	rw := httptest.NewRecorder()
+	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
+
+	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
+		t.Fatalf("failed to unmarshal response: %s", err)
+	}
+
+	if v.Status.HTTPStatus != http.StatusBadRequest {
+		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
+	}
+
+	if v.Status.Code != "INVALID_ARGUMENT" {
+		t.Errorf("invalid code: %s", v.Status.Code)
+	}
+
+	if v.Status.Message != "Invalid 'x' value." {
+		t.Errorf("invalid message: %s", v.Status.Message)
+	}
+
+	if len(v.Details) != 2 {
+		t.Errorf("invalid details length: %d", len(v.Details))
+	}
+
+	details := []interface{}{
+		map[string]interface{}{
+			"code":    "INVALID_ARGUMENT",
+			"target":  "resource",
+			"message": "x could be one of.",
+		},
+		map[string]interface{}{
+			"code":    "ALREADY_EXISTS",
+			"target":  "resource",
+			"message": "x btw already exists.",
+		},
+	}
+
+	if !reflect.DeepEqual(
+		v.Details,
+		details,
+	) {
+		t.Errorf("invalid details value: %v", v.Details)
+	}
+
+	fields := map[string][]string{
+		"x": []string{"Check correct value of 'x'."}}
+
+	vMap := v.Fields.(map[string]interface{})
+
+	if vMap["x"].([]interface{})[0] != fields["x"][0] {
+		t.Errorf("invalid fields value: %v", v.Fields)
+	}
+
 }
