@@ -746,20 +746,23 @@ With `gateway.DefaultProtoErrorHandler` enabled JSON response will look like:
 }
 ```
 
-#### error mapping
+#### Error Mapping
 
 To avoid burden of mapping errors returned from 3-rd party libraries
 you can gather all error mappings in one place and put an interceptor
 provided by atlas-app-toolkit package in a middleware chain as following:
 
+```
 interceptor := errros.UnaryServerInterceptor(
 	// List of mappings
 	
 	// Base case: simply map error to an error container.
 	errors.NewMapping(fmt.Errorf("Some Error"), errors.NewContainer(/* ... */).WithDetail(/* ... */)),
 )
+```
 
-See README in errors package for further details.
+See [README](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/errors/README.md)
+for further details.
 
 ### Collection Operators
 
