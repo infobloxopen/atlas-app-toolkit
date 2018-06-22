@@ -38,9 +38,13 @@ check-fmt:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/rpc/errdetails/error_details.proto
 
+.gen-errfields:
+	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
+	--go_out=:. $(REPO)/rpc/errfields/error_fields.proto
+
 .gen-servertestdata:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
 	--go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
 
 .PHONY: gen
-gen: .gen-op .gen-errdetails
+gen: .gen-op .gen-errdetails .gen-errfields
