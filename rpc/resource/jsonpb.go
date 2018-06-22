@@ -15,7 +15,7 @@ func (m Identifier) MarshalJSONPB(*jsonpb.Marshaler) ([]byte, error) {
 	if v == "" {
 		v = "null"
 	}
-	return []byte(v), nil
+	return []byte(`"` + v + `"`), nil
 }
 
 // UnmarshalJSONPB implements jsonpb.JSONPBUnmarshaler interface by unmarshal
