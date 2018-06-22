@@ -699,7 +699,7 @@ func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 
 To attach details and field info to your error you can
 use atlas-app-toolkit/errors package. For further details you can check a 
-[README](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/errors/README.md)
+[README](errors/README.md)
 in appropriate package, the base case is mentioned below.
 
 
@@ -761,7 +761,7 @@ interceptor := errros.UnaryServerInterceptor(
 )
 ```
 
-See [README](https://github.com/infobloxopen/atlas-app-toolkit/blob/master/errors/README.md)
+See [README](errors/README.md)
 for further details.
 
 ### Collection Operators
