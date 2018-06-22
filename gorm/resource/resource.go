@@ -1,12 +1,12 @@
 package resource
 
 import (
-	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+
+	"database/sql/driver"
 
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
@@ -14,58 +14,18 @@ import (
 const defaultResource = "<default>"
 
 var (
-	// Nil is an empty Identifier
-	Nil = Identifier{}
-	// Default is a Identifier with "DEFAULT" (SQL) value,
-	Default = Identifier{
-		Valid:      true,
-		ResourceID: int64(0),
-	}
-
 	mu       sync.RWMutex
 	registry = make(map[string]Codec)
 )
-
-// Identifier represents SQL value with NULL support.
-type Identifier struct {
-	Valid      bool
-	ResourceID interface{}
-}
-
-// Value implements driver.Valuer interface with support of NULL values.
-// If i.ID implements driver.Valuer interface than it will be used instead.
-func (i Identifier) Value() (driver.Value, error) {
-	if i.ResourceID == nil || !i.Valid {
-		return nil, nil
-	}
-	if v, ok := i.ResourceID.(driver.Valuer); ok {
-		return v.Value()
-	}
-	return i.ResourceID, nil
-}
-
-// Scan implements sql.Scanner interface with support of NULL values.
-// If i.ID implements sql.Scanner interface than it will be used instead.
-func (i *Identifier) Scan(v interface{}) error {
-	if v == nil {
-		return nil
-	}
-	i.Valid = true
-	if s, ok := i.ResourceID.(sql.Scanner); ok {
-		return s.Scan(v)
-	}
-	i.ResourceID = v
-	return nil
-}
 
 // Codec defines the interface package uses to encode and decode Protocol Buffer
 // infoblox.rpc.Identifier to an Identifier value.
 // Note that implementation must be thread safe.
 type Codec interface {
-	// Encode returns Protocol Buffer representation of an Identifier value.
-	Encode(*Identifier) (*resourcepb.Identifier, error)
-	// Decode returns an Identifier value based on Protocol Buffer representation
-	Decode(*resourcepb.Identifier) (*Identifier, error)
+	// Encode encodes value to Protocol Buffer representation
+	Encode(driver.Value) (*resourcepb.Identifier, error)
+	// Decode decodes Protocol Buffer representation to a SQL driver value
+	Decode(*resourcepb.Identifier) (driver.Value, error)
 }
 
 // RegisterCodec registers codec for a given pb.
@@ -96,7 +56,7 @@ func RegisterCodec(codec Codec, pb proto.Message) {
 
 // Decode decodes identifier using a codec registered for pb.
 // If codec has not been registered the error is returned.
-func Decode(pb proto.Message, identifier *resourcepb.Identifier) (*Identifier, error) {
+func Decode(pb proto.Message, identifier *resourcepb.Identifier) (driver.Value, error) {
 	codec, err := lookupCodec(pb)
 	if err != nil {
 		return nil, err
@@ -107,13 +67,13 @@ func Decode(pb proto.Message, identifier *resourcepb.Identifier) (*Identifier, e
 
 // Encode encodes identifier using a codec registered for pb.
 // If codec has not been registered the error is returned.
-func Encode(pb proto.Message, identifier *Identifier) (*resourcepb.Identifier, error) {
+func Encode(pb proto.Message, value driver.Value) (*resourcepb.Identifier, error) {
 	codec, err := lookupCodec(pb)
 	if err != nil {
 		return nil, err
 	}
 
-	return codec.Encode(identifier)
+	return codec.Encode(value)
 }
 
 func lookupCodec(pb proto.Message) (Codec, error) {

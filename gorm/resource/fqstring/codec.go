@@ -3,6 +3,8 @@ package fqstring
 import (
 	"fmt"
 
+	"database/sql/driver"
+
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
@@ -18,9 +20,9 @@ func NewCodec() resource.Codec {
 
 type codec struct{}
 
-func (codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
+func (codec) Decode(pb *resourcepb.Identifier) (driver.Value, error) {
 	if pb == nil || (pb.ApplicationName == "" && pb.ResourceType == "" && pb.ResourceId == "") {
-		return &resource.Nil, nil
+		return nil, nil
 	}
 
 	if pb.ApplicationName == "" || pb.ResourceType == "" || pb.ResourceId == "" {
@@ -28,26 +30,26 @@ func (codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	}
 
 	value := resourcepb.BuildString(pb.ApplicationName, pb.ResourceType, pb.ResourceId)
-	id := resource.Identifier{
-		Valid:      true,
-		ResourceID: value,
-	}
 
-	return &id, nil
+	return value, nil
 }
 
-func (codec) Encode(id *resource.Identifier) (*resourcepb.Identifier, error) {
+func (codec) Encode(value driver.Value) (*resourcepb.Identifier, error) {
 	var pb resourcepb.Identifier
 
-	if id == nil || id.ResourceID == nil || !id.Valid {
+	if value == nil {
 		return &pb, nil
 	}
 
-	value := fmt.Sprintf("%v", id.ResourceID)
-	pb.ApplicationName, pb.ResourceType, pb.ResourceId = resourcepb.ParseString(value)
+	v, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("fqstring: invalid resource id type %T", value)
+	}
+
+	pb.ApplicationName, pb.ResourceType, pb.ResourceId = resourcepb.ParseString(v)
 
 	if pb.ApplicationName == "" || pb.ResourceType == "" || pb.ResourceId == "" {
-		return nil, fmt.Errorf("fqstring: resolved identifier is not fully qualified - %v", id.ResourceID)
+		return nil, fmt.Errorf("fqstring: resolved identifier is not fully qualified - %v", v)
 	}
 
 	return &pb, nil

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"database/sql/driver"
+
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
@@ -31,7 +33,7 @@ func (c codec) String() string {
 	return "codec: " + c.applicationName + "/" + c.resourceType
 }
 
-func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
+func (c codec) Decode(pb *resourcepb.Identifier) (driver.Value, error) {
 	if v := pb.GetApplicationName(); v != "" && v != c.applicationName {
 		return nil, fmt.Errorf("integer: invalid application name %s of %s", pb.GetApplicationName(), c)
 	}
@@ -40,31 +42,28 @@ func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	}
 
 	if pb.GetResourceId() == "" {
-		return &resource.Default, nil
+		return int64(0), nil
 	}
 	i, err := strconv.ParseInt(pb.ResourceId, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("integer: unable to convert resource id %v of %s - %s", pb.ResourceId, c, err.(*strconv.NumError).Err)
 	}
-	return &resource.Identifier{
-		Valid:      true,
-		ResourceID: i,
-	}, nil
+	return i, nil
 }
 
-func (c codec) Encode(id *resource.Identifier) (*resourcepb.Identifier, error) {
+func (c codec) Encode(value driver.Value) (*resourcepb.Identifier, error) {
 	var pb resourcepb.Identifier
 
-	if id == nil || id.ResourceID == nil || !id.Valid {
+	if value == nil {
 		return nil, fmt.Errorf("integer: the resource id of %s cannot be NULL", c)
 	}
 
 	pb.ApplicationName = c.applicationName
 	pb.ResourceType = c.resourceType
 
-	v, ok := id.ResourceID.(int64)
+	v, ok := value.(int64)
 	if !ok {
-		return nil, fmt.Errorf("integer: invalid resource id type %T of %s", id.ResourceID, c)
+		return nil, fmt.Errorf("integer: invalid resource id type %T of %s", value, c)
 	}
 
 	return &resourcepb.Identifier{

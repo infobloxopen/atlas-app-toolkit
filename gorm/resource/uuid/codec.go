@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"database/sql/driver"
+
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
@@ -33,7 +35,7 @@ func (c codec) String() string {
 	return "codec: " + c.applicationName + "/" + c.resourceType
 }
 
-func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
+func (c codec) Decode(pb *resourcepb.Identifier) (driver.Value, error) {
 	if v := pb.GetApplicationName(); v != "" && v != c.applicationName {
 		return nil, fmt.Errorf("uuid: invalid application name %s of %s", pb.GetApplicationName(), c)
 	}
@@ -42,31 +44,28 @@ func (c codec) Decode(pb *resourcepb.Identifier) (*resource.Identifier, error) {
 	}
 
 	if pb.GetResourceId() == "" {
-		return &resource.Default, nil
+		return "", nil
 	}
 	v, err := uuid.Parse(pb.GetResourceId())
 	if err != nil {
 		return nil, fmt.Errorf("uuid: unable to convert resource id %v of %s - %s", pb.ResourceId, c, err)
 	}
-	return &resource.Identifier{
-		Valid:      true,
-		ResourceID: v.String(),
-	}, nil
+	return v.String(), nil
 }
 
-func (c codec) Encode(id *resource.Identifier) (*resourcepb.Identifier, error) {
+func (c codec) Encode(value driver.Value) (*resourcepb.Identifier, error) {
 	var pb resourcepb.Identifier
 
-	if id == nil || id.ResourceID == nil || !id.Valid {
+	if value == nil {
 		return nil, fmt.Errorf("uuid: the resource id of %s cannot be NULL", c)
 	}
 
 	pb.ApplicationName = c.applicationName
 	pb.ResourceType = c.resourceType
 
-	v, ok := id.ResourceID.(string)
+	v, ok := value.(string)
 	if !ok {
-		return nil, fmt.Errorf("uuid: invalid resource id type %T of %s", id.ResourceID, c)
+		return nil, fmt.Errorf("uuid: invalid resource id type %T of %s", value, c)
 	}
 
 	return &resourcepb.Identifier{
