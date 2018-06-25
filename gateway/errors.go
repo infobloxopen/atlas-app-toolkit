@@ -11,6 +11,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.
@@ -22,6 +25,7 @@ type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, 
 type RestError struct {
 	Status  *RestStatus   `json:"error,omitempty"`
 	Details []interface{} `json:"details,omitempty"`
+	Fields  interface{}   `json:"fields,omitempty"`
 }
 
 var (
@@ -86,9 +90,26 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		st = status.New(codes.Unknown, err.Error())
 	}
 
+	details := []interface{}{}
+	var fields interface{}
+
+	for _, d := range st.Details() {
+		switch d.(type) {
+		case *errdetails.TargetInfo:
+			details = append(details, d)
+		case *errfields.FieldInfo:
+			fields = d
+		default:
+			grpclog.Printf("error handler: failed to recognize error message")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
 	restErr := &RestError{
 		Status:  Status(ctx, st),
-		Details: st.Details(),
+		Details: details,
+		Fields:  fields,
 	}
 
 	if !headerWritten {

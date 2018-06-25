@@ -2,13 +2,14 @@ package gorm
 
 import (
 	"context"
+	"errors"
+	"sync"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"sync"
 )
 
 // ctxKey is an unexported type for keys defined in this package.
@@ -19,6 +20,11 @@ type ctxKey int
 // It is unexported; clients use NewContext and FromContext
 // instead of using this key directly.
 var txnKey ctxKey
+
+var (
+	ErrCtxTxnMissing = errors.New("Database transaction for request missing in context")
+	ErrCtxTxnNoDB    = errors.New("Transaction in context, but DB is nil")
+)
 
 // NewContext returns a new Context that carries value txn.
 func NewContext(parent context.Context, txn *Transaction) context.Context {
@@ -38,6 +44,21 @@ type Transaction struct {
 	mu      sync.Mutex
 	parent  *gorm.DB
 	current *gorm.DB
+}
+
+func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
+	txn, ok := FromContext(ctx)
+	if !ok {
+		return nil, ErrCtxTxnMissing
+	}
+	if txn.parent == nil {
+		return nil, ErrCtxTxnNoDB
+	}
+	db := txn.Begin()
+	if db.Error != nil {
+		return nil, db.Error
+	}
+	return db, nil
 }
 
 // Begin starts new transaction by calling `*gorm.DB.Begin()`
