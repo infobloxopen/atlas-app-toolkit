@@ -22,10 +22,10 @@ syntax = "proto3";
 import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
 
 message MyMessage {
-    infoblox.rpc.Identifier id = 1;
+    atlas.rpc.Identifier id = 1;
     string some_data = 2;
-    infoblox.rpc.Identifier reference_on_external_resource = 3;
-    infoblox.rpc.Identifier foreign_id_of_internal_resource = 4;
+    atlas.rpc.Identifier reference_on_external_resource = 3;
+    atlas.rpc.Identifier foreign_id_of_internal_resource = 4;
 }
 ```
 

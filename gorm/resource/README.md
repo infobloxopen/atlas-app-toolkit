@@ -57,19 +57,19 @@ option go_package = "github.com/yourapp/pb;pb";
 message A {
     option (gorm.opts).ormable = true;
     
-    infoblox.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
+    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
     string value = 2;
     repeated B b_list = 3; // has many
-    infoblox.rpc.Identifier external = 4 [(gorm.field).tag = {type: "text"}];
+    atlas.rpc.Identifier external = 4 [(gorm.field).tag = {type: "text"}];
 }
 
 message B {
     option (gorm.opts).ormable = true;
     
-    infoblox.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
+    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
     string value = 2;
      // foreign key to A  parent. !!! Will be set to the type of A.id
-     infoblox.rpc.Identifier a_id = 3;
+    atlas.rpc.Identifier a_id = 3;
 }
 ```
 
