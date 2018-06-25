@@ -165,7 +165,7 @@ func Encode(pb proto.Message, value driver.Value) (*resourcepb.Identifier, error
 		id.ApplicationName = appname
 	}
 	if id.ResourceType == "" {
-		id.ResourceType = ResourceType(pb)
+		id.ResourceType = Name(pb)
 	}
 	if id.ResourceId == "" {
 		id.ResourceId = s
@@ -202,10 +202,10 @@ func EncodeBytes(pb proto.Message, value driver.Value) (*resourcepb.Identifier, 
 	return Encode(pb, string(v))
 }
 
-// ResourceType returns name of pb.
+// Name returns name of pb.
 // If pb implements XXX_MessageName then it is used to return name, otherwise
 // proto.MessageName is used and "s" symbol is added at the end of the message name.
-func ResourceType(pb proto.Message) string {
+func Name(pb proto.Message) string {
 	if pb == nil {
 		return ""
 	}
