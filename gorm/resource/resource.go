@@ -107,6 +107,9 @@ func DecodeInt64(pb proto.Message, id *resourcepb.Identifier) (int64, error) {
 	if !ok {
 		return 0, fmt.Errorf("resource: invalid value type, expected int64")
 	}
+	if s == "" {
+		return int64(0), nil
+	}
 
 	i, err = strconv.ParseInt(s, 10, 64)
 	if err != nil {
