@@ -85,11 +85,11 @@ func Decode(pb proto.Message, id *resourcepb.Identifier) (driver.Value, error) {
 
 	// fully qualified
 	if pb == nil {
-		return resourcepb.BuildString(id.ApplicationName, id.ResourceType, id.ResourceId), nil
+		return resourcepb.BuildString(id.GetApplicationName(), id.GetResourceType(), id.GetResourceId()), nil
 	}
 
 	// resource id
-	return id.ResourceId, nil
+	return id.GetResourceId(), nil
 }
 
 // DecodeInt64 decodes value returned by Decode as int64.
