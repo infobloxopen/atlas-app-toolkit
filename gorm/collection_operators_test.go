@@ -48,15 +48,24 @@ func TestApplyCollectionOperators(t *testing.T) {
 
 	md := gateway.MetadataAnnotator(nil, req)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
-	gormDB, err = ApplyCollectionOperators(gormDB, ctx)
-	if err != nil {
-		t.Fatal(err)
+	interceptor := gateway.UnaryServerInterceptor()
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+
+		gormDB, err = ApplyCollectionOperators(gormDB, ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var actual []Person
+		gormDB.Find(&actual)
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("There were unfulfilled expectations: %s", err)
+		}
+		return nil, nil
 	}
-
-	var actual []Person
-	gormDB.Find(&actual)
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("There were unfulfilled expectations: %s", err)
+	_, err = interceptor(ctx, req, nil, handler)
+	if err != nil {
+		t.Fatalf("failed to apply collection operators to testRequest: %s", err)
 	}
 }
