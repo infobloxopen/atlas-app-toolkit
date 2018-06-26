@@ -1,44 +1,33 @@
 package gorm
 
 import (
-	"context"
 	"strings"
 
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/jinzhu/gorm"
 )
 
-func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error) {
-	// ApplyCollectionOperators applies query operators taken from context ctx to gorm instance db.
-	f, err := gateway.Filtering(ctx)
-	if err != nil {
-		return nil, err
-	}
-	db, err = ApplyFiltering(db, f)
-	if err != nil {
-		return nil, err
+// ApplyCollectionOperators apply collection operators to gorm instance db
+func ApplyCollectionOperators(db *gorm.DB, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	if f.GetRoot() != nil {
+		var err error
+		db, err = ApplyFiltering(db, f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var s *query.Sorting
-	s, err = gateway.Sorting(ctx)
-	if err != nil {
-		return nil, err
+	if s != nil {
+		db = ApplySorting(db, s)
 	}
-	db = ApplySorting(db, s)
 
-	var p *query.Pagination
-	p, err = gateway.Pagination(ctx)
-	if err != nil {
-		return nil, err
+	if p != nil {
+		db = ApplyPagination(db, p)
 	}
-	db = ApplyPagination(db, p)
 
-	fs := gateway.FieldSelection(ctx)
-	if err != nil {
-		return nil, err
+	if fs != nil {
+		db = ApplyFieldSelection(db, fs)
 	}
-	db = ApplyFieldSelection(db, fs)
 
 	return db, nil
 }
