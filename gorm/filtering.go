@@ -2,55 +2,53 @@ package gorm
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 // FilterStringToGorm is a shortcut to parse a filter string using default FilteringParser implementation
 // and call FilteringToGorm on the returned filtering expression.
-func FilterStringToGorm(filter string) (string, []interface{}, error) {
+func FilterStringToGorm(filter string, obj interface{}) (string, []interface{}, error) {
 	f, err := query.ParseFiltering(filter)
 	if err != nil {
 		return "", nil, err
 	}
-	return FilteringToGorm(f)
+	return FilteringToGorm(f, obj)
 }
 
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
-func FilteringToGorm(m *query.Filtering) (string, []interface{}, error) {
+func FilteringToGorm(m *query.Filtering, obj interface{}) (string, []interface{}, error) {
 	if m == nil {
 		return "", nil, nil
 	}
-
 	switch r := m.Root.(type) {
 	case *query.Filtering_Operator:
-		return LogicalOperatorToGorm(r.Operator)
+		return LogicalOperatorToGorm(r.Operator, obj)
 	case *query.Filtering_StringCondition:
-		return StringConditionToGorm(r.StringCondition)
+		return StringConditionToGorm(r.StringCondition, obj)
 	case *query.Filtering_NumberCondition:
-		return NumberConditionToGorm(r.NumberCondition)
+		return NumberConditionToGorm(r.NumberCondition, obj)
 	case *query.Filtering_NullCondition:
-		return NullConditionToGorm(r.NullCondition)
+		return NullConditionToGorm(r.NullCondition, obj)
 	default:
 		return "", nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
 }
 
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
-func LogicalOperatorToGorm(lop *query.LogicalOperator) (string, []interface{}, error) {
+func LogicalOperatorToGorm(lop *query.LogicalOperator, obj interface{}) (string, []interface{}, error) {
 	var lres string
 	var largs []interface{}
 	var err error
 	switch l := lop.Left.(type) {
 	case *query.LogicalOperator_LeftOperator:
-		lres, largs, err = LogicalOperatorToGorm(l.LeftOperator)
+		lres, largs, err = LogicalOperatorToGorm(l.LeftOperator, obj)
 	case *query.LogicalOperator_LeftStringCondition:
-		lres, largs, err = StringConditionToGorm(l.LeftStringCondition)
+		lres, largs, err = StringConditionToGorm(l.LeftStringCondition, obj)
 	case *query.LogicalOperator_LeftNumberCondition:
-		lres, largs, err = NumberConditionToGorm(l.LeftNumberCondition)
+		lres, largs, err = NumberConditionToGorm(l.LeftNumberCondition, obj)
 	case *query.LogicalOperator_LeftNullCondition:
-		lres, largs, err = NullConditionToGorm(l.LeftNullCondition)
+		lres, largs, err = NullConditionToGorm(l.LeftNullCondition, obj)
 	default:
 		return "", nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
@@ -62,13 +60,13 @@ func LogicalOperatorToGorm(lop *query.LogicalOperator) (string, []interface{}, e
 	var rargs []interface{}
 	switch r := lop.Right.(type) {
 	case *query.LogicalOperator_RightOperator:
-		rres, rargs, err = LogicalOperatorToGorm(r.RightOperator)
+		rres, rargs, err = LogicalOperatorToGorm(r.RightOperator, obj)
 	case *query.LogicalOperator_RightStringCondition:
-		rres, rargs, err = StringConditionToGorm(r.RightStringCondition)
+		rres, rargs, err = StringConditionToGorm(r.RightStringCondition, obj)
 	case *query.LogicalOperator_RightNumberCondition:
-		rres, rargs, err = NumberConditionToGorm(r.RightNumberCondition)
+		rres, rargs, err = NumberConditionToGorm(r.RightNumberCondition, obj)
 	case *query.LogicalOperator_RightNullCondition:
-		rres, rargs, err = NullConditionToGorm(r.RightNullCondition)
+		rres, rargs, err = NullConditionToGorm(r.RightNullCondition, obj)
 	default:
 		return "", nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -91,7 +89,11 @@ func LogicalOperatorToGorm(lop *query.LogicalOperator) (string, []interface{}, e
 }
 
 // StringConditionToGorm returns GORM Plain SQL representation of the string condition.
-func StringConditionToGorm(c *query.StringCondition) (string, []interface{}, error) {
+func StringConditionToGorm(c *query.StringCondition, obj interface{}) (string, []interface{}, error) {
+	dbName, err := HandleFieldPath(c.FieldPath, obj)
+	if err != nil {
+		return "", nil, err
+	}
 	var o string
 	switch c.Type {
 	case query.StringCondition_EQ:
@@ -103,11 +105,16 @@ func StringConditionToGorm(c *query.StringCondition) (string, []interface{}, err
 	if c.IsNegative {
 		neg = "NOT"
 	}
-	return fmt.Sprintf("%s(%s %s ?)", neg, strings.Join(c.FieldPath, "."), o), []interface{}{c.Value}, nil
+
+	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{c.Value}, nil
 }
 
 // NumberConditionToGorm returns GORM Plain SQL representation of the number condition.
-func NumberConditionToGorm(c *query.NumberCondition) (string, []interface{}, error) {
+func NumberConditionToGorm(c *query.NumberCondition, obj interface{}) (string, []interface{}, error) {
+	dbName, err := HandleFieldPath(c.FieldPath, obj)
+	if err != nil {
+		return "", nil, err
+	}
 	var o string
 	switch c.Type {
 	case query.NumberCondition_EQ:
@@ -125,15 +132,19 @@ func NumberConditionToGorm(c *query.NumberCondition) (string, []interface{}, err
 	if c.IsNegative {
 		neg = "NOT"
 	}
-	return fmt.Sprintf("%s(%s %s ?)", neg, strings.Join(c.FieldPath, "."), o), []interface{}{c.Value}, nil
+	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{c.Value}, nil
 }
 
 // NullConditionToGorm returns GORM Plain SQL representation of the null condition.
-func NullConditionToGorm(c *query.NullCondition) (string, []interface{}, error) {
+func NullConditionToGorm(c *query.NullCondition, obj interface{}) (string, []interface{}, error) {
+	dbName, err := HandleFieldPath(c.FieldPath, obj)
+	if err != nil {
+		return "", nil, err
+	}
 	o := "IS NULL"
 	var neg string
 	if c.IsNegative {
 		neg = "NOT"
 	}
-	return fmt.Sprintf("%s(%s %s)", neg, strings.Join(c.FieldPath, "."), o), nil, nil
+	return fmt.Sprintf("%s(%s %s)", neg, dbName, o), nil, nil
 }

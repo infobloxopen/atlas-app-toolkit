@@ -8,6 +8,9 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
+type Entity struct {
+}
+
 func TestGormFiltering(t *testing.T) {
 
 	tests := []struct {
@@ -17,92 +20,92 @@ func TestGormFiltering(t *testing.T) {
 		err  error
 	}{
 		{
-			"not(field1 == 'value1' or field2 == 'value2' and field3 != 'value3')",
-			"NOT((field1 = ?) OR ((field2 = ?) AND NOT(field3 = ?)))",
+			"not(entities.field1 == 'value1' or entities.field2 == 'value2' and entities.field3 != 'value3')",
+			"NOT((entities.field1 = ?) OR ((entities.field2 = ?) AND NOT(entities.field3 = ?)))",
 			[]interface{}{"value1", "value2", "value3"},
 			nil,
 		},
 		{
-			"field1 ~ 'regex'",
-			"(field1 ~ ?)",
+			"entities.field1 ~ 'regex'",
+			"(entities.field1 ~ ?)",
 			[]interface{}{"regex"},
 			nil,
 		},
 		{
-			"field1 !~ 'regex'",
-			"NOT(field1 ~ ?)",
+			"entities.field1 !~ 'regex'",
+			"NOT(entities.field1 ~ ?)",
 			[]interface{}{"regex"},
 			nil,
 		},
 		{
-			"field1 == 22",
-			"(field1 = ?)",
+			"entities.field1 == 22",
+			"(entities.field1 = ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"not field1 == 22",
-			"NOT(field1 = ?)",
+			"not entities.field1 == 22",
+			"NOT(entities.field1 = ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"field1 > 22",
-			"(field1 > ?)",
+			"entities.field1 > 22",
+			"(entities.field1 > ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"not field1 > 22",
-			"NOT(field1 > ?)",
+			"not entities.field1 > 22",
+			"NOT(entities.field1 > ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"field1 >= 22",
-			"(field1 >= ?)",
+			"entities.field1 >= 22",
+			"(entities.field1 >= ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"not field1 >= 22",
-			"NOT(field1 >= ?)",
+			"not entities.field1 >= 22",
+			"NOT(entities.field1 >= ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"field1 < 22",
-			"(field1 < ?)",
+			"entities.field1 < 22",
+			"(entities.field1 < ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"not field1 < 22",
-			"NOT(field1 < ?)",
+			"not entities.field1 < 22",
+			"NOT(entities.field1 < ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"field1 <= 22",
-			"(field1 <= ?)",
+			"entities.field1 <= 22",
+			"(entities.field1 <= ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"not field1 <= 22",
-			"NOT(field1 <= ?)",
+			"not entities.field1 <= 22",
+			"NOT(entities.field1 <= ?)",
 			[]interface{}{22.0},
 			nil,
 		},
 		{
-			"field1 == null",
-			"(field1 IS NULL)",
+			"entities.field1 == null",
+			"(entities.field1 IS NULL)",
 			nil,
 			nil,
 		},
 		{
-			"field1 != null",
-			"NOT(field1 IS NULL)",
+			"entities.field1 != null",
+			"NOT(entities.field1 IS NULL)",
 			nil,
 			nil,
 		},
@@ -113,7 +116,7 @@ func TestGormFiltering(t *testing.T) {
 			nil,
 		},
 		{
-			"field1 === null",
+			"entities.field1 === null",
 			"",
 			nil,
 			&query.UnexpectedSymbolError{},
@@ -121,7 +124,7 @@ func TestGormFiltering(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		gorm, args, err := FilterStringToGorm(test.rest)
+		gorm, args, err := FilterStringToGorm(test.rest, &Entity{})
 		assert.Equal(t, test.gorm, gorm)
 		assert.Equal(t, test.args, args)
 		assert.IsType(t, test.err, err)

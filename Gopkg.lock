@@ -26,6 +26,9 @@
     "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
+    "protoc-gen-go/generator",
+    "protoc-gen-go/generator/internal/remap",
+    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -225,6 +228,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cee6723c36c5f32db168e643c101b260417baea9a9027301689ef631dd6627cb"
+  inputs-digest = "72a68123eb1bb6d5371b256cb233ea7db517705dd1539ef4f23e3fc24fead2cc"
   solver-name = "gps-cdcl"
   solver-version = 1

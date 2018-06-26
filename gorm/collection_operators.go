@@ -9,13 +9,13 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error) {
+func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{}) (*gorm.DB, error) {
 	// ApplyCollectionOperators applies query operators taken from context ctx to gorm instance db.
 	f, err := gateway.Filtering(ctx)
 	if err != nil {
 		return nil, err
 	}
-	db, err = ApplyFiltering(db, f)
+	db, err = ApplyFiltering(db, f, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,10 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error
 	if err != nil {
 		return nil, err
 	}
-	db = ApplySorting(db, s)
+	db, err = ApplySorting(db, s, obj)
+	if err != nil {
+		return nil, err
+	}
 
 	var p *query.Pagination
 	p, err = gateway.Pagination(ctx)
@@ -38,14 +41,14 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context) (*gorm.DB, error
 	if err != nil {
 		return nil, err
 	}
-	db = ApplyFieldSelection(db, fs)
+	db = ApplyFieldSelection(db, fs, obj)
 
 	return db, nil
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(db *gorm.DB, f *query.Filtering) (*gorm.DB, error) {
-	str, args, err := FilteringToGorm(f)
+func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB, error) {
+	str, args, err := FilteringToGorm(f, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -56,19 +59,23 @@ func ApplyFiltering(db *gorm.DB, f *query.Filtering) (*gorm.DB, error) {
 }
 
 // ApplySorting applies sorting operator s to gorm instance db.
-func ApplySorting(db *gorm.DB, s *query.Sorting) *gorm.DB {
+func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, error) {
 	var crs []string
 	for _, cr := range s.GetCriterias() {
+		dbName, err := HandleFieldPath(strings.Split(cr.GetTag(), "."), obj)
+		if err != nil {
+			return nil, err
+		}
 		if cr.IsDesc() {
-			crs = append(crs, cr.GetTag()+" desc")
+			crs = append(crs, dbName+" desc")
 		} else {
-			crs = append(crs, cr.GetTag())
+			crs = append(crs, dbName)
 		}
 	}
 	if len(crs) > 0 {
-		return db.Order(strings.Join(crs, ","))
+		return db.Order(strings.Join(crs, ",")), nil
 	}
-	return db
+	return db, nil
 }
 
 // ApplyPagination applies pagination operator p to gorm instance db.
@@ -77,7 +84,7 @@ func ApplyPagination(db *gorm.DB, p *query.Pagination) *gorm.DB {
 }
 
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection) *gorm.DB {
+func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection, obj interface{}) *gorm.DB {
 	var fields []string
 	for _, f := range fs.GetFields() {
 		fields = append(fields, f.GetName())
