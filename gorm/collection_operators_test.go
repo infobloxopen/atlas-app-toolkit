@@ -44,11 +44,11 @@ func TestApplyCollectionOperators(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mock.ExpectQuery(fixedFullRe("SELECT name FROM \"people\" WHERE ((age <= $1)) ORDER BY age desc LIMIT 2 OFFSET 1")).WithArgs(25.0)
+	mock.ExpectQuery(fixedFullRe("SELECT name FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0)
 
 	md := gateway.MetadataAnnotator(nil, req)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
-	gormDB, err = ApplyCollectionOperators(gormDB, ctx)
+	gormDB, err = ApplyCollectionOperators(gormDB, ctx, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
