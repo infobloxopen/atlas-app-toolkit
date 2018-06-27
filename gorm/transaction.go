@@ -104,7 +104,7 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	defer t.mu.Unlock()
 	t.current.Commit()
 	err := t.current.Error
-	if err == nil && len(t.afterCommitHook) != 0 {
+	if err == nil {
 		for i := range t.afterCommitHook {
 			t.afterCommitHook[i](ctx)
 		}
