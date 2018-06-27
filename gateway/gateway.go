@@ -25,6 +25,7 @@ type gateway struct {
 	serverDialOptions []grpc.DialOption
 	endpoints         map[string][]registerFunc
 	mux               *http.ServeMux
+	gatewayMuxOptions []runtime.ServeMuxOption
 }
 
 // NewGateway creates a gRPC REST gateway with HTTP handlers that have been
@@ -49,8 +50,8 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
-			runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
-			runtime.WithMetadata(MetadataAnnotator),
+			append([]runtime.ServeMuxOption{runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
+				runtime.WithMetadata(MetadataAnnotator)}, g.gatewayMuxOptions...)...,
 		)
 		for _, register := range registers {
 			if err := register(
@@ -93,5 +94,13 @@ func WithServerAddress(address string) Option {
 func WithMux(mux *http.ServeMux) Option {
 	return func(g *gateway) {
 		g.mux = mux
+	}
+}
+
+// WithGatewayOptions allows for additional gateway ServeMuxOptions beyond the
+// default ProtoMessageErrorHandler and MetadataAnnotator from this package
+func WithGatewayOptions(opt ...runtime.ServeMuxOption) Option {
+	return func(g *gateway) {
+		g.gatewayMuxOptions = append(g.gatewayMuxOptions, opt...)
 	}
 }
