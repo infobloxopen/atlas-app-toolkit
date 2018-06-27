@@ -41,14 +41,14 @@ func FromContext(ctx context.Context) (txn *Transaction, ok bool) {
 // It works as a singleton to prevent an application of creating more than one
 // transaction instance per incoming request.
 type Transaction struct {
-	mu           sync.Mutex
-	parent       *gorm.DB
-	current      *gorm.DB
-	OnCommitHook func(ctx context.Context)
+	mu              sync.Mutex
+	parent          *gorm.DB
+	current         *gorm.DB
+	afterCommitHook []func(context.Context)
 }
 
-func (t *Transaction) SetOnCommitHook(f func(ctx context.Context)) {
-	t.OnCommitHook = f
+func (t *Transaction) AddAfterCommitHook(f []func(context.Context)) {
+	t.afterCommitHook = f
 }
 
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
@@ -102,11 +102,12 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-
 	t.current.Commit()
 	err := t.current.Error
-	if err == nil && t.OnCommitHook != nil {
-		t.OnCommitHook(ctx)
+	if err == nil && len(t.afterCommitHook) != 0 {
+		for i := range t.afterCommitHook {
+			t.afterCommitHook[i](ctx)
+		}
 	}
 	t.current = nil
 	return err
