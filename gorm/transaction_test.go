@@ -161,14 +161,14 @@ func TestTransaction_Commit(t *testing.T) {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
 	txn := &Transaction{parent: gdb}
-
+	ctx := context.Background()
 	// test current transaction is nil
-	if err := txn.Commit(); err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		t.Errorf("unexpected error %s", err)
 	}
 
 	txn.Begin()
-	if err := txn.Commit(); err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		t.Errorf("failed to commit transaction - %s", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
