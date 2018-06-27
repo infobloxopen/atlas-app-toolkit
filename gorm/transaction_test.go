@@ -196,8 +196,8 @@ func TestTransaction_AfterCommitHook(t *testing.T) {
 	txn.Begin()
 
 	called := false
-	f := func(context.Context) { called = true; return }
-	txn.AddAfterCommitHook([]func(ctx context.Context){f})
+	hook := func(context.Context) { called = true; return }
+	txn.AddAfterCommitHook(hook)
 	ctx := context.Background()
 	if err := txn.Commit(ctx); err != nil {
 		t.Errorf("failed to commit transaction - %s", err)

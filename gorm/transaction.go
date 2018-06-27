@@ -47,8 +47,8 @@ type Transaction struct {
 	afterCommitHook []func(context.Context)
 }
 
-func (t *Transaction) AddAfterCommitHook(f []func(context.Context)) {
-	t.afterCommitHook = f
+func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
+	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
