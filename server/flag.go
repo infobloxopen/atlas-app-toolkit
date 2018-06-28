@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -12,7 +13,8 @@ type GRPCFlags struct {
 	addr *string
 }
 
-type TLSFlags struct {
+type TLSServerFlags struct {
+	auth *string
 	cert *string
 	key  *string
 	ca   *string
@@ -62,8 +64,9 @@ func (f *GRPCFlags) Addr() string {
 	return *f.addr
 }
 
-func NewTLSFlags() *TLSFlags {
-	f := &TLSFlags{}
+func NewTLSServerFlags() *TLSServerFlags {
+	f := &TLSServerFlags{}
+	f.auth = flag.String("client-auth", "none", "TLS client verification: none, require, verify")
 	f.cert = flag.String("cert", "", "path to the Server certificate in PEM format")
 	f.key = flag.String("key", "", "path to the Server private key in PEM format")
 	f.ca = flag.String("ca", "", "path to the CA PEM for validating the client cert; system CAs will be used if blank")
@@ -71,11 +74,24 @@ func NewTLSFlags() *TLSFlags {
 	return f
 }
 
-func (f *TLSFlags) TLSConfig() (*tls.Config, error) {
-	return NewTLSConfig(*f.cert, *f.key, *f.ca)
+func (f *TLSServerFlags) clientAuth() (tls.ClientAuthType, error) {
+	switch *f.auth {
+	case "none":
+		return tls.NoClientCert, nil
+	case "require":
+		return tls.RequireAnyClientCert, nil
+	case "verify":
+		return tls.RequireAndVerifyClientCert, nil
+	default:
+		return tls.RequireAndVerifyClientCert, fmt.Errorf("invalid client-auth value: %s", *f.auth)
+	}
 }
 
-func (f *TLSFlags) WithGRPCTLSCreds() (grpc.ServerOption, error) {
+func (f *TLSServerFlags) TLSConfig() (*tls.Config, error) {
+	return NewTLSServerConfig(*f.cert, *f.key, *f.ca, f.clientAuth())
+}
+
+func (f *TLSServerFlags) WithGRPCTLSCreds() (grpc.ServerOption, error) {
 	if *f.cert == "" {
 		return nil, nil
 	}
