@@ -26,6 +26,9 @@
     "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
+    "protoc-gen-go/generator",
+    "protoc-gen-go/generator/internal/remap",
+    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -188,7 +191,8 @@
   packages = [
     "googleapis/api/annotations",
     "googleapis/rpc/code",
-    "googleapis/rpc/status"
+    "googleapis/rpc/status",
+    "protobuf/field_mask"
   ]
   revision = "f8c8703595236ae70fdf8789ecb656ea0bcdcf46"
 
@@ -225,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cee6723c36c5f32db168e643c101b260417baea9a9027301689ef631dd6627cb"
+  inputs-digest = "c4cdb47f4577b259d621ef817a8959c136c308a15e1eebf3900274563b8176f4"
   solver-name = "gps-cdcl"
   solver-version = 1
