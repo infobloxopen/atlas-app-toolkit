@@ -9,8 +9,8 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// ApplyCollectionOperators applies query operators taken from context ctx to gorm instance db.
 func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{}) (*gorm.DB, error) {
-	// ApplyCollectionOperators applies query operators taken from context ctx to gorm instance db.
 	f, err := gateway.Filtering(ctx)
 	if err != nil {
 		return nil, err
