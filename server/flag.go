@@ -13,7 +13,7 @@ type GRPCFlags struct {
 	addr *string
 }
 
-type TLSServerFlags struct {
+type TLSFlags struct {
 	auth *string
 	cert *string
 	key  *string
@@ -64,8 +64,8 @@ func (f *GRPCFlags) Addr() string {
 	return *f.addr
 }
 
-func NewTLSServerFlags() *TLSServerFlags {
-	f := &TLSServerFlags{}
+func NewTLSFlags() *TLSFlags {
+	f := &TLSFlags{}
 	f.auth = flag.String("client-auth", "none", "TLS client verification: none, require, verify")
 	f.cert = flag.String("cert", "", "path to the Server certificate in PEM format")
 	f.key = flag.String("key", "", "path to the Server private key in PEM format")
@@ -74,7 +74,7 @@ func NewTLSServerFlags() *TLSServerFlags {
 	return f
 }
 
-func (f *TLSServerFlags) clientAuth() (tls.ClientAuthType, error) {
+func (f *TLSFlags) clientAuth() (tls.ClientAuthType, error) {
 	switch *f.auth {
 	case "none":
 		return tls.NoClientCert, nil
@@ -87,11 +87,15 @@ func (f *TLSServerFlags) clientAuth() (tls.ClientAuthType, error) {
 	}
 }
 
-func (f *TLSServerFlags) TLSConfig() (*tls.Config, error) {
-	return NewTLSServerConfig(*f.cert, *f.key, *f.ca, f.clientAuth())
+func (f *TLSFlags) TLSConfig() (*tls.Config, error) {
+	c, err := f.clientAuth()
+	if err != nil {
+		return nil, err
+	}
+	return NewTLSServerConfig(*f.cert, *f.key, *f.ca, c)
 }
 
-func (f *TLSServerFlags) WithGRPCTLSCreds() (grpc.ServerOption, error) {
+func (f *TLSFlags) WithGRPCTLSCreds() (grpc.ServerOption, error) {
 	if *f.cert == "" {
 		return nil, nil
 	}
