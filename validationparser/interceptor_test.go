@@ -1,12 +1,11 @@
-package validationparser
+package validator
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 
+	"github.com/infobloxopen/atlas-app-toolkit/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,7 +23,7 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 	ctx := DummyContextWithServerTransportStream()
 	tests := []struct {
 		name     string
-		want     mockRequestValidationError
+		actual   error
 		expected error
 	}{
 		// Test cases
@@ -36,12 +35,12 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "PrimaryEmail",
 					Reason: "value must be a valid email address",
-					Cause:  errors.New("caused by: mail: no angle-addr"),
+					Cause:  fmt.Errorf("caused by: mail: no angle-addr"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			status.Newf(codes.InvalidArgument, "PrimaryEmail value must be a valid email address").Err(),
+			fmt.Errorf("Invalid %s: %s", "PrimaryEmail", "value must be a valid email address"),
 		},
 		{
 			"ValidationErrorInt",
@@ -51,12 +50,12 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "Id",
 					Reason: "value must be greater than 50",
-					Cause:  errors.New("caused by: invalid Contact.Id"),
+					Cause:  fmt.Errorf("caused by: invalid Contact.Id"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			status.Newf(codes.InvalidArgument, "Id value must be greater than 50").Err(),
+			fmt.Errorf("Invalid %s: %s", "Id", "value must be greater than 50"),
 		},
 		{
 			"ValidationErrorList",
@@ -66,30 +65,79 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "FirstName",
 					Reason: "value must not be in list [fizz buzz]",
-					Cause:  errors.New("caused by: invalid Contact.MiddleName"),
+					Cause:  fmt.Errorf("caused by: invalid Contact.MiddleName"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			status.Newf(codes.InvalidArgument, "FirstName value must not be in list [fizz buzz]").Err(),
+			fmt.Errorf("Invalid %s: %s", "FirstName", "value must not be in list [fizz buzz]"),
 		},
 		{
-			"ValidationErrorBad",
+			"NotValidationError",
+			mockNotValidation{
+				Field:  "Other validator",
+				Reason: "Not lyft validation",
+				Key:    true,
+			},
+			fmt.Errorf("Error : invalid key for Request.Other validator: Not lyft validation"),
+		},
+		{
+			"ValidationErrorNoCause",
 			mockRequestValidationError{
 				Field:  "Payload",
 				Reason: "embedded message failed validation",
-				Cause:  errors.New("Bad test"),
 				Key:    true,
 			},
-			status.Newf(codes.InvalidArgument, "invalid key for CreateRequest.Payload: embedded message failed validation | caused by: Bad test").Err(),
+			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation"),
+		},
+		{
+			"ValidationErrorBadCause",
+			mockRequestValidationError{
+				Field:  "Payload",
+				Reason: "embedded message failed validation",
+				Cause:  fmt.Errorf("Not validation"),
+				Key:    true,
+			},
+			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: Not validation"),
+		},
+		{
+			"ValidationErrorBadField",
+			mockRequestValidationError{
+				Field:  "Payload",
+				Reason: "embedded message failed validation",
+				Cause: mockValidationError{
+					Reason: "no field",
+					Cause:  fmt.Errorf("bad test"),
+					Key:    true,
+				},
+				Key: true,
+			},
+			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.: no field | caused by: bad test"),
+		},
+		{
+			"ValidationErrorBadReason",
+			mockRequestValidationError{
+				Field:  "Payload",
+				Reason: "embedded message failed validation",
+				Cause: mockValidationError{
+					Field: "testField",
+					Cause: fmt.Errorf("bad test"),
+					Key:   true,
+				},
+				Key: true,
+			},
+			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.testField:  | caused by: bad test"),
 		},
 	}
 	for _, tt := range tests {
-		_, actual := UnaryServerInterceptor()(ctx, tt.want, nil, nil)
+		_, err := UnaryServerInterceptor()(ctx, tt.actual, nil, nil)
+		actual := ValidationHelper(err)
 		expected := tt.expected
-		// verify that the errors match
-		if actual.Error() != expected.Error() {
-			t.Errorf("Error received was incorrect, expected: \"%s\", actual: \"%s\"", expected.Error(), actual.Error())
+		if errCasted, ok := actual.(*errors.Container); ok {
+			actualMessage := errCasted.GRPCStatus().Message()
+			if actualMessage != expected.Error() {
+				t.Errorf("Error received was incorrect for test %s, expected: \"%s\", actual: \"%s\"", tt.name, expected, actualMessage)
+			}
 		}
 	}
 }
@@ -191,18 +239,37 @@ func (e mockValidationError) Error() string {
 
 var _ error = mockValidationError{}
 
-func TestUnaryServerInterceptor(t *testing.T) {
-	tests := []struct {
-		name string
-		want grpc.UnaryServerInterceptor
-	}{
-	// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := UnaryServerInterceptor(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UnaryServerInterceptor() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+// mockNotValidation represents anoter validate error but not validation error.
+type mockNotValidation struct {
+	Field  string
+	Reason string
+	Cause  error
+	Key    bool
 }
+
+// Error satisfies the builtin error interface
+func (e mockNotValidation) Validate() error {
+	return e
+}
+
+// Error satisfies the builtin error interface
+func (e mockNotValidation) Error() string {
+	cause := ""
+	if e.Cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
+	}
+
+	key := ""
+	if e.Key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRequest.%s: %s%s",
+		key,
+		e.Field,
+		e.Reason,
+		cause)
+}
+
+var _ error = mockNotValidation{}
