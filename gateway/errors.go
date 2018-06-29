@@ -64,7 +64,7 @@ func (h *ProtoErrorHandler) MessageHandler(ctx context.Context, mux *runtime.Ser
 
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
-		grpclog.Printf("error handler: failed to extract ServerMetadata from context")
+		grpclog.Infof("error handler: failed to extract ServerMetadata from context")
 	}
 
 	handleForwardResponseServerMetadata(h.OutgoingHeaderMatcher, rw, md)
@@ -100,7 +100,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		case *errfields.FieldInfo:
 			fields = d
 		default:
-			grpclog.Printf("error handler: failed to recognize error message")
+			grpclog.Infof("error handler: failed to recognize error message")
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -120,16 +120,16 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 
 	buf, merr := marshaler.Marshal(restErr)
 	if merr != nil {
-		grpclog.Printf("error handler: failed to marshal error message %q: %v", restErr, merr)
+		grpclog.Infof("error handler: failed to marshal error message %q: %v", restErr, merr)
 		rw.WriteHeader(http.StatusInternalServerError)
 
 		if _, err := io.WriteString(rw, fmt.Sprintf(fallback, merr)); err != nil {
-			grpclog.Printf("error handler: failed to write response: %v", err)
+			grpclog.Infof("error handler: failed to write response: %v", err)
 		}
 		return
 	}
 
 	if _, err := rw.Write(buf); err != nil {
-		grpclog.Printf("error handler: failed to write response: %v", err)
+		grpclog.Infof("error handler: failed to write response: %v", err)
 	}
 }
