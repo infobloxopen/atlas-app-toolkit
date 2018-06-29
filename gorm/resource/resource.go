@@ -2,15 +2,12 @@ package resource
 
 import (
 	"database/sql/driver"
+	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
-
-	"fmt"
-
-	"strings"
-
-	"strconv"
 
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
@@ -73,14 +70,17 @@ func RegisterCodec(codec Codec, pb proto.Message) {
 
 // Decode decodes identifier using a codec registered for pb if found.
 //
-// If codec is not found and pb is nil the id is decoded in a fully qualified
-// string value in format specified for Atlas References.
-//
-// If codec is not found the only Resource ID part of the identifier is returned
-// as string value.
+// If codec is not found
+// - and id is nil, the (nil, nil) are returned.
+// - and pb is nil the id is decoded in a fully qualified string value in format specified for Atlas References.
+// - only Resource ID part of the identifier is returned as string value.
 func Decode(pb proto.Message, id *resourcepb.Identifier) (driver.Value, error) {
 	if c, ok := lookupCodec(pb); ok {
 		return c.Decode(id)
+	}
+
+	if id == nil {
+		return nil, nil
 	}
 
 	// fully qualified
@@ -99,6 +99,9 @@ func DecodeInt64(pb proto.Message, id *resourcepb.Identifier) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	if v == nil {
+		return 0, nil
+	}
 	i, ok := v.(int64)
 	if ok {
 		return i, nil
@@ -108,7 +111,7 @@ func DecodeInt64(pb proto.Message, id *resourcepb.Identifier) (int64, error) {
 		return 0, fmt.Errorf("resource: invalid value type, expected int64")
 	}
 	if s == "" {
-		return int64(0), nil
+		return 0, nil
 	}
 
 	i, err = strconv.ParseInt(s, 10, 64)
@@ -126,6 +129,9 @@ func DecodeBytes(pb proto.Message, id *resourcepb.Identifier) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if v == nil {
+		return nil, nil
+	}
 	b, ok := v.([]byte)
 	if ok {
 		return b, nil
@@ -134,28 +140,37 @@ func DecodeBytes(pb proto.Message, id *resourcepb.Identifier) ([]byte, error) {
 	if !ok {
 		return nil, fmt.Errorf("resource: invalid value type, expected []byte")
 	}
+	if s == "" {
+		return nil, nil
+	}
 	return []byte(s), nil
 }
 
 // Encode encodes identifier using a codec registered for pb.
 //
-// If codec is not found and value is not of string type an error is returned.
+// If codec is not found
+// - and value is not of string type an error is returned.
+// - and pb is nil the id is encoded as it would be a string value in fully qualified format
+// - and value is nil the (nil, nil) are returned
 //
-// If codec is not found and pb is nil the id is encoded as it would be a string
-// value in fully qualified format.
-//
-// If codec is not found the value is encoded as string and Resource ID part of
-// identifier is populated. The Application Name and Resource Type populated using
-// ApplicationName and ResourceType functions.
+// If Resource ID part is not empty, the Application Name and Resource Type parts
+// are populated by ApplicationName and Name functions accordingly, otherwise
+// the empty identifier is returned.
 func Encode(pb proto.Message, value driver.Value) (*resourcepb.Identifier, error) {
 	if c, ok := lookupCodec(pb); ok {
 		return c.Encode(value)
+	}
+	if value == nil {
+		return nil, nil
 	}
 
 	var id resourcepb.Identifier
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("resource: invalid value type %T, expected string", value)
+	}
+	if s == "" {
+		return &id, nil
 	}
 	if pb == nil {
 		id.ApplicationName, id.ResourceType, id.ResourceId = resourcepb.ParseString(s)
