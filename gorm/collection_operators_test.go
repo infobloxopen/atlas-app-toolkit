@@ -14,9 +14,16 @@ import (
 )
 
 type Person struct {
-	ID   int64
-	Name string
-	Age  int
+	Id        int64
+	Name      string
+	Age       int
+	SubPerson SubPerson
+}
+
+type SubPerson struct {
+	Id       int64
+	Name     string
+	PersonID int64
 }
 
 func fixedFullRe(s string) string {
@@ -40,11 +47,14 @@ func setUp(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 func TestApplyCollectionOperators(t *testing.T) {
 	gormDB, mock := setUp(t)
 
-	req, err := http.NewRequest("GET", "http://test.com?_fields=name&_filter=age<=25&_order_by=age desc&_limit=2&_offset=1", nil)
+	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person&_filter=age<=25&_order_by=age desc&_limit=2&_offset=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mock.ExpectQuery(fixedFullRe("SELECT name FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0)
+	mock.ExpectQuery(fixedFullRe("SELECT people.id, people.name FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
+
+	mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"sub_people\" WHERE (\"person_id\" IN ($1))")).WithArgs(111)
 
 	md := gateway.MetadataAnnotator(nil, req)
 	ctx := metadata.NewIncomingContext(context.Background(), md)

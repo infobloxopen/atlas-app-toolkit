@@ -20,8 +20,7 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 		return nil, err
 	}
 
-	var s *query.Sorting
-	s, err = gateway.Sorting(ctx)
+	s, err := gateway.Sorting(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +29,7 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 		return nil, err
 	}
 
-	var p *query.Pagination
-	p, err = gateway.Pagination(ctx)
+	p, err := gateway.Pagination(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +39,10 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 	if err != nil {
 		return nil, err
 	}
-	db = ApplyFieldSelection(db, fs, obj)
+	db, err = ApplyFieldSelection(db, fs, obj)
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
@@ -80,17 +81,23 @@ func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, err
 
 // ApplyPagination applies pagination operator p to gorm instance db.
 func ApplyPagination(db *gorm.DB, p *query.Pagination) *gorm.DB {
-	return db.Offset(p.GetOffset()).Limit(p.DefaultLimit())
+	if p != nil {
+		return db.Offset(p.GetOffset()).Limit(p.DefaultLimit())
+	}
+	return db
 }
 
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection, obj interface{}) *gorm.DB {
-	var fields []string
-	for _, f := range fs.GetFields() {
-		fields = append(fields, f.GetName())
+func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
+	toSelect, toPreload, err := FieldSelectionToGorm(fs, obj)
+	if err != nil {
+		return nil, err
 	}
-	if len(fields) > 0 {
-		return db.Select(fields)
+	if len(toSelect) != 0 {
+		db = db.Select(toSelect)
 	}
-	return db
+	for _, assoc := range toPreload {
+		db = db.Preload(assoc)
+	}
+	return db, nil
 }

@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"strings"
@@ -35,12 +36,12 @@ func FieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
 	objType := indirectType(reflect.ValueOf(obj).Type())
 	pathLength := len(fieldPath)
 	for i, part := range fieldPath {
-		if objType.Kind() != reflect.Struct {
-			return "", fmt.Errorf("%s: non-last field of a field path should be of struct type", objType.Kind())
+		if !isModel(objType) {
+			return "", fmt.Errorf("%s: non-last field of a field path should be a model", objType)
 		}
 		sf, ok := objType.FieldByName(generator.CamelCase(part))
 		if !ok {
-			return "", fmt.Errorf("Cannot find field %s", part)
+			return "", fmt.Errorf("Cannot find field %s in %s", part, objType)
 		}
 		if i < pathLength-1 {
 			objType = indirectType(sf.Type)
@@ -82,10 +83,22 @@ type tableNamer interface {
 }
 
 func indirectType(t reflect.Type) reflect.Type {
-	if t.Kind() == reflect.Ptr {
+	kind := t.Kind()
+	switch kind {
+	case reflect.Ptr, reflect.Slice, reflect.Array:
 		return t.Elem()
+	default:
+		return t
 	}
-	return t
+}
+
+func isModel(t reflect.Type) bool {
+	kind := t.Kind()
+	_, isValuer := reflect.Zero(t).Interface().(driver.Valuer)
+	if (kind == reflect.Struct || kind == reflect.Slice) && !isValuer {
+		return true
+	}
+	return false
 }
 
 type EmptyFieldPathError struct {
