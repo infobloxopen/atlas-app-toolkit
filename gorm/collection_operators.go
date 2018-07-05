@@ -89,12 +89,9 @@ func ApplyPagination(db *gorm.DB, p *query.Pagination) *gorm.DB {
 
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
 func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
-	toSelect, toPreload, err := FieldSelectionToGorm(fs, obj)
+	toPreload, err := FieldSelectionToGorm(fs, obj)
 	if err != nil {
 		return nil, err
-	}
-	if len(toSelect) != 0 {
-		db = db.Select(toSelect)
 	}
 	for _, assoc := range toPreload {
 		db = db.Preload(assoc)

@@ -10,43 +10,29 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
-func FieldSelectionStringToGorm(fs string, obj interface{}) ([]string, []string, error) {
+// FieldSelectionStringToGorm is a shortcut to parse a string into FieldSelection struct and
+// receive a list of associations to preload.
+func FieldSelectionStringToGorm(fs string, obj interface{}) ([]string, error) {
 	return FieldSelectionToGorm(query.ParseFieldSelection(fs), obj)
 }
 
-func FieldSelectionToGorm(fs *query.FieldSelection, obj interface{}) ([]string, []string, error) {
+// FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
+func FieldSelectionToGorm(fs *query.FieldSelection, obj interface{}) ([]string, error) {
 	if fs == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
 	objType := indirectType(reflect.ValueOf(obj).Type())
-	var toSelect, toPreload []string
+	var toPreload []string
 	fieldNames := getSortedFieldNames(fs.GetFields())
 	for _, fieldName := range fieldNames {
 		f := fs.GetFields()[fieldName]
-		if f.GetSubs() == nil {
-			sf, ok := objType.FieldByName(generator.CamelCase(f.GetName()))
-			if !ok {
-				return nil, nil, fmt.Errorf("Cannot find field %s in %s", f.GetName(), objType)
-			}
-			fType := indirectType(sf.Type)
-			if isModel(fType) {
-				toPreload = append(toPreload, generator.CamelCase(f.GetName()))
-			} else {
-				dbName, err := FieldPathToDBName([]string{f.GetName()}, obj)
-				if err != nil {
-					return nil, nil, err
-				}
-				toSelect = append(toSelect, dbName)
-			}
-		} else {
-			subPreload, err := handlePreloads(f, objType)
-			if err != nil {
-				return nil, nil, err
-			}
-			toPreload = append(toPreload, subPreload...)
+		subPreload, err := handlePreloads(f, objType)
+		if err != nil {
+			return nil, err
 		}
+		toPreload = append(toPreload, subPreload...)
 	}
-	return toSelect, toPreload, nil
+	return toPreload, nil
 }
 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {

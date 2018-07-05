@@ -51,7 +51,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mock.ExpectQuery(fixedFullRe("SELECT people.id, people.name FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0).
+	mock.ExpectQuery(fixedFullRe("SELECT * FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
 
 	mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"sub_people\" WHERE (\"person_id\" IN ($1))")).WithArgs(111)
