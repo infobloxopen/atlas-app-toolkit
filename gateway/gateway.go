@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
@@ -97,10 +98,13 @@ func ClientUnaryInterceptor(parentCtx context.Context, method string, req, reply
 func NewGateway(options ...Option) (*http.ServeMux, error) {
 	// configure gateway defaults
 	g := gateway{
-		serverAddress:     DefaultServerAddress,
-		endpoints:         make(map[string][]registerFunc),
-		serverDialOptions: []grpc.DialOption{grpc.WithInsecure(), grpc.WithUnaryInterceptor(ClientUnaryInterceptor)},
-		mux:               http.NewServeMux(),
+		serverAddress: DefaultServerAddress,
+		endpoints:     make(map[string][]registerFunc),
+		serverDialOptions: []grpc.DialOption{grpc.WithInsecure(), grpc.WithUnaryInterceptor(
+			grpc_middleware.ChainUnaryClient(
+				[]grpc.UnaryClientInterceptor{ClientUnaryInterceptor, PresenceClientInterceptor()}...),
+		)},
+		mux: http.NewServeMux(),
 	}
 	// apply functional options
 	for _, opt := range options {

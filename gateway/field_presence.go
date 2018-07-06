@@ -1,4 +1,4 @@
-package presence
+package gateway
 
 import (
 	"bytes"
@@ -11,20 +11,16 @@ import (
 
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 const fieldPresenceMetaKey = "field-paths"
 
-// Annotator will parse the JSON input and then add the paths to the
+// PresenceAnnotator will parse the JSON input and then add the paths to the
 // metadata to be pulled from context later
-func Annotator(ctx context.Context, req *http.Request) metadata.MD {
+func PresenceAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 	if req == nil {
 		return nil
 	}
@@ -80,26 +76,19 @@ type pathItem struct {
 
 // GetFieldsSlice pulls the paths from the context if put there via grpc metadata
 func GetFieldsSlice(ctx context.Context) []string {
-	paths, _ := gateway.HeaderN(ctx, fieldPresenceMetaKey, -1)
+	paths, _ := HeaderN(ctx, fieldPresenceMetaKey, -1)
 	return paths
 }
 
-// UnaryServerInterceptor gets the interceptor for populating a fieldmask in a
+// PresenceClientInterceptor gets the interceptor for populating a fieldmask in a
 // proto message from the fields given in the metadata/context
-func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
-		// handle panic
+func PresenceClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
 		defer func() {
-			if perr := recover(); perr != nil {
-				err = status.Errorf(codes.Internal, "field presence interceptor: %s", perr)
-				grpclog.Errorln(err)
-				res = nil
-			}
+			err = invoker(ctx, method, req, reply, cc, opts...)
 		}()
-
 		if req == nil {
-			grpclog.Warningf("field presence interceptor: empty request %+v", req)
-			return handler(ctx, req)
+			return
 		}
 
 		// --- If a Fields field of type *FieldMask exists, set the paths in it
@@ -115,11 +104,6 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			field.Set(reflect.New(field.Type().Elem()))
 			//unchecked assertion should be safe because of if condition above
 			field.Interface().(*field_mask.FieldMask).Paths = GetFieldsSlice(ctx)
-		}
-
-		res, err = handler(ctx, req)
-		if err != nil {
-			return
 		}
 		return
 	}

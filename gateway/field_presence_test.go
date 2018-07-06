@@ -1,4 +1,4 @@
-package presence
+package gateway
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func TestAnnotator(t *testing.T) {
 			Method: "POST",
 			Body:   ioutil.NopCloser(strings.NewReader(input)),
 		}
-		md := Annotator(context.Background(), postReq)
+		md := PresenceAnnotator(context.Background(), postReq)
 		if !reflect.DeepEqual(md, expect) {
 			t.Errorf("Did not produce expected metadata %+v, got %+v", expect, md)
 		}
@@ -37,7 +37,11 @@ type dummyReq struct {
 }
 
 func TestUnaryServerInterceptor(t *testing.T) {
-	interceptor := UnaryServerInterceptor()
+	dummyInvoker := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
+		return nil
+	}
+
+	interceptor := PresenceClientInterceptor()
 	// Test with good metadata and no present field
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.MD{
@@ -46,11 +50,9 @@ func TestUnaryServerInterceptor(t *testing.T) {
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
 	req := &dummyReq{}
-	v, err := interceptor(ctx, req, nil, grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
-		return nil, nil
-	}))
-	if v != nil {
-		t.Error("Expecting no response object but got one")
+	err := interceptor(ctx, "POST", req, nil, nil, dummyInvoker)
+	if req == nil {
+		t.Error("For some reason it deleted the request object")
 	}
 	if err != nil {
 		t.Error(err.Error())
@@ -61,11 +63,9 @@ func TestUnaryServerInterceptor(t *testing.T) {
 
 	// Test with good (but arbitrary) metadata, but a present field to not overwrite
 	req = &dummyReq{Fields: &field_mask.FieldMask{Paths: []string{}}}
-	v, err = interceptor(ctx, req, nil, grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
-		return nil, nil
-	}))
-	if v != nil {
-		t.Error("Expecting no response object but got one")
+	err = interceptor(ctx, "POST", req, nil, nil, dummyInvoker)
+	if req == nil {
+		t.Error("For some reason it deleted the request object")
 	}
 	if err != nil {
 		t.Error(err.Error())
