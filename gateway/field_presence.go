@@ -74,8 +74,8 @@ type pathItem struct {
 	node interface{}
 }
 
-// GetFieldsSlice pulls the paths from the context if put there via grpc metadata
-func GetFieldsSlice(ctx context.Context) []string {
+// getFieldsSlice pulls the paths from the context if put there via grpc metadata
+func getFieldsSlice(ctx context.Context) []string {
 	paths, _ := HeaderN(ctx, fieldPresenceMetaKey, -1)
 	return paths
 }
@@ -103,7 +103,7 @@ func PresenceClientInterceptor() grpc.UnaryClientInterceptor {
 			//instantiate object
 			field.Set(reflect.New(field.Type().Elem()))
 			//unchecked assertion should be safe because of if condition above
-			field.Interface().(*field_mask.FieldMask).Paths = GetFieldsSlice(ctx)
+			field.Interface().(*field_mask.FieldMask).Paths = getFieldsSlice(ctx)
 		}
 		return
 	}
