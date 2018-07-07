@@ -170,7 +170,7 @@ of foreign keys in %s association`, objType, assoc)
 
 func parseParentChildAssoc(parent reflect.Type, child reflect.Type, assocKeys []string, fKeys []string) (string, string, []string, []string, error) {
 	parentTableName := tableName(parent)
-	childTableName := tableName(parent)
+	childTableName := tableName(child)
 	var dbAssocKeys, dbFKeys []string
 	for _, k := range assocKeys {
 		sf, ok := parent.FieldByName(k)
@@ -180,7 +180,7 @@ func parseParentChildAssoc(parent reflect.Type, child reflect.Type, assocKeys []
 		dbAssocKeys = append(dbAssocKeys, parentTableName+"."+columnName(&sf))
 	}
 	for _, k := range fKeys {
-		sf, ok := parent.FieldByName(k)
+		sf, ok := child.FieldByName(k)
 		if !ok {
 			return "", "", nil, nil, fmt.Errorf("Foreign key %s is not found in %s", k, child)
 		}

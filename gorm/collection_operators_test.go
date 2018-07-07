@@ -17,13 +17,13 @@ type Person struct {
 	Id        int64
 	Name      string
 	Age       int
-	SubPerson SubPerson
+	SubPerson SubPerson `gorm:"foreignkey:PersonId;association_foreignkey:Id"`
 }
 
 type SubPerson struct {
 	Id       int64
 	Name     string
-	PersonID int64
+	PersonId int64
 }
 
 func fixedFullRe(s string) string {
@@ -47,11 +47,11 @@ func setUp(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 func TestApplyCollectionOperators(t *testing.T) {
 	gormDB, mock := setUp(t)
 
-	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person&_filter=age<=25&_order_by=age desc&_limit=2&_offset=1", nil)
+	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person&_filter=age<=25 and sub_person.name=='Mike'&_order_by=age,sub_person.name desc&_limit=2&_offset=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mock.ExpectQuery(fixedFullRe("SELECT * FROM \"people\" WHERE ((people.age <= $1)) ORDER BY people.age desc LIMIT 2 OFFSET 1")).WithArgs(25.0).
+	mock.ExpectQuery(fixedFullRe("SELECT \"people\".* FROM \"people\" LEFT JOIN sub_people ON people.id = sub_people.person_id WHERE (((people.age <= $1) AND (sub_people.name = $2))) ORDER BY people.age,sub_people.name desc LIMIT 2 OFFSET 1")).WithArgs(25.0, "Mike").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
 
 	mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"sub_people\" WHERE (\"person_id\" IN ($1))")).WithArgs(111)

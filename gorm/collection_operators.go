@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
@@ -35,7 +36,7 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 	for k := range sAssocToJoin {
 		fAssocToJoin[k] = struct{}{}
 	}
-	db, err = JoinAssociations(db, fAssocToJoin, fAssocToJoin)
+	db, err = JoinAssociations(db, fAssocToJoin, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func JoinAssociations(db *gorm.DB, assoc map[string]struct{}, obj interface{}) (
 		for i, k := range sourceKeys {
 			keyPairs = append(keyPairs, k+" = "+targetKeys[i])
 		}
-		db = db.Joins("LEFT JOIN %s ON %s", tableName, strings.Join(keyPairs, " AND "))
+		db = db.Joins(fmt.Sprintf("LEFT JOIN %s ON %s", tableName, strings.Join(keyPairs, " AND ")))
 	}
 	return db, nil
 }
