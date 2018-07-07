@@ -15,7 +15,7 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 	if err != nil {
 		return nil, err
 	}
-	db, err = ApplyFiltering(db, f, obj)
+	db, fAssocToJoin, err := ApplyFiltering(db, f, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,18 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 	if err != nil {
 		return nil, err
 	}
-	db, err = ApplySorting(db, s, obj)
+	db, sAssocToJoin, err := ApplySorting(db, s, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if fAssocToJoin == nil && sAssocToJoin != nil {
+		fAssocToJoin = make(map[string]struct{})
+	}
+	for k := range sAssocToJoin {
+		fAssocToJoin[k] = struct{}{}
+	}
+	db, err = JoinAssociations(db, fAssocToJoin, fAssocToJoin)
 	if err != nil {
 		return nil, err
 	}
@@ -48,24 +59,28 @@ func ApplyCollectionOperators(db *gorm.DB, ctx context.Context, obj interface{})
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB, error) {
-	str, args, err := FilteringToGorm(f, obj)
+func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
+	str, args, assocToJoin, err := FilteringToGorm(f, obj)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if str != "" {
-		return db.Where(str, args...), nil
+		return db.Where(str, args...), assocToJoin, nil
 	}
-	return db, nil
+	return db, nil, nil
 }
 
 // ApplySorting applies sorting operator s to gorm instance db.
-func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, error) {
+func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
 	var crs []string
+	assocToJoin := make(map[string]struct{})
 	for _, cr := range s.GetCriterias() {
-		dbName, err := HandleFieldPath(strings.Split(cr.GetTag(), "."), obj)
+		dbName, assoc, err := HandleFieldPath(strings.Split(cr.GetTag(), "."), obj)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+		if assoc != "" {
+			assocToJoin[assoc] = struct{}{}
 		}
 		if cr.IsDesc() {
 			crs = append(crs, dbName+" desc")
@@ -73,8 +88,23 @@ func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, err
 			crs = append(crs, dbName)
 		}
 	}
-	if len(crs) > 0 {
-		return db.Order(strings.Join(crs, ",")), nil
+	if len(crs) == 0 {
+		return db, nil, nil
+	}
+	return db.Order(strings.Join(crs, ",")), assocToJoin, nil
+}
+
+func JoinAssociations(db *gorm.DB, assoc map[string]struct{}, obj interface{}) (*gorm.DB, error) {
+	for k := range assoc {
+		tableName, sourceKeys, targetKeys, err := JoinInfo(obj, k)
+		if err != nil {
+			return nil, err
+		}
+		var keyPairs []string
+		for i, k := range sourceKeys {
+			keyPairs = append(keyPairs, k+" = "+targetKeys[i])
+		}
+		db = db.Joins("LEFT JOIN %s ON %s", tableName, strings.Join(keyPairs, " AND "))
 	}
 	return db, nil
 }
