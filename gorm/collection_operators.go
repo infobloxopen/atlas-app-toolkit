@@ -95,6 +95,7 @@ func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map
 	return db.Order(strings.Join(crs, ",")), assocToJoin, nil
 }
 
+// JoinAssociations joins obj's associations from assoc to the current gorm query.
 func JoinAssociations(db *gorm.DB, assoc map[string]struct{}, obj interface{}) (*gorm.DB, error) {
 	for k := range assoc {
 		tableName, sourceKeys, targetKeys, err := JoinInfo(obj, k)

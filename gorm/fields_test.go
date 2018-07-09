@@ -82,5 +82,4 @@ func TestGormFieldSelection(t *testing.T) {
 			assert.Nil(t, err)
 		}
 	}
-
 }
