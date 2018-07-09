@@ -22,7 +22,7 @@ func HandleFieldPath(fieldPath []string, obj interface{}) (string, string, error
 	dbPath, err := fieldPathToDBName(fieldPath, obj)
 	if err != nil {
 		switch err.(type) {
-		case *EmptyFieldPathError, *InvalidGormTagError:
+		case *EmptyFieldPathError:
 			return "", "", err
 		default:
 			return strings.Join(fieldPath, "."), "", nil
@@ -121,12 +121,4 @@ type EmptyFieldPathError struct {
 
 func (e *EmptyFieldPathError) Error() string {
 	return fmt.Sprintf("Empty field path is not allowed")
-}
-
-type InvalidGormTagError struct {
-	Tag string
-}
-
-func (e *InvalidGormTagError) Error() string {
-	return fmt.Sprintf("%s: gorm tag is invalid", e.Tag)
 }
