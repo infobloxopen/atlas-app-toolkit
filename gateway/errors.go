@@ -11,6 +11,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.
@@ -22,6 +25,7 @@ type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, 
 type RestError struct {
 	Status  *RestStatus   `json:"error,omitempty"`
 	Details []interface{} `json:"details,omitempty"`
+	Fields  interface{}   `json:"fields,omitempty"`
 }
 
 var (
@@ -60,7 +64,7 @@ func (h *ProtoErrorHandler) MessageHandler(ctx context.Context, mux *runtime.Ser
 
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
-		grpclog.Printf("error handler: failed to extract ServerMetadata from context")
+		grpclog.Infof("error handler: failed to extract ServerMetadata from context")
 	}
 
 	handleForwardResponseServerMetadata(h.OutgoingHeaderMatcher, rw, md)
@@ -86,9 +90,26 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		st = status.New(codes.Unknown, err.Error())
 	}
 
+	details := []interface{}{}
+	var fields interface{}
+
+	for _, d := range st.Details() {
+		switch d.(type) {
+		case *errdetails.TargetInfo:
+			details = append(details, d)
+		case *errfields.FieldInfo:
+			fields = d
+		default:
+			grpclog.Infof("error handler: failed to recognize error message")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
 	restErr := &RestError{
 		Status:  Status(ctx, st),
-		Details: st.Details(),
+		Details: details,
+		Fields:  fields,
 	}
 
 	if !headerWritten {
@@ -99,16 +120,16 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 
 	buf, merr := marshaler.Marshal(restErr)
 	if merr != nil {
-		grpclog.Printf("error handler: failed to marshal error message %q: %v", restErr, merr)
+		grpclog.Infof("error handler: failed to marshal error message %q: %v", restErr, merr)
 		rw.WriteHeader(http.StatusInternalServerError)
 
 		if _, err := io.WriteString(rw, fmt.Sprintf(fallback, merr)); err != nil {
-			grpclog.Printf("error handler: failed to write response: %v", err)
+			grpclog.Infof("error handler: failed to write response: %v", err)
 		}
 		return
 	}
 
 	if _, err := rw.Write(buf); err != nil {
-		grpclog.Printf("error handler: failed to write response: %v", err)
+		grpclog.Infof("error handler: failed to write response: %v", err)
 	}
 }

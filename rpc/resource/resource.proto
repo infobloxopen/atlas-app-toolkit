@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package atlas.rpc;
+
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;resource";
+
+// A number of application services require a mechanism to
+// encode the identity of a particular resource across applications.
+// The resource identifiers consist of the application ID,
+// an application-defined resource type,
+// and an application-defined ID for that resource
+message Identifier {
+    // An application identifier that will be used among
+    // other infrastructure services to identify the application
+    string application_name = 1;
+
+    // An application specific type name of a resource
+    string resource_type = 2;
+
+    // An application specific resource identity of a resource
+    string resource_id = 3;
+}

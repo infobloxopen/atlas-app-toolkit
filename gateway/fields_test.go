@@ -7,9 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestRetain(t *testing.T) {
@@ -54,13 +52,10 @@ func TestRetain(t *testing.T) {
 		return
 	}
 
-	md := runtime.ServerMetadata{
-		HeaderMD: metadata.Pairs(
-			runtime.MetadataPrefix+fieldsMetaKey, "y",
-		),
-	}
-	ctx := runtime.NewServerMetadataContext(context.Background(), md)
-	retainFields(ctx, nil, indata)
+	req, _ := http.NewRequest("GET", "http://example.com?_fields=y", nil)
+
+	ctx := context.Background()
+	retainFields(ctx, req, indata)
 
 	if !reflect.DeepEqual(indata, expdata) {
 		t.Errorf("Unexpected result %v while expecting %v", indata, expdata)
@@ -183,36 +178,5 @@ func ensureRetain(t *testing.T, input, fields, expected string) {
 	if !reflect.DeepEqual(indata, expdata) {
 		t.Errorf("Filtering input %s on fields %s returned %v while expecting %v", input, fields, indata, expdata)
 		return
-	}
-}
-
-func TestFieldSelection(t *testing.T) {
-	// fields parameters is not specified
-	req, err := http.NewRequest(http.MethodGet, "http://app.com?someparam=1", nil)
-	if err != nil {
-		t.Fatalf("failed to build new http testRequest: %s", err)
-	}
-
-	md := MetadataAnnotator(context.Background(), req)
-	ctx := metadata.NewIncomingContext(context.Background(), md)
-
-	flds := FieldSelection(ctx)
-	if flds != nil {
-		t.Fatalf("unexpected fields result: %v, expected nil", flds)
-	}
-
-	// fields parameters is specified
-	req, err = http.NewRequest(http.MethodGet, "http://app.com?_fields=name,address.street&someparam=1", nil)
-	if err != nil {
-		t.Fatalf("failed to build new http testRequest: %s", err)
-	}
-
-	md = MetadataAnnotator(context.Background(), req)
-	ctx = metadata.NewIncomingContext(context.Background(), md)
-
-	flds = FieldSelection(ctx)
-	expected := &query.FieldSelection{Fields: query.FieldSelectionMap{"name": &query.Field{Name: "name"}, "address": &query.Field{Name: "address", Subs: query.FieldSelectionMap{"street": &query.Field{Name: "street"}}}}}
-	if !reflect.DeepEqual(flds, expected) {
-		t.Errorf("Unexpected result %v while expecting %v", flds, expected)
 	}
 }
