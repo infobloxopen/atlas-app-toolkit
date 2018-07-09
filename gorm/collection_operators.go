@@ -74,13 +74,16 @@ func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB,
 // ApplySorting applies sorting operator s to gorm instance db.
 func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
 	var crs []string
-	assocToJoin := make(map[string]struct{})
+	var assocToJoin map[string]struct{}
 	for _, cr := range s.GetCriterias() {
 		dbName, assoc, err := HandleFieldPath(strings.Split(cr.GetTag(), "."), obj)
 		if err != nil {
 			return nil, nil, err
 		}
 		if assoc != "" {
+			if assocToJoin == nil {
+				assocToJoin = make(map[string]struct{})
+			}
 			assocToJoin[assoc] = struct{}{}
 		}
 		if cr.IsDesc() {
