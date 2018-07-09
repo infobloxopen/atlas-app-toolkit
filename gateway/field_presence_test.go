@@ -18,7 +18,7 @@ func TestAnnotator(t *testing.T) {
 	for input, expect := range map[string]metadata.MD{
 		`{}`: metadata.MD{},
 		`{`:  nil,
-		`{"one":{"two":"a", "three":[]}, "four": 5}`: {"grpcgateway-field-paths": []string{"Four", "One.Two", "One.Three"}},
+		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
 	} {
 		postReq := &http.Request{
 			Method: "POST",
@@ -34,6 +34,10 @@ func TestAnnotator(t *testing.T) {
 
 type dummyReq struct {
 	Fields *field_mask.FieldMask
+}
+
+func (r *dummyReq) GetFields() *field_mask.FieldMask {
+	return r.Fields
 }
 
 func TestUnaryServerInterceptor(t *testing.T) {

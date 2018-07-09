@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/generator"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -58,7 +57,7 @@ func PresenceAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 	}
 
 	md := make(metadata.MD)
-	key := runtime.MetadataPrefix + fieldPresenceMetaKey
+	key := fieldPresenceMetaKey
 	for _, path := range paths {
 		md[key] = append(md[key], path)
 	}
@@ -74,10 +73,8 @@ type pathItem struct {
 	node interface{}
 }
 
-// getFieldsSlice pulls the paths from the context if put there via grpc metadata
-func getFieldsSlice(ctx context.Context) []string {
-	paths, _ := HeaderN(ctx, fieldPresenceMetaKey, -1)
-	return paths
+type withFields interface {
+	GetFields() *field_mask.FieldMask
 }
 
 // PresenceClientInterceptor gets the interceptor for populating a fieldmask in a
@@ -92,18 +89,20 @@ func PresenceClientInterceptor() grpc.UnaryClientInterceptor {
 		}
 
 		// --- If a Fields field of type *FieldMask exists, set the paths in it
-		var field reflect.Value
-		// First: deref the request as far as possible
-		for field = reflect.ValueOf(req); field.Kind() == reflect.Ptr && !field.IsNil(); field = field.Elem() {
-		}
-		// Second: check for the "Fields" field, only use if still Nil (no overwrite)
-		if field = field.FieldByName("Fields"); field.IsValid() &&
-			field.Type() == reflect.TypeOf(&field_mask.FieldMask{}) && field.IsNil() {
-
+		if fields, ok := req.(withFields); ok && fields.GetFields() == nil {
+			paths, found := HeaderN(ctx, fieldPresenceMetaKey, -1)
+			if !found {
+				return
+			}
+			reqObj := reflect.ValueOf(req)
+			if reqObj.Kind() == reflect.Ptr && !reqObj.IsNil() {
+				reqObj = reqObj.Elem()
+			}
+			field := reqObj.FieldByName("Fields")
 			//instantiate object
 			field.Set(reflect.New(field.Type().Elem()))
 			//unchecked assertion should be safe because of if condition above
-			field.Interface().(*field_mask.FieldMask).Paths = getFieldsSlice(ctx)
+			field.Interface().(*field_mask.FieldMask).Paths = paths
 		}
 		return
 	}

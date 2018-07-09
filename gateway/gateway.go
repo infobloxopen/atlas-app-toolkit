@@ -119,7 +119,8 @@ func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
 			append([]runtime.ServeMuxOption{runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
-				runtime.WithMetadata(MetadataAnnotator)}, g.gatewayMuxOptions...)...,
+				runtime.WithMetadata(MetadataAnnotator), runtime.WithMetadata(PresenceAnnotator)},
+				g.gatewayMuxOptions...)...,
 		)
 		for _, register := range registers {
 			if err := register(
