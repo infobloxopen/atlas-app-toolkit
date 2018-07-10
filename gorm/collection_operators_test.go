@@ -16,9 +16,16 @@ import (
 )
 
 type Person struct {
-	ID   int64
-	Name string
-	Age  int
+	Id        int64
+	Name      string
+	Age       int
+	SubPerson SubPerson `gorm:"foreignkey:PersonId;association_foreignkey:Id"`
+}
+
+type SubPerson struct {
+	Id       int64
+	Name     string
+	PersonId int64
 }
 
 func fixedFullRe(s string) string {
@@ -52,7 +59,7 @@ type testResponse struct {
 
 func TestApplyCollectionOperators(t *testing.T) {
 
-	req, err := http.NewRequest("GET", "http://test.com?_fields=name&_filter=age<=25&_order_by=age desc&_limit=2&_offset=1", nil)
+	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person&_filter=age<=25 and sub_person.name=='Mike'&_order_by=age,sub_person.name desc&_limit=2&_offset=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,12 +71,15 @@ func TestApplyCollectionOperators(t *testing.T) {
 		gormDB, mock := setUp(t)
 
 		rq := req.(*testRequest)
-		gormDB, err = ApplyCollectionOperators(gormDB, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
+		gormDB, err = ApplyCollectionOperators(gormDB, &Person{}, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		mock.ExpectQuery(fixedFullRe("SELECT name FROM \"people\" WHERE ((age <= $1)) ORDER BY age desc LIMIT 2 OFFSET 1")).WithArgs(25.0)
+		mock.ExpectQuery(fixedFullRe("SELECT \"people\".* FROM \"people\" LEFT JOIN sub_people ON people.id = sub_people.person_id WHERE (((people.age <= $1) AND (sub_people.name = $2))) ORDER BY people.age,sub_people.name desc LIMIT 2 OFFSET 1")).WithArgs(25.0, "Mike").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
+
+		mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"sub_people\" WHERE (\"person_id\" IN ($1))")).WithArgs(111)
 
 		var actual []Person
 		gormDB.Find(&actual)
@@ -80,7 +90,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 		return nil
 	}
 
-	err = gateway.ClientUnaryInterceptor(ctx, req.Method, &testRequest{}, &testRequest{}, nil, invoker)
+	err = gateway.ClientUnaryInterceptor(ctx, req.Method, &testRequest{}, &testResponse{}, nil, invoker)
 	if err != nil {
 		t.Fatal("no error returned")
 	}
