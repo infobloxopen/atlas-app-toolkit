@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -25,6 +26,13 @@ func TestAnnotator(t *testing.T) {
 			Body:   ioutil.NopCloser(strings.NewReader(input)),
 		}
 		md := PresenceAnnotator(context.Background(), postReq)
+		if expect == nil && md != nil {
+			t.Error("Did not produce expected nil metadata")
+			continue
+		}
+		// Because the order of objects at the same depth is not guaranteed
+		sort.Strings(md[fieldPresenceMetaKey])
+		sort.Strings(expect[fieldPresenceMetaKey])
 		if !reflect.DeepEqual(md, expect) {
 			t.Errorf("Did not produce expected metadata %+v, got %+v", expect, md)
 		}
