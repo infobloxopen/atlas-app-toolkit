@@ -12,11 +12,11 @@ const (
 	msgUniqueViolation     = "There is already an existing '%s' object with the same '%s'."
 )
 
-// ToMapFunc function converts mapping function for pq.Error to a conventional
+// ToMapFunc function converts mapping function for *pq.Error to a conventional
 // MapFunc from atlas-app-toolkit/errors package.
-func ToMapFunc(f func(context.Context, pq.Error) (error, bool)) errors.MapFunc {
+func ToMapFunc(f func(context.Context, *pq.Error) (error, bool)) errors.MapFunc {
 	return func(ctx context.Context, err error) (error, bool) {
-		if pqErr, ok := err.(pq.Error); ok {
+		if pqErr, ok := err.(*pq.Error); ok {
 			return f(ctx, pqErr)
 		}
 
@@ -24,11 +24,16 @@ func ToMapFunc(f func(context.Context, pq.Error) (error, bool)) errors.MapFunc {
 	}
 }
 
+var CondPQ errors.MapCond = func(err error) bool {
+	_, ok := err.(*pq.Error)
+	return ok
+}
+
 // CondConstraint function returns a condition function that matches a
 // particular constraint name.
 func CondConstraintEq(c string) errors.MapCond {
 	return func(err error) bool {
-		if pqErr, ok := err.(pq.Error); ok {
+		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Constraint == c {
 				return true
 			}
@@ -42,7 +47,7 @@ func CondConstraintEq(c string) errors.MapCond {
 // a particular constraint code.
 func CondConstrintCodeEq(code string) errors.MapCond {
 	return func(err error) bool {
-		if pqErr, ok := err.(pq.Error); ok {
+		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Code == code {
 				return true
 			}
