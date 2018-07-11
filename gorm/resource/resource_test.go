@@ -402,7 +402,7 @@ func TestEncode(t *testing.T) {
 			},
 			Message:       nil,
 			Value:         12,
-			ExpectedError: "resource: invalid value type int, expected string",
+			ExpectedError: "resource: unsupported value type int",
 		},
 		{
 			Value:      nil,
@@ -443,13 +443,13 @@ func TestEncodeInt64(t *testing.T) {
 	defer Cleanup(t)
 
 	tcases := []struct {
-		Value         driver.Value
+		Value         int64
 		Message       proto.Message
 		Identifier    *resourcepb.Identifier
 		ExpectedError string
 	}{
 		{
-			Value:   int64(1),
+			Value:   1,
 			Message: &TestProtoMessage{},
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "",
@@ -458,23 +458,13 @@ func TestEncodeInt64(t *testing.T) {
 			},
 		},
 		{
-			Value:   int64(1),
+			Value:   1,
 			Message: nil,
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
 				ResourceType:    "",
 				ResourceId:      "1",
 			},
-		},
-		{
-			Value:   "1",
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "",
-			},
-			ExpectedError: "resource: invalid value type string, expected int64",
 		},
 	}
 
@@ -501,7 +491,7 @@ func TestEncodeBytes(t *testing.T) {
 	defer Cleanup(t)
 
 	tcases := []struct {
-		Value         driver.Value
+		Value         []byte
 		Message       proto.Message
 		Identifier    *resourcepb.Identifier
 		ExpectedError string
@@ -523,16 +513,6 @@ func TestEncodeBytes(t *testing.T) {
 				ResourceType:    "",
 				ResourceId:      "1",
 			},
-		},
-		{
-			Value:   "1",
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "",
-			},
-			ExpectedError: "resource: invalid value type string, expected []byte",
 		},
 	}
 
