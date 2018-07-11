@@ -43,3 +43,8 @@ func ParseString(id string) (aname, rtype, rid string) {
 	}
 	return
 }
+
+func (m Identifier) MarshalText() (text []byte, err error) {
+	text = []byte(BuildString(m.GetApplicationName(), m.GetResourceType(), m.GetResourceId()))
+	return
+}
