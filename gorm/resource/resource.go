@@ -218,16 +218,6 @@ func Encode(pb proto.Message, value driver.Value) (*resourcepb.Identifier, error
 	return &id, nil
 }
 
-// EncodeInt64 forwards call to Encode.
-func EncodeInt64(pb proto.Message, value int64) (*resourcepb.Identifier, error) {
-	return Encode(pb, value)
-}
-
-// EncodeBytes forwards call to Encode.
-func EncodeBytes(pb proto.Message, value []byte) (*resourcepb.Identifier, error) {
-	return Encode(pb, value)
-}
-
 // Name returns name of pb.
 // If pb implements XXX_MessageName then it is used to return name, otherwise
 // proto.MessageName is used and "s" symbol is added at the end of the message name.
