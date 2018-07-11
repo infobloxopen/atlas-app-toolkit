@@ -18,7 +18,7 @@ func FilterStringToGorm(filter string, obj interface{}) (string, []interface{}, 
 
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
 func FilteringToGorm(m *query.Filtering, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
-	if m == nil {
+	if m == nil || m.Root == nil {
 		return "", nil, nil, nil
 	}
 	switch r := m.Root.(type) {
