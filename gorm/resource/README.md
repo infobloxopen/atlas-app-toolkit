@@ -10,6 +10,9 @@ You could register `resource.Codec` for you PB type to be used to convert `atlas
 By default if PB resource is undefined (`nil`) the `atlas.rpc.Identifier` is converted to a string in fully qualified format specified for
 Atlas References, otherwise the Resource ID part is returned as string value.
 
+If `driver.Value` is `nil` default codecs returns `nil` `atlas.rpc.Identifier`, if you want to override such behavior in order to return empty
+`atlas.rpc.Identifier` that could be rendered to `null` string in JSON - 
+
 If `resource.Codec` is not registered for a PB type the value of identifier is converted from `driver.Value` to a string.
 If Resource Type is not found it is populated from the name of PB type,
 the Application Name is populated if was registered. (see `RegisterApplication`).
@@ -24,6 +27,9 @@ The only numeric and text formats are supported. If type is not set it will be g
 
 If you want to expose foreign keys on API just leave them with empty type in `gorm.field.tag` and it will be calculated based on the
 parent's primary key type.
+
+By default `Identifier`s are nillable, it means that for primary keys you need to set corresponding tag `primary_key: true` and for foreign keys
+and external references `not_null: true`.
 
 The Postgres types from tags are converted as follows:
 
@@ -57,7 +63,7 @@ option go_package = "github.com/yourapp/pb;pb";
 message A {
     option (gorm.opts).ormable = true;
     
-    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
+    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer" primary_key: true}];
     string value = 2;
     repeated B b_list = 3; // has many
     atlas.rpc.Identifier external = 4 [(gorm.field).tag = {type: "text"}];
@@ -66,10 +72,11 @@ message A {
 message B {
     option (gorm.opts).ormable = true;
     
-    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer"}];
+    atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "integer" primary_key: true}];
     string value = 2;
      // foreign key to A  parent. !!! Will be set to the type of A.id
     atlas.rpc.Identifier a_id = 3;
+    atlas.rpc.Identifier external_not_null = 4 [(gorm.field).tag = {type: "text" not_null: true}];
 }
 ```
 
@@ -96,13 +103,14 @@ type AORM struct {
 	Id int64
 	Value string
 	BList []*BORM
-	External string
+	External *string
 }
 
 type BORM struct {
 	Id int64
 	Value string
 	AId *int64
+	ExternalNotNull string
 }
 ```
 

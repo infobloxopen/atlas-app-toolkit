@@ -88,3 +88,46 @@ func TestBuildString(t *testing.T) {
 		}
 	}
 }
+
+func TestMarshalText(t *testing.T) {
+	tcases := []struct {
+		Identifier   *Identifier
+		ExpectedText string
+	}{
+		{
+			Identifier: &Identifier{
+				ResourceType: "res",
+				ResourceId:   "uuid",
+			},
+			ExpectedText: "res/uuid",
+		},
+		{
+			Identifier: &Identifier{
+				ApplicationName: "app",
+				ResourceType:    "res",
+				ResourceId:      "uuid",
+			},
+			ExpectedText: "app/res/uuid",
+		},
+		{
+			Identifier: &Identifier{
+				ResourceId: "uuid",
+			},
+			ExpectedText: "uuid",
+		},
+		{
+			Identifier:   &Identifier{},
+			ExpectedText: "",
+		},
+		{
+			Identifier:   nil,
+			ExpectedText: "<nil>",
+		},
+	}
+
+	for n, tc := range tcases {
+		if v := tc.Identifier.String(); v != tc.ExpectedText {
+			t.Errorf("tc %d: invalid text value %s, expected %s", n, v, tc.ExpectedText)
+		}
+	}
+}

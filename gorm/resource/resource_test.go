@@ -17,11 +17,33 @@ import (
 type TestCodec struct{}
 
 func (TestCodec) Decode(id *resourcepb.Identifier) (driver.Value, error) {
+	if id.GetResourceId() == "err" {
+		return nil, errors.New("test error")
+	}
+	if id.GetResourceId() == "invalid" {
+		return true, nil
+	}
+	if id.GetResourceId() == "str" {
+		return "", nil
+	}
+	if id.GetResourceId() == "strempty" {
+		return "", nil
+	}
+	if id.GetResourceId() == "12" {
+		return strconv.ParseInt(id.GetResourceId(), 10, 64)
+	}
 	return id.ResourceId, nil
 }
 func (TestCodec) Encode(value driver.Value) (*resourcepb.Identifier, error) {
-	return &resourcepb.Identifier{ResourceId: value.(string)}, nil
-
+	switch value.(type) {
+	case string:
+		return &resourcepb.Identifier{ResourceId: value.(string)}, nil
+	case int64:
+		return &resourcepb.Identifier{ResourceId: strconv.FormatInt(value.(int64), 10)}, nil
+	case []byte:
+		return &resourcepb.Identifier{ResourceId: string(value.([]byte))}, nil
+	}
+	return nil, nil
 }
 
 type TestInt64Codec struct{}
@@ -395,14 +417,40 @@ func TestEncode(t *testing.T) {
 			},
 		},
 		{
+			Value:   int64(12),
+			Message: &TestProtoMessage{},
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "",
 				ResourceType:    "",
-				ResourceId:      "",
+				ResourceId:      "12",
 			},
-			Message:       nil,
-			Value:         12,
-			ExpectedError: "resource: invalid value type int, expected string",
+		},
+		{
+			Value:   int64(1),
+			Message: nil,
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "app",
+				ResourceType:    "",
+				ResourceId:      "1",
+			},
+		},
+		{
+			Value:   []byte("1"),
+			Message: &TestProtoMessage{},
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "",
+				ResourceType:    "",
+				ResourceId:      "1",
+			},
+		},
+		{
+			Value:   []byte("1"),
+			Message: nil,
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "app",
+				ResourceType:    "",
+				ResourceId:      "1",
+			},
 		},
 		{
 			Value:      nil,
@@ -433,122 +481,6 @@ func TestEncode(t *testing.T) {
 		}
 		if v := id.GetResourceId(); v != tc.Identifier.GetResourceId() {
 			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.Identifier.ResourceId)
-		}
-	}
-}
-
-func TestEncodeInt64(t *testing.T) {
-	RegisterCodec(&TestInt64Codec{}, &TestProtoMessage{})
-	RegisterApplication("app")
-	defer Cleanup(t)
-
-	tcases := []struct {
-		Value         driver.Value
-		Message       proto.Message
-		Identifier    *resourcepb.Identifier
-		ExpectedError string
-	}{
-		{
-			Value:   int64(1),
-			Message: &TestProtoMessage{},
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "1",
-			},
-		},
-		{
-			Value:   int64(1),
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "app",
-				ResourceType:    "",
-				ResourceId:      "1",
-			},
-		},
-		{
-			Value:   "1",
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "",
-			},
-			ExpectedError: "resource: invalid value type string, expected int64",
-		},
-	}
-
-	for n, tc := range tcases {
-		id, err := EncodeInt64(tc.Message, tc.Value)
-		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
-			t.Fatalf("tc %d: invalid error %s, expected %s", n, err, tc.ExpectedError)
-		}
-		if v := id.GetApplicationName(); v != tc.Identifier.GetApplicationName() {
-			t.Errorf("tc %d: invalid application name %s, expected %s", n, v, tc.Identifier.GetApplicationName())
-		}
-		if v := id.GetResourceType(); v != tc.Identifier.GetResourceType() {
-			t.Errorf("tc %d: invalid resource type %s, expected %s", n, v, tc.Identifier.GetResourceType())
-		}
-		if v := id.GetResourceId(); v != tc.Identifier.GetResourceId() {
-			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.Identifier.GetResourceId())
-		}
-	}
-}
-
-func TestEncodeBytes(t *testing.T) {
-	RegisterCodec(&TestBytesCodec{}, &TestProtoMessage{})
-	RegisterApplication("app")
-	defer Cleanup(t)
-
-	tcases := []struct {
-		Value         driver.Value
-		Message       proto.Message
-		Identifier    *resourcepb.Identifier
-		ExpectedError string
-	}{
-		{
-			Value:   []byte("1"),
-			Message: &TestProtoMessage{},
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "1",
-			},
-		},
-		{
-			Value:   []byte("1"),
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "app",
-				ResourceType:    "",
-				ResourceId:      "1",
-			},
-		},
-		{
-			Value:   "1",
-			Message: nil,
-			Identifier: &resourcepb.Identifier{
-				ApplicationName: "",
-				ResourceType:    "",
-				ResourceId:      "",
-			},
-			ExpectedError: "resource: invalid value type string, expected []byte",
-		},
-	}
-
-	for n, tc := range tcases {
-		id, err := EncodeBytes(tc.Message, tc.Value)
-		if (err != nil && tc.ExpectedError != err.Error()) || (err == nil && tc.ExpectedError != "") {
-			t.Fatalf("tc %d: invalid error %s, expected %s", n, err, tc.ExpectedError)
-		}
-		if v := id.GetApplicationName(); v != tc.Identifier.GetApplicationName() {
-			t.Errorf("tc %d: invalid application name %s, expected %s", n, v, tc.Identifier.GetApplicationName())
-		}
-		if v := id.GetResourceType(); v != tc.Identifier.GetResourceType() {
-			t.Errorf("tc %d: invalid resource type %s, expected %s", n, v, tc.Identifier.GetResourceType())
-		}
-		if v := id.GetResourceId(); v != tc.Identifier.GetResourceId() {
-			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.Identifier.GetResourceId())
 		}
 	}
 }

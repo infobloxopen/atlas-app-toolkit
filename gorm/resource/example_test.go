@@ -82,7 +82,7 @@ func Example() {
 		pb.VarName = v.VarName
 
 		// convert internal id to RPC representation using registered UUID codec
-		if id, err := EncodeInt64(pb, v.ID); err != nil {
+		if id, err := Encode(pb, v.ID); err != nil {
 			return nil, err
 		} else {
 			pb.Id = id
