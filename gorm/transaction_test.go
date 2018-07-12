@@ -161,14 +161,14 @@ func TestTransaction_Commit(t *testing.T) {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
 	txn := &Transaction{parent: gdb}
-
+	ctx := context.Background()
 	// test current transaction is nil
-	if err := txn.Commit(); err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		t.Errorf("unexpected error %s", err)
 	}
 
 	txn.Begin()
-	if err := txn.Commit(); err != nil {
+	if err := txn.Commit(ctx); err != nil {
 		t.Errorf("failed to commit transaction - %s", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -180,6 +180,36 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 }
 
+func TestTransaction_AfterCommitHook(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	txn := &Transaction{parent: gdb}
+	txn.Begin()
+
+	called := false
+	hook := func(context.Context) { called = true; return }
+	txn.AddAfterCommitHook(hook)
+	ctx := context.Background()
+	if err := txn.Commit(ctx); err != nil {
+		t.Errorf("failed to commit transaction - %s", err)
+	}
+	if !called {
+		t.Errorf("did not fire the hook")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to commit transaction - %s", err)
+	}
+
+}
 func TestTransaction_Rollback(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {

@@ -832,11 +832,15 @@ populated in case if they provided in incoming HTTP request.
 
 #### How can I apply collection operators passed to my GRPC service to a GORM query?
 
-You can use `ApplyCollectionOperators` method from [op/gorm](gateway/gorm) package.
+You can use `ApplyCollectionOperators` methods from [op/gorm](gateway/gorm) package.
 
 ```golang
 ...
-gormDB, err = ApplyCollectionOperators(gormDB, ctx)
+f := &query.Filtering{}
+s := &query.Sorting{}
+p := &query.Pagination{}
+fs := &query.FieldSelection{}
+gormDB, err = ApplyCollectionOperators(gormDB, f, s, p, fs)
 if err != nil {
     ...
 }

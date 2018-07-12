@@ -41,9 +41,14 @@ func FromContext(ctx context.Context) (txn *Transaction, ok bool) {
 // It works as a singleton to prevent an application of creating more than one
 // transaction instance per incoming request.
 type Transaction struct {
-	mu      sync.Mutex
-	parent  *gorm.DB
-	current *gorm.DB
+	mu              sync.Mutex
+	parent          *gorm.DB
+	current         *gorm.DB
+	afterCommitHook []func(context.Context)
+}
+
+func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
+	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
@@ -91,15 +96,19 @@ func (t *Transaction) Rollback() error {
 
 // Commit finishes transaction by calling `*gorm.DB.Commit()`
 // Reset current transaction and returns an error if any.
-func (t *Transaction) Commit() error {
+func (t *Transaction) Commit(ctx context.Context) error {
 	if t.current == nil {
 		return nil
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-
 	t.current.Commit()
 	err := t.current.Error
+	if err == nil {
+		for i := range t.afterCommitHook {
+			t.afterCommitHook[i](ctx)
+		}
+	}
 	t.current = nil
 	return err
 }
@@ -129,7 +138,7 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 			if err != nil {
 				terr = txn.Rollback()
 			} else {
-				if terr = txn.Commit(); terr != nil {
+				if terr = txn.Commit(ctx); terr != nil {
 					err = status.Error(codes.Internal, "failed to commit transaction")
 				}
 			}
