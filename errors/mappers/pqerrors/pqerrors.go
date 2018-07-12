@@ -37,7 +37,7 @@ func CondPQ() errors.MapCond {
 	}
 }
 
-// CondConstraint function returns a condition function that matches a
+// CondConstraintEq function returns a condition function that matches a
 // particular constraint name.
 func CondConstraintEq(c string) errors.MapCond {
 	return func(err error) bool {
@@ -51,9 +51,9 @@ func CondConstraintEq(c string) errors.MapCond {
 	}
 }
 
-// CondConstraintCode function returns a condition function that matches
+// CondCodeEq function returns a condition function that matches
 // a particular constraint code.
-func CondConstraintCodeEq(code string) errors.MapCond {
+func CondCodeEq(code string) errors.MapCond {
 	return func(err error) bool {
 		if pqErr, ok := err.(*pq.Error); ok {
 			if string(pqErr.Code) == code {
@@ -70,7 +70,7 @@ func CondConstraintCodeEq(code string) errors.MapCond {
 func NewForeignKeyMapping(c string, t1 string, t2 string) errors.MapFunc {
 	return errors.NewMapping(
 		errors.CondAnd(
-			CondConstraintCodeEq("23503"),
+			CondCodeEq("23503"),
 			CondConstraintEq(c),
 		),
 		errors.NewContainer(codes.InvalidArgument, msgForeignKeyViolation, t1, t2),
@@ -83,7 +83,7 @@ func NewForeignKeyMapping(c string, t1 string, t2 string) errors.MapFunc {
 func NewRestrictMapping(c string, t1 string, t2 string) errors.MapFunc {
 	return errors.NewMapping(
 		errors.CondAnd(
-			CondConstraintCodeEq("23001"),
+			CondCodeEq("23001"),
 			CondConstraintEq(c),
 		),
 		errors.NewContainer(codes.InvalidArgument, msgRestrictViolation, t1, t2),
@@ -96,7 +96,7 @@ func NewRestrictMapping(c string, t1 string, t2 string) errors.MapFunc {
 func NewNotNullMapping(c string, t string, col string) errors.MapFunc {
 	return errors.NewMapping(
 		errors.CondAnd(
-			CondConstraintCodeEq("23502"),
+			CondCodeEq("23502"),
 			CondConstraintEq(c),
 		),
 		errors.NewContainer(codes.InvalidArgument, msgNotNullViolation, col, t),
@@ -109,7 +109,7 @@ func NewNotNullMapping(c string, t string, col string) errors.MapFunc {
 func NewUniqueMapping(c string, t string, col string) errors.MapFunc {
 	return errors.NewMapping(
 		errors.CondAnd(
-			CondConstraintCodeEq("23505"),
+			CondCodeEq("23505"),
 			CondConstraintEq(c),
 		),
 		errors.NewContainer(codes.AlreadyExists, msgUniqueViolation, t, col),

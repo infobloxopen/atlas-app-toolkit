@@ -45,16 +45,16 @@ func TestCond(t *testing.T) {
 			cond: CondConstraintEq("foo"), in: fmt.Errorf("foo"), expected: false,
 		},
 		{
-			name: "cond_constr_code_non_pointer",
-			cond: CondConstraintCodeEq("1312"), in: pq.Error{Code: "1312"}, expected: false,
+			name: "cond_code_non_pointer",
+			cond: CondCodeEq("1312"), in: pq.Error{Code: "1312"}, expected: false,
 		},
 		{
-			name: "cond_constr_code_base",
-			cond: CondConstraintCodeEq("1312"), in: &pq.Error{Code: "1312"}, expected: true,
+			name: "cond_code_base",
+			cond: CondCodeEq("1312"), in: &pq.Error{Code: "1312"}, expected: true,
 		},
 		{
-			name: "cond_constr_code_invalid_error",
-			cond: CondConstraintCodeEq("1312"), in: fmt.Errorf("foo"), expected: false,
+			name: "cond_code_invalid_error",
+			cond: CondCodeEq("1312"), in: fmt.Errorf("foo"), expected: false,
 		},
 	} {
 		tc := tc
