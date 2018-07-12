@@ -31,6 +31,12 @@ func WithJWT(keyfunc jwt.Keyfunc) option {
 			return attributes, ErrInternal
 		}
 		for k, v := range claims {
+			// HACK: if the multi-tenancy field is included in the JWT payload, it needs
+			// to be changed to "account" because "account" is the multi-tenancy field
+			// used in the authorization service
+			if k == MultiTenancyField {
+				k = "account"
+			}
 			attr := &pdp.Attribute{Id: k, Type: "string", Value: fmt.Sprint(v)}
 			attributes = append(attributes, attr)
 		}
@@ -69,7 +75,7 @@ func WithRequest(appID string) option {
 		}
 		operation := fmt.Sprintf("%s.%s", stripPackageName(service), method)
 		attributes := []*pdp.Attribute{
-			{Id: "operation", Type: "string", Value: operation},
+			{Id: "endpoint", Type: "string", Value: operation},
 			// lowercase the appID to match PARG namespace
 			{Id: "application", Type: "string", Value: strings.ToLower(appID)},
 		}

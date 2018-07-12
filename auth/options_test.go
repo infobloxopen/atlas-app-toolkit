@@ -37,6 +37,18 @@ func TestWithJWT(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			token: makeToken(jwt.MapClaims{
+				MultiTenancyField: "TestAccount",
+			}, t),
+			expected: []*pdp.Attribute{
+				{Id: "account", Type: "string", Value: "TestAccount"},
+			},
+			keyfunc: func(token *jwt.Token) (interface{}, error) {
+				return []byte(TestSecret), nil
+			},
+			err: nil,
+		},
 		// parse and verify an invalid token
 		{
 			token: makeToken(jwt.MapClaims{
@@ -143,7 +155,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/PetStore/ListPets"},
 			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "shoppingmall"},
 			},
 			err: nil,
@@ -152,7 +164,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/atlas.example.PetStore/ListPets"},
 			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "shoppingmall"},
 			},
 			err: nil,
@@ -161,7 +173,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/PetStore/ListPets"},
 			appID:  "",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "default"},
 			},
 			err: nil,
