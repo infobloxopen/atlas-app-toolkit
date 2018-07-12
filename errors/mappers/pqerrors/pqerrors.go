@@ -1,8 +1,12 @@
 package pqerrors
 
 import (
-	"github.com/infobloxopen/atlas-app-toolkit/errors"
+	"context"
+
 	"github.com/lib/pq"
+	"google.golang.org/grpc/codes"
+
+	"github.com/infobloxopen/atlas-app-toolkit/errors"
 )
 
 const (
@@ -20,13 +24,17 @@ func ToMapFunc(f func(context.Context, *pq.Error) (error, bool)) errors.MapFunc 
 			return f(ctx, pqErr)
 		}
 
-		return nil, false
+		return err, false
 	}
 }
 
-var CondPQ errors.MapCond = func(err error) bool {
-	_, ok := err.(*pq.Error)
-	return ok
+// CondPQ function returns a condition function that matches standard
+// lib/pq error.
+func CondPQ() errors.MapCond {
+	return func(err error) bool {
+		_, ok := err.(*pq.Error)
+		return ok
+	}
 }
 
 // CondConstraint function returns a condition function that matches a
@@ -45,10 +53,10 @@ func CondConstraintEq(c string) errors.MapCond {
 
 // CondConstraintCode function returns a condition function that matches
 // a particular constraint code.
-func CondConstrintCodeEq(code string) errors.MapCond {
+func CondConstraintCodeEq(code string) errors.MapCond {
 	return func(err error) bool {
 		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code == code {
+			if string(pqErr.Code) == code {
 				return true
 			}
 		}
@@ -75,10 +83,10 @@ func NewForeignKeyMapping(c string, t1 string, t2 string) errors.MapFunc {
 func NewRestrictMapping(c string, t1 string, t2 string) errors.MapFunc {
 	return errors.NewMapping(
 		errors.CondAnd(
-			CondConstrainCodeEq("23001"),
+			CondConstraintCodeEq("23001"),
 			CondConstraintEq(c),
 		),
-		errors.NewContainer(codes.InvalidArgument, msgRestrictKeyViolation, t1, t2),
+		errors.NewContainer(codes.InvalidArgument, msgRestrictViolation, t1, t2),
 	)
 }
 
@@ -104,6 +112,6 @@ func NewUniqueMapping(c string, t string, col string) errors.MapFunc {
 			CondConstraintCodeEq("23505"),
 			CondConstraintEq(c),
 		),
-		errors.NewContainer(codes.InvalidArgument, msgUniqueViolation, t, col),
+		errors.NewContainer(codes.AlreadyExists, msgUniqueViolation, t, col),
 	)
 }
