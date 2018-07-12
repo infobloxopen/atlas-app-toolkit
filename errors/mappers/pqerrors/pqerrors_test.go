@@ -13,62 +13,72 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/errors"
 )
 
-func TestCondPQ(t *testing.T) {
-	for i, tc := range []struct {
+func TestCond(t *testing.T) {
+	for _, tc := range []struct {
 		in       error
+		name     string
+		cond     errors.MapCond
 		expected bool
 	}{
-		{in: pq.Error{}, expected: false},
-		{in: &pq.Error{}, expected: true},
-		{in: fmt.Errorf("pq.Error"), expected: false},
+		{
+			name: "cond_pq_non_pointer",
+			cond: CondPQ(), in: pq.Error{}, expected: false,
+		},
+		{
+			name: "cond_pq_base",
+			cond: CondPQ(), in: &pq.Error{}, expected: true,
+		},
+		{
+			name: "cond_pq_invalid_error",
+			cond: CondPQ(), in: fmt.Errorf("pq.Error"), expected: false,
+		},
+		{
+			name: "cond_constr_non_pointer",
+			cond: CondConstraintEq("foo"), in: pq.Error{Constraint: "foo"}, expected: false,
+		},
+		{
+			name: "cond_constr_base",
+			cond: CondConstraintEq("foo"), in: &pq.Error{Constraint: "foo"}, expected: true,
+		},
+		{
+			name: "cond_constr_invalid_error",
+			cond: CondConstraintEq("foo"), in: fmt.Errorf("foo"), expected: false,
+		},
+		{
+			name: "cond_constr_code_non_pointer",
+			cond: CondConstraintCodeEq("1312"), in: pq.Error{Code: "1312"}, expected: false,
+		},
+		{
+			name: "cond_constr_code_base",
+			cond: CondConstraintCodeEq("1312"), in: &pq.Error{Code: "1312"}, expected: true,
+		},
+		{
+			name: "cond_constr_code_invalid_error",
+			cond: CondConstraintCodeEq("1312"), in: fmt.Errorf("foo"), expected: false,
+		},
 	} {
-		actual := CondPQ()(tc.in)
-		if actual != tc.expected {
-			t.Errorf("TestCase #%d: expected %v; got %v", i, tc.expected, actual)
-		}
-	}
-}
-
-func TestCondConstraintEq(t *testing.T) {
-	testC := "constraint_foo"
-
-	for i, tc := range []struct {
-		in       error
-		expected bool
-	}{
-		{in: pq.Error{Constraint: testC}, expected: false},
-		{in: &pq.Error{Constraint: testC}, expected: true},
-		{in: fmt.Errorf(testC), expected: false},
-	} {
-		actual := CondConstraintEq(testC)(tc.in)
-		if actual != tc.expected {
-			t.Errorf("TestCase #%d: expected %v; got %v", i, tc.expected, actual)
-		}
-	}
-}
-
-func TestCondConstraintCodeEq(t *testing.T) {
-	testC := "1366"
-
-	for i, tc := range []struct {
-		in       error
-		expected bool
-	}{
-		{in: pq.Error{Code: pq.ErrorCode(testC)}, expected: false},
-		{in: &pq.Error{Code: pq.ErrorCode(testC)}, expected: true},
-		{in: fmt.Errorf(testC), expected: false},
-	} {
-		actual := CondConstraintCodeEq(testC)(tc.in)
-		if actual != tc.expected {
-			t.Errorf("TestCase #%d: expected %v; got %v", i, tc.expected, actual)
-		}
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if actual := tc.cond(tc.in); actual != tc.expected {
+				t.Errorf("expected %v; got %v", tc.expected, actual)
+			}
+		})
 	}
 }
 
 func TestMapping(t *testing.T) {
+
+	// ToMapFunc Custom Mapping
+	var f errors.MapFunc = ToMapFunc(func(ctx context.Context, err *pq.Error) (error, bool) {
+		if err.Detail == "yay" {
+			return errors.NewContainer(codes.DataLoss, "data loss"), true
+		}
+
+		return nil, false
+	})
+
 	for _, tc := range []struct {
 		in         error
-		c, t1, t2  string
 		expected   bool
 		mapping    errors.MapFunc
 		name       string
@@ -153,6 +163,26 @@ func TestMapping(t *testing.T) {
 			name:     "unique_invalid_constraint",
 			in:       &pq.Error{Constraint: "hex", Code: "23505"},
 			mapping:  NewUniqueMapping("foo", "baz", "bar"),
+			expected: false,
+		},
+		{
+			name:       "tomapfunc_base",
+			in:         &pq.Error{Detail: "yay"},
+			mapping:    f,
+			expected:   true,
+			statusCode: codes.DataLoss,
+			statusMsg:  "data loss",
+		},
+		{
+			name:     "tomapfunc_non_pointer",
+			in:       pq.Error{Detail: "yay"},
+			mapping:  f,
+			expected: false,
+		},
+		{
+			name:     "tomapfunc_invalid_err",
+			in:       pq.Error{Detail: "ya"},
+			mapping:  f,
 			expected: false,
 		},
 	} {
