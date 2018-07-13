@@ -1,19 +1,16 @@
 # Authorization Interceptor
 
-This package provides a server-side gRPC interceptor that interfaces with Themis, a policy engine that is developed and maintained by Infoblox. It is designed to give developers fine-grained control over who (e.g. specific users) or what (e.g. neighboring services) can access their gRPC service's business logic.
+This package provides a server-side gRPC interceptor that interfaces with [Themis](https://github.com/infobloxopen/themis), a policy engine that is developed and maintained by Infoblox. 
+
+It is designed to give developers fine-grained control over who (e.g. specific users) or what (e.g. neighboring services) can access their gRPC service's business logic.
 
 ## How it Works
-When building a gRPC server, a developer can supply his or her server with a collection of _gRPC server-side interceptors_. Each request that's sent to the gRPC server will traverse the gRPC interceptors before reaching the server's business logic. At any point, an interceptor can stop a given request from advancing to the application.
 
-Here are some common usages for gRPC interceptors.
+If you're unfamiliar with gRPC interceptors and their intended use, please consider reading [this](https://github.com/grpc-ecosystem/go-grpc-middleware#middleware) brief explanation.
 
-- Logging (e.g. log to `stdout` on each request)
-- Metrics (e.g. increment a request-counting metric)
-- **Authorization** (e.g. check if the request-sender is allowed to access a given resource)
+The authorization interceptor determines whether or not an API consumer can access an endpoint. If the API consumer does not have appropriate permissions to access an endpoint (e.g. the consumer does not provide an API key), the interceptor will stop their request from advancing to the application.
 
-When the authorization interceptor is enabled, it ensures that whoever or whatever sent the request is allowed to access some endpoint. If they're not, the interceptor issues a `DENY` response, otherwise the request moves to the application itself.
-
-Behold the behavior authorization interceptor as if it were a living, breathing human: _"Hey Themis, is the sender of request XYZ allowed to access endpoint ABC in my service? They're not? Okay, I'll deny the request!"_
+Here's the authorization interceptor as if it were a living, breathing human: _"Hey Themis, is the sender of request XYZ allowed to access endpoint ABC in my service? They're not? Okay, I'll deny the request!"_
 
 ## Add Interceptors
 If you already use gRPC with Go, your project probably has a bit of code like this.
@@ -33,7 +30,7 @@ myServer := grpc.NewServer(
 )
 ```
 
-For more information about adding server-side gRPC interceptors, check out [the documentation](https://github.com/grpc-ecosystem/go-grpc-middleware) on the official gRPC GitHub repository.
+Again, the official gRPC GitHub repository [has documentation](https://github.com/grpc-ecosystem/go-grpc-middleware) to explain this process.
 
 ## Add the Default AuthZ Interceptor
 
@@ -49,7 +46,10 @@ myServer := grpc.NewServer(
   )),
 )
 ```
-In the example above, the `themisAddress` variable corresponds to the host and port of Themis. The `applicationID`  maps the interceptor to a specific application. In a microservices environment, you might have multiple services that, as a unit, compose an application (e.g. a "petstore" service, a "coffee shop" service, and a "cellphone kiosk" service might belong to a "shopping mall" application). Each service has its own access control logic, but they're all under the same application umbrella.
+In the example above, the `themisAddress` variable corresponds to the host and port of Themis.
+
+
+The `applicationID` maps the interceptor to a specific application. In a microservices environment, you might have multiple services that, as a unit, compose an application (e.g. a "petstore" service, a "coffee shop" service, and a "cellphone kiosk" service might belong to a "shopping mall" application). Each service has its own access control logic, but they're all under the same application umbrella.
 
 When you define your gRPC server, start by using the `auth` package's `UnaryServerInterceptor` interceptor. The `applicationID` associates the interceptor with a specific set of policies.
 
@@ -100,7 +100,7 @@ Visit [this link](http://localhost:6060/pkg/github.com/infobloxopen/atlas-app-to
 
 ### `WithJWT`
 
-For token-based authorization with JWT, the `WithJWT` option will prove useful. When a request reaches the authorization interceptor, it will include the full JWT payload in a given authorization request to Themis.
+This option enables token-based authorization with JWT. When requests reach the authorization interceptor, the interceptor will include the full JWT payload in a given authorization request to Themis.
 
 ```json
 {
@@ -113,7 +113,7 @@ Each of the fields in the above example would be sent to Themis as part of the a
 
 ### `WithCallback`
 
-The `WithCallback` option allows for application-specific authorization behavior. Although the toolkit offers a robust set of authorization options, you might need specialized, non-generalizable authorization logic to satisfy your access control requirements. Enter the `WithCallback` option.
+This option allows for application-specific authorization behavior. The toolkit offers a robust set of authorization options, but you might need specialized, non-generalizable authorization logic to satisfy your access control requirements.
 
 To use the `WithCallback` option, you must be somewhat familiar with the API for Themis, which is defined [here](https://github.com/infobloxopen/themis/blob/master/proto/service.proto).
 
@@ -126,8 +126,20 @@ myCallBackFunction := func(ctx context.Context) ([]*pdp.Attribute, error){
   return myAttributes, nil
 }
 ```
-In the example callback above, each request to the Themis will include an two additional attributes: the city and country (although both are hardcoded). It shows how you can modify the authorization logic without making changes to the toolkit code.
+Each request to the Themis will include an two additional attributes: the city and country (although both are hardcoded). The point being, you can modify the authorization logic without making changes to the toolkit code.
 
 ### `WithRequest`
 
-The `WithRequest` option will
+This option includes information about the gRPC request as part of the request to Themis. The interceptor will add the following attributes.
+
+- The gRPC service name (e.g. `/PetStore`)
+- The gRPC function name (e.g. `ListAllPets`)
+
+### `WithTLS`
+
+This option uses metadata from a TLS-authenticated client. When included, the following options are included in a request to Themis.
+
+- Whether or not the request-sender is TLS authenticated
+- The TLS certificate issuer (if authenticated)
+- The TLS common subject name (if authenticated)
+
