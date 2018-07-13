@@ -28,8 +28,8 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-// MapValidationError function returns a MapFunc that checks if the error is of type validation
-func MapValidationError() errors.MapFunc {
+// ValidationErrorMapping function returns a MapFunc that checks if the error is of type validation
+func ValidationErrorMapping() errors.MapFunc {
 	return errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
 		return ValidationHelper(err), true
 	})
