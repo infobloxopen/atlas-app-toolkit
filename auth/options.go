@@ -31,12 +31,6 @@ func WithJWT(keyfunc jwt.Keyfunc) option {
 			return attributes, ErrInternal
 		}
 		for k, v := range claims {
-			// HACK: if the multi-tenancy field is included in the JWT payload, it needs
-			// to be changed to "account" because "account" is the multi-tenancy field
-			// used in the authorization service
-			if k == MultiTenancyField {
-				k = "account"
-			}
 			attr := &pdp.Attribute{Id: k, Type: "string", Value: fmt.Sprint(v)}
 			attributes = append(attributes, attr)
 		}
