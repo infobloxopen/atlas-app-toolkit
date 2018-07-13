@@ -25,7 +25,7 @@ func TestAnnotator(t *testing.T) {
 			Method: "POST",
 			Body:   ioutil.NopCloser(strings.NewReader(input)),
 		}
-		md := PresenceAnnotator(context.Background(), postReq)
+		md := NewPresenceAnnotator("POST")(context.Background(), postReq)
 		if expect == nil && md != nil {
 			t.Error("Did not produce expected nil metadata")
 			continue

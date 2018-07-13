@@ -19,49 +19,58 @@ const fieldPresenceMetaKey = "field-paths"
 
 // PresenceAnnotator will parse the JSON input and then add the paths to the
 // metadata to be pulled from context later
-func PresenceAnnotator(ctx context.Context, req *http.Request) metadata.MD {
-	if req == nil {
-		return nil
-	}
-	if req.Method != "POST" && req.Method != "PUT" { // && req.Method != "PATCH"
-		return nil
-	}
-
-	// Read body of request then reset it to be read in future
-	body, err := ioutil.ReadAll(req.Body)
-	req.Body = ioutil.NopCloser(bytes.NewReader(body))
-	if err != nil {
-		return nil
-	}
-
-	paths := []string{}
-	var root interface{}
-	if err := json.Unmarshal(body, &root); err != nil {
-		return nil
-	}
-
-	queue := []pathItem{{node: root}}
-	for len(queue) > 0 {
-		// dequeue an item
-		item := queue[0]
-		queue = queue[1:]
-		if m, ok := item.node.(map[string]interface{}); ok {
-			// if the item is an object, then enqueue all of its children
-			for k, v := range m {
-				queue = append(queue, pathItem{path: append(item.path, generator.CamelCase(k)), node: v})
-			}
-		} else if len(item.path) > 0 {
-			// otherwise, it's a leaf node so print its path
-			paths = append(paths, strings.Join(item.path, "."))
+func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request) metadata.MD {
+	return func(ctx context.Context, req *http.Request) metadata.MD {
+		if req == nil {
+			return nil
 		}
-	}
+		validMethod := false
+		for _, m := range methods {
+			if req.Method == m {
+				validMethod = true
+				break
+			}
+		}
+		if !validMethod {
+			return nil
+		}
 
-	md := make(metadata.MD)
-	key := fieldPresenceMetaKey
-	for _, path := range paths {
-		md[key] = append(md[key], path)
+		// Read body of request then reset it to be read in future
+		body, err := ioutil.ReadAll(req.Body)
+		req.Body = ioutil.NopCloser(bytes.NewReader(body))
+		if err != nil {
+			return nil
+		}
+
+		paths := []string{}
+		var root interface{}
+		if err := json.Unmarshal(body, &root); err != nil {
+			return nil
+		}
+
+		queue := []pathItem{{node: root}}
+		for len(queue) > 0 {
+			// dequeue an item
+			item := queue[0]
+			queue = queue[1:]
+			if m, ok := item.node.(map[string]interface{}); ok {
+				// if the item is an object, then enqueue all of its children
+				for k, v := range m {
+					queue = append(queue, pathItem{path: append(item.path, generator.CamelCase(k)), node: v})
+				}
+			} else if len(item.path) > 0 {
+				// otherwise, it's a leaf node so print its path
+				paths = append(paths, strings.Join(item.path, "."))
+			}
+		}
+
+		md := make(metadata.MD)
+		if len(paths) == 0 {
+			return md
+		}
+		md[fieldPresenceMetaKey] = paths
+		return md
 	}
-	return md
 }
 
 // pathItem stores a in-progress deconstruction of a path for a fieldmask
