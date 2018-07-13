@@ -191,7 +191,8 @@
   packages = [
     "googleapis/api/annotations",
     "googleapis/rpc/code",
-    "googleapis/rpc/status"
+    "googleapis/rpc/status",
+    "protobuf/field_mask"
   ]
   revision = "f8c8703595236ae70fdf8789ecb656ea0bcdcf46"
 
@@ -228,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "72a68123eb1bb6d5371b256cb233ea7db517705dd1539ef4f23e3fc24fead2cc"
+  inputs-digest = "a87209b53ba7e0f7a9c61dcb6509543262bb500affb481dc8cdca44004087ded"
   solver-name = "gps-cdcl"
   solver-version = 1
