@@ -37,18 +37,6 @@ func TestWithJWT(t *testing.T) {
 			},
 			err: nil,
 		},
-		{
-			token: makeToken(jwt.MapClaims{
-				MultiTenancyField: "TestAccount",
-			}, t),
-			expected: []*pdp.Attribute{
-				{Id: "account", Type: "string", Value: "TestAccount"},
-			},
-			keyfunc: func(token *jwt.Token) (interface{}, error) {
-				return []byte(TestSecret), nil
-			},
-			err: nil,
-		},
 		// parse and verify an invalid token
 		{
 			token: makeToken(jwt.MapClaims{
