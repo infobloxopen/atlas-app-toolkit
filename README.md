@@ -23,16 +23,16 @@
         2. [Sorting](#sorting)
         3. [Filtering](#filtering)
         4. [Pagination](#pagination)
-
+    6. [Field Presence](#field-presence)
 
 ## Getting Started
 
-Toolkit provides a means to have a generated code that supports a certain common functionality that 
-is typicall requesred for any service.
-Toolkit declares its own format for Resposes, Errors, Long Running operations, Collection operators.
+Toolkit provides a means to have a generated code that supports a certain common functionality that
+is typically required for any service.
+Toolkit declares its own format for Responses, Errors, Long Running operations, Collection operators.
 More details on this can be found in appropriate section on this page.
 
-Tollkit approach provides following features:
+Toolkit approach provides following features:
 - Application may be composed from one or more independent services (micro-service architecture)
 - Service is supposed to be a gRPC service
 - REST API is presented by a separate service (gRPC Gateway) that serves as a reverse-proxy and
@@ -92,7 +92,7 @@ When bootstrapping a gRPC server, add middleware that will extract the account_i
 
 We provide transaction management by offering `gorm.Transaction` wrapper and `gorm.UnaryServerInterceptor`.
 The `gorm.Transaction` works as a singleton to prevent an application of creating more than one transaction instance per incoming request.
-The `gorm.UnaryServerInterceptor` performs management on transactions. 
+The `gorm.UnaryServerInterceptor` performs management on transactions.
 Interceptor creates new transaction on each incoming request and commits it if request finishes without error, otherwise transaction is aborted.
 The created transaction is stored in `context.Context` and passed to the request handler as usual.
 **NOTE** Client is responsible to call `txn.Begin()` to open transaction.
@@ -526,8 +526,8 @@ Response with no results:
 ```
 {
   "success": {
-    "status": 201, 
-    "message": "Account provisioned", 
+    "status": 201,
+    "message": "Account provisioned",
     "code": "CREATED"
   }
 }
@@ -537,25 +537,25 @@ Response with results:
 ```
 {
   "success": {
-    "status": 200, 
-    "message": "Found 2 items", 
+    "status": 200,
+    "message": "Found 2 items",
     "code": "OK"
   },
   "results": [
     {
-      "account_id": 4, 
-      "created_at": "2018-01-06T03:53:27.651Z", 
-      "updated_at": "2018-01-06T03:53:27.651Z", 
-      "account_number": null, 
-      "sfdc_account_id": "3", 
+      "account_id": 4,
+      "created_at": "2018-01-06T03:53:27.651Z",
+      "updated_at": "2018-01-06T03:53:27.651Z",
+      "account_number": null,
+      "sfdc_account_id": "3",
       "id": 5
-    }, 
+    },
     {
-      "account_id": 31, 
-      "created_at": "2018-01-06T04:38:32.572Z", 
-      "updated_at": "2018-01-06T04:38:32.572Z", 
-      "account_number": null, 
-      "sfdc_account_id": "1", 
+      "account_id": 31,
+      "created_at": "2018-01-06T04:38:32.572Z",
+      "updated_at": "2018-01-06T04:38:32.572Z",
+      "account_number": null,
+      "sfdc_account_id": "1",
       "id": 9
     }
   ]
@@ -566,14 +566,14 @@ Response for get by id operation:
 ```
 {
   "success": {
-    "status": 200, 
-    "message": "object found", 
+    "status": 200,
+    "message": "object found",
     "code": "OK"
   },
   "results": {
-      "account_id": 4, 
-      "created_at": "2018-05-06T03:53:27.651Z", 
-      "updated_at": "2018-05-06T03:53:27.651Z", 
+      "account_id": 4,
+      "created_at": "2018-05-06T03:53:27.651Z",
+      "updated_at": "2018-05-06T03:53:27.651Z",
       "id": 5
    }
 }
@@ -583,36 +583,36 @@ Response with results and service-defined results tag “rpz_hits”:
 ```
 {
   "success": {
-    "status": 200, 
-    "message": "Read 360 items", 
+    "status": 200,
+    "message": "Read 360 items",
     "code": "OK"
   },
   "rpz_hits": [
     {
-      "pid": "default", 
-      "rip": "10.35.205.4", 
-      "policy_name": "Default", 
-      "ttl": -1, 
-      "qtype": 1, 
-      "qip": "10.120.20.247", 
-      "confidence": 3, 
-      "network": "on-prem", 
-      "event_time": "2017-12-13T07:07:50.000Z", 
-      "feed_name": "rpz", 
-      "dsource": 1, 
-      "rcode": 3, 
-      "timestamp": "11e7-dfd4-54e564f0-0000-0000287cd227", 
-      "company": "302002|0", 
-      "feed_type": "0", 
-      "user": "unknown", 
-      "device": "10.120.20.247", 
-      "severity": 3, 
-      "country": "unknown", 
-      "policy_action": "Block", 
-      "qname": "barfywyjgx.com", 
-      "tproperty": "A", 
+      "pid": "default",
+      "rip": "10.35.205.4",
+      "policy_name": "Default",
+      "ttl": -1,
+      "qtype": 1,
+      "qip": "10.120.20.247",
+      "confidence": 3,
+      "network": "on-prem",
+      "event_time": "2017-12-13T07:07:50.000Z",
+      "feed_name": "rpz",
+      "dsource": 1,
+      "rcode": 3,
+      "timestamp": "11e7-dfd4-54e564f0-0000-0000287cd227",
+      "company": "302002|0",
+      "feed_type": "0",
+      "user": "unknown",
+      "device": "10.120.20.247",
+      "severity": 3,
+      "country": "unknown",
+      "policy_action": "Block",
+      "qname": "barfywyjgx.com",
+      "tproperty": "A",
       "tclass": "UNKNOWN"
-    }, 
+    },
     ...
   ]
 }
@@ -698,7 +698,7 @@ func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
 #### Errors Package
 
 To attach details and field info to your error you can
-use atlas-app-toolkit/errors package. For further details you can check a 
+use atlas-app-toolkit/errors package. For further details you can check a
 [README](errors/README.md)
 in appropriate package, the base case is mentioned below.
 
@@ -755,7 +755,7 @@ provided by atlas-app-toolkit package in a middleware chain as following:
 ```
 interceptor := errros.UnaryServerInterceptor(
 	// List of mappings
-	
+
 	// Base case: simply map error to an error container.
 	errors.NewMapping(fmt.Errorf("Some Error"), errors.NewContainer(/* ... */).WithDetail(/* ... */)),
 )
@@ -978,11 +978,11 @@ message MyRequest {
 
 #### Pagination
 
-A service may implement pagination of collections. Pagination of response resources can be client-driven, server-driven, or both. 
+A service may implement pagination of collections. Pagination of response resources can be client-driven, server-driven, or both.
 
-Client-driven pagination is a model in which rows are addressable by offset and page size. This scheme is similar to SQL query pagination where row offset and page size determine the rows in the query response. 
+Client-driven pagination is a model in which rows are addressable by offset and page size. This scheme is similar to SQL query pagination where row offset and page size determine the rows in the query response.
 
-Server-driven pagination is a model in which the server returns some amount of data along with a token indicating there is more data and where subsequent queries can get the next page of data. This scheme is used by AWS Dynamo where, depending on the individual resource size, pages can run into thousands of resources. 
+Server-driven pagination is a model in which the server returns some amount of data along with a token indicating there is more data and where subsequent queries can get the next page of data. This scheme is used by AWS Dynamo where, depending on the individual resource size, pages can run into thousands of resources.
 
 Some data sources can provide the number of resources a query will generate, while others cannot.
 
@@ -1023,4 +1023,35 @@ message MyRequest {
 message MyResponse {
   infoblox.api.PageInfo page = 1;
 }
+```
+
+### Field Presence
+
+Using the toolkit's Server Wrapper functionality, you can optionally enable
+automatic filling of a FieldMask within the gateway.
+
+As a prerequisite, the request passing through the gateway must match the list
+of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask named
+"Fields" at the top level.
+```proto
+import github.com/genproto/atlas-app-toolkit/query/collection_operators.proto;
+message MyRequest {
+
+}
+```
+
+To enable the functionality, use the following args in the `WithGateway` method:
+```golang
+server.WithGateway(
+  gateway.WithGatewayOptions(
+    runtime.WithMetadata(gateway.NewPresenceAnnotator("POST", ...)),
+    ...
+  ),
+  gateway.WithDialOptions(
+    []grpc.DialOption{grpc.WithInsecure(), grpc.WithUnaryInterceptor(
+      grpc_middleware.ChainUnaryClient(
+        []grpc.UnaryClientInterceptor{ClientUnaryInterceptor, PresenceClientInterceptor()}...)},
+      ),
+  )
+)
 ```
