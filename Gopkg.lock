@@ -36,7 +36,7 @@
     "ptypes/timestamp",
     "ptypes/wrappers"
   ]
-  revision = "9f81198da99b79e14d70ca2c3cc1bbe44c6e69b6"
+  revision = "1325a051a2753cd67556b182843b1b693d0854cd"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -55,7 +55,7 @@
     "tags/logrus",
     "util/metautils"
   ]
-  revision = "eb23b08d08bbe930113a6512a7a829050341448c"
+  revision = "e9c5d9645c437ab1b204cff969a2c0fb16cd4276"
 
 [[projects]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
@@ -64,26 +64,39 @@
     "runtime/internal",
     "utilities"
   ]
-  revision = "07f5e79768022f9a3265235f0db4ac8c3f675fec"
-  version = "v1.3.1"
+  revision = "92583770e3f01b09a0d3e9bdf64321d8bebd48f2"
+  version = "v1.4.1"
 
 [[projects]]
   branch = "master"
   name = "github.com/grpc-ecosystem/grpc-opentracing"
   packages = ["go/otgrpc"]
-  revision = "0e7658f8ee99ee5aa683e2a032b8880091b7a055"
+  revision = "8e809c8a86450a29b90dcc9efbf062d0fe6d9746"
 
 [[projects]]
   branch = "master"
   name = "github.com/infobloxopen/go-trees"
   packages = [
     "dltree",
+    "domain",
     "domaintree",
     "iptree",
     "numtree",
-    "strtree"
+    "strtree",
+    "uintX/domaintree16",
+    "uintX/domaintree32",
+    "uintX/domaintree64",
+    "uintX/domaintree8",
+    "uintX/iptree16",
+    "uintX/iptree32",
+    "uintX/iptree64",
+    "uintX/iptree8",
+    "uintX/strtree16",
+    "uintX/strtree32",
+    "uintX/strtree64",
+    "uintX/strtree8"
   ]
-  revision = "ba3cf0abf6c4176275bfdabf40f4da38da29becb"
+  revision = "a1e500cde93cdca91ae6c7366e0cb9f477c63603"
 
 [[projects]]
   branch = "master"
@@ -93,7 +106,7 @@
     "pdp-service",
     "pep"
   ]
-  revision = "cfc3dc97e1401bacaf2350cc813fbd0fb4fa519d"
+  revision = "d62bb103665cf16dfcee5083f4557163fb7a68ff"
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
@@ -132,28 +145,28 @@
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "80db560fac1fb3e6ac81dbc7f8ae4c061f5257bd"
+  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "lex/httplex",
     "trace"
   ]
-  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
+  revision = "c21de06aaf072cea07f3a65d6970e5c7d8b6cd6d"
 
 [[projects]]
   branch = "master"
@@ -162,7 +175,7 @@
     "unix",
     "windows"
   ]
-  revision = "641605214e7dab930817f68e2fef560efbb033e5"
+  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -194,7 +207,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "f8c8703595236ae70fdf8789ecb656ea0bcdcf46"
+  revision = "8b2cc369ab52e0003a878865c9372afdd6ca5c5a"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -208,9 +221,11 @@
     "credentials",
     "encoding",
     "encoding/proto",
-    "grpclb/grpc_lb_v1/messages",
     "grpclog",
     "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/grpcrand",
     "keepalive",
     "metadata",
     "naming",
@@ -223,12 +238,12 @@
     "tap",
     "transport"
   ]
-  revision = "d11072e7ca9811b1100b80ca0269ac831f06d024"
-  version = "v1.11.3"
+  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
+  version = "v1.13.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a87209b53ba7e0f7a9c61dcb6509543262bb500affb481dc8cdca44004087ded"
+  inputs-digest = "41d2b551d00cbc494bad24365f4eaab347577e20128c12788105d58376bb88c5"
   solver-name = "gps-cdcl"
   solver-version = 1
