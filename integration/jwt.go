@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	// TestSecret dummy secret used for signing test JWTs
-	TestSecret = "some-secret-123"
+	// testSecret is a dummy secret used for signing test JWTs
+	testSecret = "some-secret-123"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 func MakeTestJWT(method jwt.SigningMethod, claims jwt.Claims) (string, error) {
 	token, err := jwt.NewWithClaims(
 		method, claims,
-	).SignedString([]byte(TestSecret))
+	).SignedString([]byte(testSecret))
 	if err != nil {
 		return "", err
 	}
