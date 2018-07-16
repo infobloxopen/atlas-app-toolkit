@@ -1034,9 +1034,10 @@ As a prerequisite, the request passing through the gateway must match the list
 of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask named
 "Fields" at the top level.
 ```proto
-import github.com/genproto/atlas-app-toolkit/query/collection_operators.proto;
+import "google/protobuf/field_mask.proto";
 message MyRequest {
-
+  bytes data = 1;
+  google.protobuf.FieldMask fields = 2;
 }
 ```
 
@@ -1050,7 +1051,7 @@ server.WithGateway(
   gateway.WithDialOptions(
     []grpc.DialOption{grpc.WithInsecure(), grpc.WithUnaryInterceptor(
       grpc_middleware.ChainUnaryClient(
-        []grpc.UnaryClientInterceptor{ClientUnaryInterceptor, PresenceClientInterceptor()}...)},
+        []grpc.UnaryClientInterceptor{gateway.ClientUnaryInterceptor, gateway.PresenceClientInterceptor()}...)},
       ),
   )
 )
