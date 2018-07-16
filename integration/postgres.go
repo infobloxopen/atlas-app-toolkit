@@ -188,9 +188,7 @@ func WithMigrateFunction(migrateFunction func(sql.DB) error) func(*testPostgresD
 	}
 }
 
-// WithMigrateFunction is used to rebuild the test Postgres database on a
-// per-test basis. Whenever the database is reset with the Reset() function, the
-// migrate function will rebuild the tables.
+// WithTimeout is used to specify a connection timeout to the database
 func WithTimeout(timeout time.Duration) func(*testPostgresDB) {
 	return func(db *testPostgresDB) {
 		db.timeout = timeout

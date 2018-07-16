@@ -10,7 +10,7 @@ import (
 
 // AppendTokenToOutgoingContext adds an authorization token to the gRPC
 // request context metadata. The user must provide a token field name like "token"
-// or "bearer"
+// or "bearer" to this function. It is intended specifically for gRPC testing.
 func AppendTokenToOutgoingContext(ctx context.Context, fieldName, token string) context.Context {
 	c := metadata.AppendToOutgoingContext(
 		ctx, "Authorization", fmt.Sprintf("%s %s", fieldName, token),
@@ -18,7 +18,8 @@ func AppendTokenToOutgoingContext(ctx context.Context, fieldName, token string) 
 	return c
 }
 
-// DefaultContext returns a context that has a jwt for basic testing purposes
+// StandardTestingContext returns an outgoing request context that includes the
+// standard test JWT. It is intended specifically for gRPC testing.
 func StandardTestingContext() (context.Context, error) {
 	token, err := MakeTestJWT(jwt.SigningMethodHS256, StandardClaims)
 	if err != nil {

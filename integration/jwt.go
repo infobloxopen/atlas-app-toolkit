@@ -11,13 +11,13 @@ const (
 )
 
 var (
-	// DefaultClaims is the standard payload inside a test JWT
+	// StandardClaims is the standard payload inside a test JWT
 	StandardClaims = jwt.MapClaims{
 		auth.MultiTenancyField: "TestAccount",
 	}
 )
 
-// MakeToken generates a token string based on the given jwt claims
+// MakeTestJWT generates a token string based on the given JWT claims
 func MakeTestJWT(method jwt.SigningMethod, claims jwt.Claims) (string, error) {
 	token, err := jwt.NewWithClaims(
 		method, claims,
@@ -28,6 +28,7 @@ func MakeTestJWT(method jwt.SigningMethod, claims jwt.Claims) (string, error) {
 	return token, nil
 }
 
+// StandardTestJWT builds a JWT with the standard test claims in the JWT payload
 func StandardTestJWT() (string, error) {
 	return MakeTestJWT(jwt.SigningMethodHS256, StandardClaims)
 }
