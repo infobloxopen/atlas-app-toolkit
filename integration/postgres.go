@@ -26,7 +26,7 @@ type testPostgresDB struct {
 	dbUser          string
 	dbPassword      string
 	dbVersion       string
-	migrateFunction func(sql.DB) error
+	migrateFunction func(*sql.DB) error
 	timeout         time.Duration
 }
 
@@ -70,7 +70,7 @@ func (db testPostgresDB) Reset() error {
 	}
 	// run migrations if a migration function has exists
 	if db.migrateFunction != nil {
-		if err := db.migrateFunction(*dbSQL); err != nil {
+		if err := db.migrateFunction(dbSQL); err != nil {
 			return err
 		}
 	}
@@ -182,7 +182,7 @@ func WithVersion(version string) func(*testPostgresDB) {
 // WithMigrateFunction is used to rebuild the test Postgres database on a
 // per-test basis. Whenever the database is reset with the Reset() function, the
 // migrate function will rebuild the tables.
-func WithMigrateFunction(migrateFunction func(sql.DB) error) func(*testPostgresDB) {
+func WithMigrateFunction(migrateFunction func(*sql.DB) error) func(*testPostgresDB) {
 	return func(db *testPostgresDB) {
 		db.migrateFunction = migrateFunction
 	}

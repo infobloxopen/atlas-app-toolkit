@@ -21,6 +21,7 @@ func RunBinary(binPath string, args ...string) (func(), error) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Start(); err != nil {
+		cancel()
 		return nil, err
 	}
 	return cancel, nil
