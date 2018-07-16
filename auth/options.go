@@ -69,7 +69,7 @@ func WithRequest(appID string) option {
 		}
 		operation := fmt.Sprintf("%s.%s", stripPackageName(service), method)
 		attributes := []*pdp.Attribute{
-			{Id: "operation", Type: "string", Value: operation},
+			{Id: "endpoint", Type: "string", Value: operation},
 			// lowercase the appID to match PARG namespace
 			{Id: "application", Type: "string", Value: strings.ToLower(appID)},
 		}

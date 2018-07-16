@@ -26,13 +26,17 @@
     "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
+    "protoc-gen-go/generator",
+    "protoc-gen-go/generator/internal/remap",
+    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
     "ptypes/struct",
-    "ptypes/timestamp"
+    "ptypes/timestamp",
+    "ptypes/wrappers"
   ]
-  revision = "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175"
+  revision = "9f81198da99b79e14d70ca2c3cc1bbe44c6e69b6"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -187,7 +191,8 @@
   packages = [
     "googleapis/api/annotations",
     "googleapis/rpc/code",
-    "googleapis/rpc/status"
+    "googleapis/rpc/status",
+    "protobuf/field_mask"
   ]
   revision = "f8c8703595236ae70fdf8789ecb656ea0bcdcf46"
 
@@ -224,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "683ea68bb5ae7897d97dd18a13c600e1334796952dd6cff778db30181b1a5547"
+  inputs-digest = "a87209b53ba7e0f7a9c61dcb6509543262bb500affb481dc8cdca44004087ded"
   solver-name = "gps-cdcl"
   solver-version = 1

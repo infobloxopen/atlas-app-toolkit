@@ -3,9 +3,13 @@ package gateway
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -25,6 +29,67 @@ type gateway struct {
 	serverDialOptions []grpc.DialOption
 	endpoints         map[string][]registerFunc
 	mux               *http.ServeMux
+	gatewayMuxOptions []runtime.ServeMuxOption
+}
+
+// ClientUnaryInterceptor parse collection operators and stores in corresponding message fields
+func ClientUnaryInterceptor(parentCtx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	raw, ok := Header(parentCtx, query_url)
+	if ok {
+		request, err := url.Parse(raw)
+		if err != nil {
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+		vals := request.Query()
+		// extracts "_order_by" parameters from request
+		if v := vals.Get(sortQueryKey); v != "" {
+			s, err := query.ParseSorting(v)
+			if err != nil {
+				return status.Error(codes.InvalidArgument, err.Error())
+			}
+			err = SetCollectionOps(req, s)
+			if err != nil {
+				return err
+			}
+		}
+		// extracts "_fields" parameters from request
+		if v := vals.Get(fieldsQueryKey); v != "" {
+			fs := query.ParseFieldSelection(v)
+			err := SetCollectionOps(req, fs)
+			if err != nil {
+				return err
+			}
+		}
+
+		// extracts "_filter" parameters from request
+		if v := vals.Get(filterQueryKey); v != "" {
+			f, err := query.ParseFiltering(v)
+			if err != nil {
+				return status.Error(codes.InvalidArgument, err.Error())
+			}
+
+			err = SetCollectionOps(req, f)
+			if err != nil {
+				return err
+			}
+		}
+
+		// extracts "_limit", "_offset",  "_page_token" parameters from request
+		var p *query.Pagination
+		l := vals.Get(limitQueryKey)
+		o := vals.Get(offsetQueryKey)
+		pt := vals.Get(pageTokenQueryKey)
+
+		p, err = query.ParsePagination(l, o, pt)
+		if err != nil {
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+		err = SetCollectionOps(req, p)
+		if err != nil {
+			return err
+		}
+	}
+	return invoker(parentCtx, method, req, reply, cc, opts...)
 }
 
 // NewGateway creates a gRPC REST gateway with HTTP handlers that have been
@@ -34,7 +99,7 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 	g := gateway{
 		serverAddress:     DefaultServerAddress,
 		endpoints:         make(map[string][]registerFunc),
-		serverDialOptions: []grpc.DialOption{grpc.WithInsecure()},
+		serverDialOptions: []grpc.DialOption{grpc.WithInsecure(), grpc.WithUnaryInterceptor(ClientUnaryInterceptor)},
 		mux:               http.NewServeMux(),
 	}
 	// apply functional options
@@ -49,8 +114,8 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
-			runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
-			runtime.WithMetadata(MetadataAnnotator),
+			append([]runtime.ServeMuxOption{runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
+				runtime.WithMetadata(MetadataAnnotator)}, g.gatewayMuxOptions...)...,
 		)
 		for _, register := range registers {
 			if err := register(
@@ -93,5 +158,13 @@ func WithServerAddress(address string) Option {
 func WithMux(mux *http.ServeMux) Option {
 	return func(g *gateway) {
 		g.mux = mux
+	}
+}
+
+// WithGatewayOptions allows for additional gateway ServeMuxOptions beyond the
+// default ProtoMessageErrorHandler and MetadataAnnotator from this package
+func WithGatewayOptions(opt ...runtime.ServeMuxOption) Option {
+	return func(g *gateway) {
+		g.gatewayMuxOptions = append(g.gatewayMuxOptions, opt...)
 	}
 }
