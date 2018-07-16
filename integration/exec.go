@@ -26,14 +26,13 @@ func RunBinary(binPath string, args ...string) (func(), error) {
 	return cancel, nil
 }
 
-// BuildSource builds a target Go package and gives the resulting binary
-// some user-defined name
+// BuildGoSource builds a target Go package and gives the resulting binary
+// some user-defined name. The function returned by BuildGoSource will remove
+// the binary that got created.
 func BuildGoSource(packagePath, output string) (func() error, error) {
 	cmdBuild := exec.Command("go", "build", "-o", output, packagePath)
 	if out, err := cmdBuild.CombinedOutput(); err != nil {
-		return nil, errors.New(fmt.Sprintf("unable to build package: %v (%s)",
-			err, string(out),
-		))
+		return nil, fmt.Errorf("unable to build package: %v (%s)", err, string(out))
 	}
 	return func() error {
 		return os.Remove(output)
@@ -51,18 +50,15 @@ func RunContainer(image string, dockerArgs, runtimeArgs []string) (func() error,
 	// launch the container
 	out, err := exec.Command(execDocker[0], execDocker[1:]...).CombinedOutput()
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("%s: %s", err.Error(), string(out)),
-		)
+		return nil, fmt.Errorf("%s: %s", err.Error(), string(out))
 	}
 	// get the uuid from the container after it starts. this gets used to kill
 	// the container
-	var uuid string
-	if split := strings.Split(string(out), "\n"); len(split) == 0 {
+	split := strings.Split(string(out), "\n")
+	if len(split) == 0 {
 		return nil, errors.New("unable to get container uuid")
-	} else {
-		uuid = split[0]
 	}
+	uuid := split[0]
 	return func() error {
 		return exec.Command("docker", "kill", uuid).Run()
 	}, nil
