@@ -77,7 +77,7 @@ authorizer := Authorizer{
   Bldr: NewBuilder(
     // this is where options are provided by the user
     WithRequest("shopping-mall"),
-    WithJWT(nil),
+    WithJWT("Bearer", nil),
   ),
   Hdlr: NewHandler(),
 }
