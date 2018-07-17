@@ -28,6 +28,9 @@ var (
 	errInvalidAssertion = errors.New("unable to assert value as jwt.MapClaims")
 )
 
+// GetJWTFieldWithTokenType gets the JWT from a context and returns the
+// specified field. The user must provide a token type, which prefixes the
+// token itself (e.g. "Bearer" or "token")
 func GetJWTFieldWithTokenType(ctx context.Context, tokenType, tokenField string, keyfunc jwt.Keyfunc) (string, error) {
 	token, err := getToken(ctx, tokenType, keyfunc)
 	if err != nil {
