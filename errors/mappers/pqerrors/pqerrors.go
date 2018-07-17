@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	msgForeignKeyViolation = "Cannot insert The '%s' object as it does not refer to a valid '%s' object."
-	msgRestrictViolation   = "Cannot update or delete an '%s' object as it is referenced by a '%s' object."
+	msgForeignKeyViolation = "Cannot insert object '%s' as it does not refer to a valid '%s' object."
+	msgRestrictViolation   = "Cannot update or delete an object '%s' as it is referenced by a '%s' object."
 	msgNotNullViolation    = "The '%s' field for the '%s' object cannot be empty."
 	msgUniqueViolation     = "There is already an existing '%s' object with the same '%s'."
 )
