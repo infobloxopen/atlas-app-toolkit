@@ -74,10 +74,10 @@ func TestWithJWT(t *testing.T) {
 	for _, test := range jwtTests {
 		ctx := context.Background()
 		if test.token != "" {
-			c, _ := contextWithToken(test.token)
+			c, _ := contextWithToken(test.token, DefaultTokenType)
 			ctx = c
 		}
-		builder := NewBuilder(WithJWT(test.keyfunc))
+		builder := NewBuilder(WithJWT(DefaultTokenType, test.keyfunc))
 		req, err := builder.build(ctx)
 		if err != test.err {
 			t.Errorf("Unexpected error when building request: %v", err)
