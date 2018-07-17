@@ -57,8 +57,11 @@ When you define your gRPC server, start by using the `auth` package's `UnaryServ
 ## Customize the AuthZ Interceptor
 The `auth` package provides a set of _options_ that offer fine-grained control of the authorization interceptor. Options affect how the authorization middleware interfaces with Themis. For example, you might need to permit or deny request using the fields in a JWT. Well, there's an option to handle this use case!
 
-Interceptor options are your friend because they abstract Themis' API behind a set of well-documented functions. Below is a detailed description of each option.
+Interceptor options are helpful because they abstract Themis' API behind a set of well-documented functions.
 
+### Applying Options
+
+The example below shows how to would configure your application's authorization logic using options.
 
 ```go
 import (
@@ -91,14 +94,17 @@ myServer := grpc.NewServer(
 )
 ```
 
-You'll likely find the Go documentation helpful, too.
-
+This readme has a description of each option below, but you can also host a local GoDoc server.
 ```sh
 godoc -http :6060
+open http://localhost:6060/pkg/github.com/infobloxopen/atlas-app-toolkit/auth
 ```
-Visit [this link](http://localhost:6060/pkg/github.com/infobloxopen/atlas-app-toolkit/auth/) in your browser.
 
-### `WithJWT`
+### Interceptor Options
+
+Here are the authorization options that are currently provided by the toolkit. 
+
+#### `WithJWT`
 
 This option enables token-based authorization with JWT. When requests reach the authorization interceptor, the interceptor will include the full JWT payload in a given authorization request to Themis.
 
@@ -111,14 +117,14 @@ This option enables token-based authorization with JWT. When requests reach the 
 ```
 Each of the fields in the above example would be sent to Themis as part of the authorization request.
 
-### `WithRequest`
+#### `WithRequest`
 
 This option includes information about the gRPC request as part of the request to Themis. The interceptor will add the following attributes.
 
 - The gRPC service name (e.g. `/PetStore`)
 - The gRPC function name (e.g. `ListAllPets`)
 
-### `WithTLS`
+#### `WithTLS`
 
 This option uses metadata from a TLS-authenticated client. When included, the following options are included in a request to Themis.
 
@@ -126,7 +132,7 @@ This option uses metadata from a TLS-authenticated client. When included, the fo
 - The TLS certificate issuer (if authenticated)
 - The TLS common subject name (if authenticated)
 
-### `WithCallback`
+#### `WithCallback`
 
 This option allows for application-specific authorization behavior. The toolkit offers a robust set of authorization options, but you might need specialized, non-generalizable authorization logic to satisfy your access control requirements.
 
