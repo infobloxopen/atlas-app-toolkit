@@ -31,9 +31,9 @@ vendor:
 check-fmt:
 	test -z `$(BUILDER) go fmt ./...`
 
-.gen-op:
+.gen-query:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=:. $(REPO)/op/collection_operators.proto
+	--go_out=:. $(REPO)/query/collection_operators.proto
 
 .gen-errdetails:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \

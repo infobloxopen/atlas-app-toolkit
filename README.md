@@ -804,7 +804,7 @@ If you want to explicitly declare one of collection operators in your `proto`
 scheme, to do so just import `collection_operators.proto`.
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Sorting sorting = 1;
