@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -29,13 +30,8 @@ func TestAppendTokenToOutgoingContext(t *testing.T) {
 	}
 }
 
-func ExampleAppendTokenToOutgoingContext() {
-	// someFunc doesn't do anything, but in a real-world situation it might
-	// send a request to some grpc service that requires an authorization
-	// token
-	someFunc := func(context.Context) {
-		// send a request to some grpc service
-	}
+func ExampleAppendTokenToOutgoingContext_output() {
+	// make the jwt
 	authToken, err := jwt.NewWithClaims(
 		jwt.SigningMethodHS256, jwt.MapClaims{
 			"user":  "user-test",
@@ -45,10 +41,23 @@ func ExampleAppendTokenToOutgoingContext() {
 	if err != nil {
 		log.Fatalf("unable to build token: %v", err)
 	}
+	// add the jwt to context
 	ctxBearer := AppendTokenToOutgoingContext(
-		context.Background(), authToken, "Bearer",
+		context.Background(), "Bearer", authToken,
 	)
-	someFunc(ctxBearer)
+	// check to make sure the token was added
+	md, ok := metadata.FromOutgoingContext(ctxBearer)
+	if !ok || len(md["authorization"]) < 1 {
+		log.Fatalf("unable to get token from context: %v", err)
+	}
+	fields := strings.Split(md["authorization"][0], " ")
+	if len(fields) < 2 {
+		log.Fatalf("unexpected authorization metadata: %v", fields)
+	}
+	fmt.Println(fields[0] == "Bearer")
+	fmt.Println(fields[1] == authToken)
+	// Output: true
+	// true
 }
 
 func TestStandardTestingContext(t *testing.T) {
