@@ -75,7 +75,7 @@ func TestCheckConnection(t *testing.T) {
 		t.Errorf("expected to get non-nil error")
 	}
 	db.host = "localhost"
-	rm, err := db.RunAsDockerContainer("test-postgres-container")
+	rm, err := db.RunAsDockerContainer()
 	if err != nil {
 		t.Fatalf("unable to start the database container: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestReset(t *testing.T) {
 	if err := db.Reset(); err == nil {
 		t.Errorf("expected to receive an error when resetting database")
 	}
-	rm, err := db.RunAsDockerContainer("test-postgres-container")
+	rm, err := db.RunAsDockerContainer()
 	if err != nil {
 		t.Fatalf("unable to start the database container: %v", err)
 	}
