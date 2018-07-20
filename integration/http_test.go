@@ -10,6 +10,7 @@ import (
 )
 
 func TestMakeStandardRequest(t *testing.T) {
+	client := http.Client{}
 	var tests = []struct {
 		name    string
 		method  string
@@ -64,11 +65,13 @@ func TestMakeStandardRequest(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			testServer := httptest.NewServer(test.handler)
 			defer testServer.Close()
-			if _, err := MakeStandardRequest(
+			req, err := MakeStandardRequest(
 				test.method, testServer.URL, test.payload,
-			); err != nil && test.err == nil {
+			)
+			if err != nil && test.err == nil {
 				t.Errorf("unexpected error: %v", err)
 			}
+			client.Do(req)
 		})
 	}
 }
