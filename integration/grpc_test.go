@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -26,6 +27,28 @@ func TestAppendTokenToOutgoingContext(t *testing.T) {
 	if md["authorization"][0] != fmt.Sprintf("Bearer %s", token) {
 		t.Fatalf("context does not contain token in metadata")
 	}
+}
+
+func ExampleAppendTokenToOutgoingContext() {
+	// someFunc doesn't do anything, but in a real-world situation it might
+	// send a request to some grpc service that requires an authorization
+	// token
+	someFunc := func(context.Context) {
+		// send a request to some grpc service
+	}
+	authToken, err := jwt.NewWithClaims(
+		jwt.SigningMethodHS256, jwt.MapClaims{
+			"user":  "user-test",
+			"roles": "admin",
+		},
+	).SignedString([]byte("some-secret"))
+	if err != nil {
+		log.Fatalf("unable to build token: %v", err)
+	}
+	ctxBearer := AppendTokenToOutgoingContext(
+		context.Background(), authToken, "Bearer",
+	)
+	someFunc(ctxBearer)
 }
 
 func TestStandardTestingContext(t *testing.T) {
