@@ -20,14 +20,15 @@ func (e testDatabaseError) Error() string {
 }
 
 type testPostgresDB struct {
-	host            string
-	port            int
-	dbName          string
-	dbUser          string
-	dbPassword      string
-	dbVersion       string
-	migrateFunction func(*sql.DB) error
-	timeout         time.Duration
+	host                string
+	port                int
+	dbName              string
+	dbUser              string
+	dbPassword          string
+	dbVersion           string
+	migrateUpFunction   func(*sql.DB) error
+	migrateDownFunction func(*sql.DB) error
+	timeout             time.Duration
 }
 
 // NewTestPostgresDB returns a test postgres database that
@@ -60,17 +61,21 @@ func (db testPostgresDB) Reset() error {
 		return err
 	}
 	defer dbSQL.Close()
-	resetQuery := "DROP SCHEMA public CASCADE;" +
-		"CREATE SCHEMA public;" +
-		"GRANT ALL ON SCHEMA public TO postgres;" +
-		"GRANT ALL ON SCHEMA public TO public;"
-	// drop all the tables in the test database
-	if _, err := dbSQL.Exec(resetQuery); err != nil {
-		return err
+	if db.migrateDownFunction != nil {
+		db.migrateDownFunction(dbSQL)
+	} else {
+		resetQuery := "DROP SCHEMA public CASCADE;" +
+			"CREATE SCHEMA public;" +
+			"GRANT ALL ON SCHEMA public TO postgres;" +
+			"GRANT ALL ON SCHEMA public TO public;"
+		// drop all the tables in the test database
+		if _, err := dbSQL.Exec(resetQuery); err != nil {
+			return err
+		}
 	}
 	// run migrations if a migration function has exists
-	if db.migrateFunction != nil {
-		if err := db.migrateFunction(dbSQL); err != nil {
+	if db.migrateUpFunction != nil {
+		if err := db.migrateUpFunction(dbSQL); err != nil {
 			return err
 		}
 	}
@@ -180,10 +185,19 @@ func WithVersion(version string) func(*testPostgresDB) {
 
 // WithMigrateFunction is used to rebuild the test Postgres database on a
 // per-test basis. Whenever the database is reset with the Reset() function, the
-// migrate function will rebuild the tables.
-func WithMigrateFunction(migrateFunction func(*sql.DB) error) func(*testPostgresDB) {
+// migrateUp function will rebuild the tables.
+func WithMigrateUpFunction(migrateUpFunction func(*sql.DB) error) func(*testPostgresDB) {
 	return func(db *testPostgresDB) {
-		db.migrateFunction = migrateFunction
+		db.migrateUpFunction = migrateUpFunction
+	}
+}
+
+// WithMigrateFunction is used to tear down the test Postgres according to a
+// specific set of migrations. It runs on a per-test basis whenever the Reset()
+// function is called.
+func WithMigrateDownFunction(migrateDownFunction func(*sql.DB) error) func(*testPostgresDB) {
+	return func(db *testPostgresDB) {
+		db.migrateDownFunction = migrateDownFunction
 	}
 }
 
