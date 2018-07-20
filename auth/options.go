@@ -19,10 +19,10 @@ type option func(*defaultBuilder)
 // WithJWT allows for token-based authorization using JWT. When WithJWT has been
 // added as a build parameter, every field in the token payload will be included
 // in the request to Themis
-func WithJWT(keyfunc jwt.Keyfunc) option {
+func WithJWT(tokenType string, keyfunc jwt.Keyfunc) option {
 	withTokenJWTFunc := func(ctx context.Context) ([]*pdp.Attribute, error) {
 		attributes := []*pdp.Attribute{}
-		token, err := getToken(ctx, keyfunc)
+		token, err := getToken(ctx, tokenType, keyfunc)
 		if err != nil {
 			return attributes, ErrUnauthorized
 		}

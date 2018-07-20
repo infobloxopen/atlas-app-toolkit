@@ -16,6 +16,10 @@ const (
 
 	// MultiTenancyField the field name for a specific tenant
 	MultiTenancyField = "AccountID"
+
+	// DefaultTokenType is the name of the authorization token (e.g. "Bearer"
+	// or "token")
+	DefaultTokenType = "token"
 )
 
 var (
@@ -24,9 +28,11 @@ var (
 	errInvalidAssertion = errors.New("unable to assert value as jwt.MapClaims")
 )
 
-// GetJWTField gets the JWT from a context and returns the specified field
-func GetJWTField(ctx context.Context, field string, keyfunc jwt.Keyfunc) (string, error) {
-	token, err := getToken(ctx, keyfunc)
+// GetJWTFieldWithTokenType gets the JWT from a context and returns the
+// specified field. The user must provide a token type, which prefixes the
+// token itself (e.g. "Bearer" or "token")
+func GetJWTFieldWithTokenType(ctx context.Context, tokenType, tokenField string, keyfunc jwt.Keyfunc) (string, error) {
+	token, err := getToken(ctx, tokenType, keyfunc)
 	if err != nil {
 		return "", errMissingToken
 	}
@@ -34,11 +40,17 @@ func GetJWTField(ctx context.Context, field string, keyfunc jwt.Keyfunc) (string
 	if !ok {
 		return "", errInvalidAssertion
 	}
-	jwtField, ok := claims[field]
+	jwtField, ok := claims[tokenField]
 	if !ok {
 		return "", errMissingField
 	}
 	return fmt.Sprint(jwtField), nil
+}
+
+// GetJWTField gets the JWT from a context and returns the specified field
+// using the DefaultTokenName
+func GetJWTField(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (string, error) {
+	return GetJWTFieldWithTokenType(ctx, DefaultTokenType, tokenField, keyfunc)
 }
 
 // GetAccountID gets the JWT from a context and returns the AccountID field
@@ -50,8 +62,8 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 // WARNING: if keyfunc is nil, the token will get parsed but not verified
 // because it has been checked previously in the stack. More information
 // here: https://godoc.org/github.com/dgrijalva/jwt-go#Parser.ParseUnverified
-func getToken(ctx context.Context, keyfunc jwt.Keyfunc) (jwt.Token, error) {
-	tokenStr, err := grpc_auth.AuthFromMD(ctx, "token")
+func getToken(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (jwt.Token, error) {
+	tokenStr, err := grpc_auth.AuthFromMD(ctx, tokenField)
 	if err != nil {
 		return jwt.Token{}, ErrUnauthorized
 	}
