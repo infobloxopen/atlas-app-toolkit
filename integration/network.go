@@ -45,3 +45,8 @@ func GetOpenPortInRange(lowerBound, upperBound int) (int, error) {
 	}
 	return -1, errPortNotFound
 }
+
+// GetOpenPort searches for an open port on the host
+func GetOpenPort() (int, error) {
+	return GetOpenPortInRange(portRangeMin, portRangeMax)
+}
