@@ -79,13 +79,12 @@ func (db testPostgresDB) Reset() error {
 
 // RunAsDockerContainer spins-up a Postgres database server as a Docker
 // container. The test Postgres database will run inside this Docker container.
-func (db testPostgresDB) RunAsDockerContainer(containerName string) (func() error, error) {
+func (db testPostgresDB) RunAsDockerContainer() (func() error, error) {
 	cleanup, err := RunContainer(
 		// define the postgres image version
 		fmt.Sprintf("postgres:%s", db.dbVersion),
 		// define the arguments to docker
 		[]string{
-			fmt.Sprintf("--name=%s", containerName),
 			fmt.Sprintf("--publish=%d:5432", db.port),
 			fmt.Sprintf("--env=POSTGRES_DB=%s", db.dbName),
 			fmt.Sprintf("--env=POSTGRES_PASSWORD=%s", db.dbPassword),
