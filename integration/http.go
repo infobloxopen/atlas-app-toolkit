@@ -9,7 +9,7 @@ import (
 
 // MakeStandardRequest issues an HTTP request a specific endpoint with Atlas-specific
 // request data (e.g. the authorization token)
-func MakeStandardRequest(method, url string, payload interface{}) (*http.Response, error) {
+func MakeStandardRequest(method, url string, payload interface{}) (*http.Request, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
@@ -23,6 +23,5 @@ func MakeStandardRequest(method, url string, payload interface{}) (*http.Respons
 		return nil, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("%s %s", "token", token))
-	client := http.Client{}
-	return client.Do(req)
+	return req, nil
 }
