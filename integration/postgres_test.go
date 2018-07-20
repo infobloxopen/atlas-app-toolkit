@@ -100,13 +100,13 @@ func TestReset(t *testing.T) {
 		t.Fatalf("unable to start the database container: %v", err)
 	}
 	defer rm()
-	db.migrateFunction = func(*sql.DB) error {
+	db.migrateUpFunction = func(*sql.DB) error {
 		return errors.New("intentional testing error")
 	}
 	if err := db.Reset(); err == nil {
 		t.Errorf("expected to receive an error when migrating database")
 	}
-	db.migrateFunction = func(*sql.DB) error {
+	db.migrateUpFunction = func(*sql.DB) error {
 		orm, err := gorm.Open("postgres", db.GetDSN())
 		if err != nil {
 			t.Errorf("unable to connect to database: %v", err)
