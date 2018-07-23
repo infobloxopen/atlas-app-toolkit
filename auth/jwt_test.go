@@ -14,6 +14,56 @@ const (
 	TestSecret = "some-secret-123"
 )
 
+func TestGetJWTFieldWithTokenType(t *testing.T) {
+	var jwtFieldTests = []struct {
+		claims    jwt.MapClaims
+		tokenType string
+		field     string
+		expected  string
+		err       error
+	}{
+		{
+			claims:    jwt.MapClaims{"some-field": "id-abc-123"},
+			tokenType: "token",
+			field:     "some-field",
+			expected:  "id-abc-123",
+			err:       nil,
+		},
+		{
+			claims:    jwt.MapClaims{"some-field": "id-abc-123"},
+			tokenType: "Bearer",
+			field:     "some-other-field",
+			expected:  "",
+			err:       errMissingField,
+		},
+		{
+			claims:    jwt.MapClaims{},
+			tokenType: "token",
+			field:     "some-field",
+			expected:  "",
+			err:       errMissingToken,
+		},
+	}
+	for _, test := range jwtFieldTests {
+		ctx := context.Background()
+		if len(test.claims) != 0 {
+			token := makeToken(test.claims, t)
+			c, err := contextWithToken(token, test.tokenType)
+			if err != nil {
+				t.Fatalf("Error when building request context: %v", err)
+			}
+			ctx = c
+		}
+		actual, err := GetJWTFieldWithTokenType(ctx, test.tokenType, test.field, nil)
+		if err != test.err {
+			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
+		}
+		if actual != test.expected {
+			t.Errorf("Invalid JWT field: %v - expected %v", actual, test.expected)
+		}
+	}
+}
+
 func TestGetJWTField(t *testing.T) {
 	var jwtFieldTests = []struct {
 		claims   jwt.MapClaims
@@ -22,37 +72,24 @@ func TestGetJWTField(t *testing.T) {
 		err      error
 	}{
 		{
-			claims: jwt.MapClaims{
-				"some-field": "id-abc-123",
-			},
+			claims:   jwt.MapClaims{"some-field": "id-abc-123"},
 			field:    "some-field",
 			expected: "id-abc-123",
 			err:      nil,
 		},
 		{
-			claims: jwt.MapClaims{
-				"some-field": "id-abc-123",
-			},
+			claims:   jwt.MapClaims{"some-field": "id-abc-123"},
 			field:    "some-other-field",
 			expected: "",
 			err:      errMissingField,
 		},
-		{
-			claims:   jwt.MapClaims{},
-			field:    "some-field",
-			expected: "",
-			err:      errMissingToken,
-		},
 	}
 	for _, test := range jwtFieldTests {
-		ctx := context.Background()
-		if len(test.claims) != 0 {
-			token := makeToken(test.claims, t)
-			c, err := contextWithToken(token)
-			if err != nil {
-				t.Fatalf("Error when building request context: %v", err)
-			}
-			ctx = c
+		ctx, err := contextWithToken(
+			makeToken(test.claims, t), DefaultTokenType,
+		)
+		if err != nil {
+			t.Fatalf("Error when building request context: %v", err)
 		}
 		actual, err := GetJWTField(ctx, test.field, nil)
 		if err != test.err {
@@ -85,7 +122,7 @@ func TestGetAccountID(t *testing.T) {
 	}
 	for _, test := range accountIDTests {
 		token := makeToken(test.claims, t)
-		ctx, err := contextWithToken(token)
+		ctx, err := contextWithToken(token, DefaultTokenType)
 		if err != nil {
 			t.Fatalf("Error when building request context: %v", err)
 		}
@@ -100,9 +137,9 @@ func TestGetAccountID(t *testing.T) {
 }
 
 // creates a context with a jwt
-func contextWithToken(token string) (context.Context, error) {
+func contextWithToken(token, tokenType string) (context.Context, error) {
 	md := metadata.Pairs(
-		"authorization", fmt.Sprintf("token %s", token),
+		"authorization", fmt.Sprintf("%s %s", tokenType, token),
 	)
 	return metadata.NewIncomingContext(context.Background(), md), nil
 }
