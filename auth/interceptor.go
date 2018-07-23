@@ -146,7 +146,7 @@ func makeInterceptor(a string, b Builder, h Handler) grpc.UnaryServerInterceptor
 func UnaryServerInterceptor(authzAddress, appID string) grpc.UnaryServerInterceptor {
 	return makeInterceptor(
 		authzAddress,
-		NewBuilder(WithJWT(nil), WithRequest(appID)),
+		NewBuilder(WithJWT(DefaultTokenType, nil), WithRequest(appID)),
 		NewHandler(),
 	)
 }

@@ -74,10 +74,10 @@ func TestWithJWT(t *testing.T) {
 	for _, test := range jwtTests {
 		ctx := context.Background()
 		if test.token != "" {
-			c, _ := contextWithToken(test.token)
+			c, _ := contextWithToken(test.token, DefaultTokenType)
 			ctx = c
 		}
-		builder := NewBuilder(WithJWT(test.keyfunc))
+		builder := NewBuilder(WithJWT(DefaultTokenType, test.keyfunc))
 		req, err := builder.build(ctx)
 		if err != test.err {
 			t.Errorf("Unexpected error when building request: %v", err)
@@ -143,7 +143,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/PetStore/ListPets"},
 			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "shoppingmall"},
 			},
 			err: nil,
@@ -152,7 +152,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/atlas.example.PetStore/ListPets"},
 			appID:  "ShoppingMall",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "shoppingmall"},
 			},
 			err: nil,
@@ -161,7 +161,7 @@ func TestWithRequest(t *testing.T) {
 			stream: &mockTransportStream{method: "/PetStore/ListPets"},
 			appID:  "",
 			expected: []*pdp.Attribute{
-				{Id: "operation", Type: "string", Value: "PetStore.ListPets"},
+				{Id: "endpoint", Type: "string", Value: "PetStore.ListPets"},
 				{Id: "application", Type: "string", Value: "default"},
 			},
 			err: nil,
