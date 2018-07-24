@@ -41,48 +41,58 @@ func TestAnnotator(t *testing.T) {
 }
 
 type dummyReq struct {
-	Fields *field_mask.FieldMask
+	SomeFieldMaskField *field_mask.FieldMask
 }
 
-func (r *dummyReq) GetFields() *field_mask.FieldMask {
-	return r.Fields
+type testReqWithoutFieldMask struct {
+	foo string
+	bar *dummyReq
+	baz *int
 }
 
 func TestUnaryServerInterceptor(t *testing.T) {
 	dummyInvoker := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 		return nil
 	}
-
 	interceptor := PresenceClientInterceptor()
-	// Test with good metadata and no present field
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.MD{
 			fieldPresenceMetaKey: []string{"one.two.three", "one.four"},
 		},
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
-	req := &dummyReq{}
-	err := interceptor(ctx, "POST", req, nil, nil, dummyInvoker)
-	if req == nil {
-		t.Error("For some reason it deleted the request object")
-	}
-	if err != nil {
-		t.Error(err.Error())
-	}
-	if !reflect.DeepEqual(req.Fields, &field_mask.FieldMask{Paths: []string{"one.two.three", "one.four"}}) {
-		t.Error("Didn't properly set the fieldmask in the request")
-	}
 
-	// Test with good (but arbitrary) metadata, but a present field to not overwrite
-	req = &dummyReq{Fields: &field_mask.FieldMask{Paths: []string{}}}
-	err = interceptor(ctx, "POST", req, nil, nil, dummyInvoker)
-	if req == nil {
-		t.Error("For some reason it deleted the request object")
-	}
-	if err != nil {
-		t.Error(err.Error())
-	}
-	if !reflect.DeepEqual(req.Fields, &field_mask.FieldMask{Paths: []string{}}) {
-		t.Error("Wasn't supposed to alter fieldmask in request but did")
-	}
+	t.Run("sets FieldMask if nil", func(t *testing.T) {
+		req := &dummyReq{}
+		if err := interceptor(ctx, "POST", req, nil, nil, dummyInvoker); err != nil {
+			t.Fatal(err)
+		}
+		if req == nil {
+			t.Fatal("For some reason it deleted the request object")
+		}
+		got, want := req.SomeFieldMaskField, &field_mask.FieldMask{Paths: []string{"one.two.three", "one.four"}}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Didn't properly set the fieldmask in the request.\ngot :%v\nwant:%v", got, want)
+		}
+	})
+	t.Run("doesn't set FieldMask if not nil", func(t *testing.T) {
+		// Test with good (but arbitrary) metadata, but a present field to not overwrite
+		req := &dummyReq{SomeFieldMaskField: &field_mask.FieldMask{Paths: []string{}}}
+		err := interceptor(ctx, "POST", req, nil, nil, dummyInvoker)
+		if req == nil {
+			t.Error("For some reason it deleted the request object")
+		}
+		if err != nil {
+			t.Error(err.Error())
+		}
+		if !reflect.DeepEqual(req.SomeFieldMaskField, &field_mask.FieldMask{Paths: []string{}}) {
+			t.Error("Wasn't supposed to alter fieldmask in request but did")
+		}
+	})
+	t.Run("works if no FieldMask in request", func(t *testing.T) {
+		req := &testReqWithoutFieldMask{foo: "bar"}
+		if err := interceptor(ctx, "POST", req, nil, nil, dummyInvoker); err != nil {
+			t.Error(err.Error())
+		}
+	})
 }
