@@ -38,7 +38,7 @@ func FieldSelectionToGorm(fs *query.FieldSelection, obj interface{}) ([]string, 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	sf, ok := objType.FieldByName(generator.CamelCase(f.GetName()))
 	if !ok {
-		return nil, fmt.Errorf("Cannot find field %s in %s", f.GetName(), objType)
+		return nil, nil
 	}
 	fType := indirectType(sf.Type)
 	if f.GetSubs() == nil {

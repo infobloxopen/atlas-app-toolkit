@@ -59,17 +59,7 @@ func TestGormFieldSelection(t *testing.T) {
 		{
 			"unknown_property",
 			nil,
-			true,
-		},
-		{
-			"property.unknown_property",
-			nil,
-			true,
-		},
-		{
-			"sub_model.unknown_property",
-			nil,
-			true,
+			false,
 		},
 	}
 	for _, test := range tests {
