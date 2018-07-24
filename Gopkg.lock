@@ -14,10 +14,10 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
-  version = "v3.2.0"
+  revision = "0b96aaa707760d6ab28d9b9d1913ff5993328bae"
 
 [[projects]]
   branch = "master"
@@ -99,7 +99,6 @@
   revision = "a1e500cde93cdca91ae6c7366e0cb9f477c63603"
 
 [[projects]]
-  branch = "master"
   name = "github.com/infobloxopen/themis"
   packages = [
     "pdp",
@@ -110,7 +109,10 @@
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
-  packages = ["."]
+  packages = [
+    ".",
+    "dialects/postgres"
+  ]
   revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
   version = "v1.9.1"
 
@@ -119,6 +121,16 @@
   name = "github.com/jinzhu/inflection"
   packages = ["."]
   revision = "04140366298a54a039076d798123ffa108fff46c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "hstore",
+    "oid"
+  ]
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -244,6 +256,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "41d2b551d00cbc494bad24365f4eaab347577e20128c12788105d58376bb88c5"
+  inputs-digest = "8d17f587367005fc2771574b560210a84f9ba757e17211894645b912511226fb"
   solver-name = "gps-cdcl"
   solver-version = 1
