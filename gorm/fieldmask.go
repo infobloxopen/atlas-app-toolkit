@@ -12,11 +12,11 @@ import (
 // MergeWithMask will take the fields of `source` that are included as
 // paths in `mask` and write them to the corresponding fields of `dest`
 func MergeWithMask(source, dest interface{}, mask *fieldmask.FieldMask) error {
-	if source == nil {
-		return nil
-	}
 	if mask == nil || len(mask.Paths) == 0 {
 		return nil
+	}
+	if source == nil {
+		return errors.New("Source object is nil")
 	}
 	if dest == nil {
 		return errors.New("Destination object is nil")
