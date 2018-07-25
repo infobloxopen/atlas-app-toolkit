@@ -13,13 +13,13 @@ import (
 // paths in `mask` and write them to the corresponding fields of `dest`
 func MergeWithMask(source, dest interface{}, mask *fieldmask.FieldMask) error {
 	if source == nil {
-		return errors.New("Source object is nil")
+		return nil
+	}
+	if mask == nil || len(mask.Paths) == 0 {
+		return nil
 	}
 	if dest == nil {
 		return errors.New("Destination object is nil")
-	}
-	if mask == nil {
-		return errors.New("FieldMask is nil")
 	}
 	if reflect.TypeOf(source) != reflect.TypeOf(dest) {
 		return errors.New("Types of source and destination objects do not match")
