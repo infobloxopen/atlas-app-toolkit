@@ -1,11 +1,10 @@
-package validator
+package validationerrors
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,12 +34,12 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "PrimaryEmail",
 					Reason: "value must be a valid email address",
-					Cause:  fmt.Errorf("caused by: mail: no angle-addr"),
+					Cause:  fmt.Errorf("mail: no angle-addr"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			fmt.Errorf("Invalid %s: %s", "PrimaryEmail", "value must be a valid email address"),
+			&ValidationError{Key: true, Field: "primary_email", Reason: "value must be a valid email address", Cause: fmt.Errorf("mail: no angle-addr"), ErrorTypeName: "validationerrors.mockValidationError"},
 		},
 		{
 			"ValidationErrorInt",
@@ -50,12 +49,12 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "Id",
 					Reason: "value must be greater than 50",
-					Cause:  fmt.Errorf("caused by: invalid Contact.Id"),
+					Cause:  fmt.Errorf("invalid Contact.Id"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			fmt.Errorf("Invalid %s: %s", "Id", "value must be greater than 50"),
+			&ValidationError{Key: true, Field: "id", Reason: "value must be greater than 50", Cause: fmt.Errorf("invalid Contact.Id"), ErrorTypeName: "validationerrors.mockValidationError"},
 		},
 		{
 			"ValidationErrorList",
@@ -65,12 +64,12 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause: mockValidationError{
 					Field:  "FirstName",
 					Reason: "value must not be in list [fizz buzz]",
-					Cause:  fmt.Errorf("caused by: invalid Contact.MiddleName"),
+					Cause:  fmt.Errorf("invalid Contact.MiddleName"),
 					Key:    true,
 				},
 				Key: true,
 			},
-			fmt.Errorf("Invalid %s: %s", "FirstName", "value must not be in list [fizz buzz]"),
+			&ValidationError{Key: true, Field: "first_name", Reason: "value must not be in list [fizz buzz]", Cause: fmt.Errorf("invalid Contact.MiddleName"), ErrorTypeName: "validationerrors.mockValidationError"},
 		},
 		{
 			"NotValidationError",
@@ -79,7 +78,7 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Reason: "Not lyft validation",
 				Key:    true,
 			},
-			fmt.Errorf("Error : invalid key for Request.Other validator: Not lyft validation"),
+			fmt.Errorf("invalid key for Request.Other validator: Not lyft validation"),
 		},
 		{
 			"ValidationErrorNoCause",
@@ -88,7 +87,7 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Reason: "embedded message failed validation",
 				Key:    true,
 			},
-			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation"),
+			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation"),
 		},
 		{
 			"ValidationErrorBadCause",
@@ -98,7 +97,7 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				Cause:  fmt.Errorf("Not validation"),
 				Key:    true,
 			},
-			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: Not validation"),
+			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: Not validation"),
 		},
 		{
 			"ValidationErrorBadField",
@@ -112,7 +111,7 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				},
 				Key: true,
 			},
-			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.: no field | caused by: bad test"),
+			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.: no field | caused by: bad test"),
 		},
 		{
 			"ValidationErrorBadReason",
@@ -126,18 +125,17 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 				},
 				Key: true,
 			},
-			fmt.Errorf("Error : invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.testField:  | caused by: bad test"),
+			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.testField:  | caused by: bad test"),
 		},
 	}
 	for _, tt := range tests {
-		_, err := UnaryServerInterceptor()(ctx, tt.actual, nil, nil)
-		actual := ValidationHelper(err)
+		fmt.Println("THE ACTUAL method ")
+		_, actual := UnaryServerInterceptor()(ctx, tt.actual, nil, nil)
+		fmt.Println("THE ACTUAL ERROR   ", actual)
 		expected := tt.expected
-		if errCasted, ok := actual.(*errors.Container); ok {
-			actualMessage := errCasted.GRPCStatus().Message()
-			if actualMessage != expected.Error() {
-				t.Errorf("Error received was incorrect for test %s, expected: \"%s\", actual: \"%s\"", tt.name, expected, actualMessage)
-			}
+		fmt.Println("THE EXPECTED ERROR ", expected)
+		if actual.Error() != expected.Error() {
+			t.Errorf("Error received was incorrect for test %s, expected: \"%s\", actual: \"%s\"", tt.name, expected, actual)
 		}
 	}
 }
@@ -168,6 +166,55 @@ func TestUnaryServerInterceptor_Success(t *testing.T) {
 	// verify that no errors get returned
 	if actual != nil {
 		t.Errorf("expected no error, but got: %v", actual.Error())
+	}
+}
+
+// TestUnaryServerInterceptor_ValidationErrors will run mock validation errors to see if it parses correctly.
+func TestCamelToSnake(t *testing.T) {
+	tests := []struct {
+		name     string
+		actual   string
+		expected string
+	}{
+		// Test cases
+		{
+			"Testing CamelCase",
+			"CamelCase",
+			"camel_case",
+		},
+		{
+			"Testing AnotherCamel123",
+			"AnotherCamel123",
+			"another_camel123",
+		},
+		{
+			"Testing testCase",
+			"testCase",
+			"test_case",
+		},
+		{
+			"Testing testcase",
+			"testcase",
+			"testcase",
+		},
+		{
+			"Testing JSONData",
+			"TestCaseUUID",
+			"test_case_uuid",
+		},
+		{
+			"Testing JSONData",
+			"JSONData",
+			"json_data",
+		},
+	}
+	for _, tt := range tests {
+		actual := CamelToSnake(tt.actual)
+		expected := tt.expected
+		if actual != expected {
+			t.Errorf("CamelToSnake failed for test %s, expected: \"%s\", actual: \"%s\"", tt.name, expected, actual)
+		}
+
 	}
 }
 

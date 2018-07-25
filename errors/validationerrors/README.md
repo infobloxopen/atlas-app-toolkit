@@ -1,8 +1,8 @@
-# validator
+# validationerrors
 
-    import "github.com/infobloxopen/atlas-app-toolkit/errors/validator"
+    import "github.com/infobloxopen/atlas-app-toolkit/errors/validationerrors"
 
-`validator` is a generic request contents validator server-side middleware for
+`validationerrors` is a generic request contents validator server-side middleware for
 gRPC.
 
 
@@ -25,19 +25,19 @@ plugins that create the `Validate` methods (including nested messages) based on 
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor
 ```
 UnaryServerInterceptor returns a new unary server interceptor that validates
-incoming messages.
+incoming messages and returns a ValidationError.
 
 Invalid messages will be rejected with `InvalidArgument` and the error before reaching any userspace handlers.
 
 
-#### func  MapValidationError
+#### func  DefaultMapping
 
 ```go
-func MapValidationError() errors.MapFunc
+func DefaultMapping() errors.MapFunc
 ```
-MapValidationError returns a mapper that parses through the lyft protoc-gen-validate errors and only returns a user friendly error. 
+DefaultMapping returns a mapper that parses through the lyft protoc-gen-validate errors and only returns a user friendly error. 
 
-Example return after MapValidationError on a invalid email: 
+Example return after DefaultMapping on a invalid email: 
 
 ```json
 {
