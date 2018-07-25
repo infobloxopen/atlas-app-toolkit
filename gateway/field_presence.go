@@ -82,10 +82,6 @@ type pathItem struct {
 	node interface{}
 }
 
-type withFields interface {
-	GetFields() *field_mask.FieldMask
-}
-
 // PresenceClientInterceptor gets the interceptor for populating a fieldmask in a
 // proto message from the fields given in the metadata/context
 func PresenceClientInterceptor() grpc.UnaryClientInterceptor {
@@ -97,21 +93,26 @@ func PresenceClientInterceptor() grpc.UnaryClientInterceptor {
 			return
 		}
 
-		// --- If a Fields field of type *FieldMask exists, set the paths in it
-		if fields, ok := req.(withFields); ok && fields.GetFields() == nil {
-			paths, found := HeaderN(ctx, fieldPresenceMetaKey, -1)
-			if !found {
-				return
+		paths, found := HeaderN(ctx, fieldPresenceMetaKey, -1)
+		if !found {
+			return
+		}
+		fieldMask := &field_mask.FieldMask{Paths: paths}
+
+		// If a field with type *FieldMask exists, set the paths in it
+		t := reflect.ValueOf(req)
+		if t.Kind() != reflect.Interface && t.Kind() != reflect.Ptr {
+			return
+		}
+		t = t.Elem()
+		if t.Kind() != reflect.Struct { // only Structs can have their fields enumerated
+			return
+		}
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			if f.Type() == reflect.TypeOf(fieldMask) && f.IsNil() {
+				f.Set(reflect.ValueOf(fieldMask))
 			}
-			reqObj := reflect.ValueOf(req)
-			if reqObj.Kind() == reflect.Ptr && !reqObj.IsNil() {
-				reqObj = reqObj.Elem()
-			}
-			field := reqObj.FieldByName("Fields")
-			//instantiate object
-			field.Set(reflect.New(field.Type().Elem()))
-			//unchecked assertion should be safe because of if condition above
-			field.Interface().(*field_mask.FieldMask).Paths = paths
 		}
 		return
 	}

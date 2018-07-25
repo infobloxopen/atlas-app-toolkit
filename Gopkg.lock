@@ -36,7 +36,7 @@
     "ptypes/timestamp",
     "ptypes/wrappers"
   ]
-  revision = "427e165155e0a4ff5993a36657c1f733f5b0f782"
+  revision = "93b26e6a70e37abb14f2f88194949312b0592a84"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -164,7 +164,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
+  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
 
 [[projects]]
   branch = "master"
@@ -178,7 +178,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   branch = "master"
@@ -187,7 +187,7 @@
     "unix",
     "windows"
   ]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
 
 [[projects]]
   name = "golang.org/x/text"
