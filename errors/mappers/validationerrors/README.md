@@ -1,6 +1,6 @@
 # Validation Errors
 
-    import "github.com/infobloxopen/atlas-app-toolkit/errors/validationerrors"
+    import "github.com/infobloxopen/atlas-app-toolkit/errors/mappers/validationerrors"
 
 `validationerrors` is a request contents validator server-side middleware for
 gRPC.
