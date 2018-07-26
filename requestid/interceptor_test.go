@@ -50,14 +50,3 @@ func TestUnaryServerInterceptorWithDummyRequestId(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
-
-func TestUnaryServerInterceptorPanic(t *testing.T) {
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		panic("TestUnaryServerInterceptorPanic raised panic")
-	}
-	ctx := DummyContextWithServerTransportStream()
-	_, err := UnaryServerInterceptor()(ctx, testRequest{}, nil, handler)
-	if err == nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}

@@ -19,7 +19,7 @@ const (
 
 	// DefaultTokenType is the name of the authorization token (e.g. "Bearer"
 	// or "token")
-	DefaultTokenType = "token"
+	DefaultTokenType = "Bearer"
 )
 
 var (

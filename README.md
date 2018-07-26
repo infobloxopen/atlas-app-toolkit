@@ -804,7 +804,7 @@ If you want to explicitly declare one of collection operators in your `proto`
 scheme, to do so just import `collection_operators.proto`.
 
 ```proto
-import "github.com/infobloxopen/atlas-app-toolkit/op/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
 
 message MyRequest {
     infoblox.api.Sorting sorting = 1;
@@ -1031,8 +1031,8 @@ Using the toolkit's Server Wrapper functionality, you can optionally enable
 automatic filling of a FieldMask within the gateway.
 
 As a prerequisite, the request passing through the gateway must match the list
-of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask named
-"Fields" at the top level.
+of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the 
+top level.
 ```proto
 import "google/protobuf/field_mask.proto";
 message MyRequest {

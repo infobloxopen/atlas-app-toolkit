@@ -41,12 +41,21 @@ func TestMergeWithMask(t *testing.T) {
 	err = MergeWithMask(source, dest, &field_mask.FieldMask{Paths: []string{"FieldB.FieldDNE", "FieldA.FieldTwo"}})
 	assert.Equal(t, errors.New("Field path \"FieldB.FieldDNE\" doesn't exist in type *gorm.topTest"), err)
 
-	err = MergeWithMask(nil, nil, nil)
+	err = MergeWithMask(nil, dest, &field_mask.FieldMask{Paths: []string{"FieldB.FieldDNE"}})
 	assert.Equal(t, errors.New("Source object is nil"), err)
-	err = MergeWithMask(source, nil, nil)
+
+	for _, fm := range []*field_mask.FieldMask{nil, {}} {
+		err = MergeWithMask(nil, nil, fm)
+		assert.Nil(t, err)
+		err = MergeWithMask(nil, dest, fm)
+		assert.Nil(t, err)
+		err = MergeWithMask(source, nil, fm)
+		assert.Nil(t, err)
+		err = MergeWithMask(source, dest.FieldA, fm)
+		assert.Nil(t, err)
+	}
+	err = MergeWithMask(source, nil, &field_mask.FieldMask{Paths: []string{"FieldB"}})
 	assert.Equal(t, errors.New("Destination object is nil"), err)
-	err = MergeWithMask(source, dest, nil)
-	assert.Equal(t, errors.New("FieldMask is nil"), err)
-	err = MergeWithMask(source, dest.FieldA, &field_mask.FieldMask{})
+	err = MergeWithMask(source, dest.FieldA, &field_mask.FieldMask{Paths: []string{"FieldB"}})
 	assert.Equal(t, errors.New("Types of source and destination objects do not match"), err)
 }
