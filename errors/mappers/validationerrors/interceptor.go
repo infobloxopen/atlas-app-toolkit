@@ -36,12 +36,16 @@ func GetValidationError(err error) error {
 	valueOfError := reflect.ValueOf(err)
 
 	// Check if the error is a struct and a type of validation error that contains a cause.
-	if valueOfError.Kind() == reflect.Struct && strings.Contains(typeOfError.String(), "ValidationError") && !valueOfError.FieldByName("Cause").IsNil() {
+	if valueOfError.Kind() == reflect.Struct && strings.Contains(typeOfError.String(), "ValidationError") &&
+		!valueOfError.FieldByName("Cause").IsNil() {
 		cause := valueOfError.FieldByName("Cause")
 		typeOfCause := reflect.TypeOf(cause.Interface())
 
 		valueOfCause := reflect.ValueOf(cause.Interface())
-		if strings.Contains(typeOfCause.String(), "ValidationError") && valueOfCause.FieldByName("Field").String() != "" && valueOfCause.FieldByName("Reason").String() != "" && !valueOfCause.FieldByName("Cause").IsNil() {
+		if strings.Contains(typeOfCause.String(), "ValidationError") &&
+			valueOfCause.FieldByName("Field").String() != "" &&
+			valueOfCause.FieldByName("Reason").String() != "" &&
+			!valueOfCause.FieldByName("Cause").IsNil() {
 			// Retrieve the field and reason from the error
 			field := valueOfCause.FieldByName("Field").String()
 			field = CamelToSnake(field)
