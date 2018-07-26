@@ -13,8 +13,7 @@ messages of a gRPC request. In case of a
 validation failure, an `InvalidArgument` gRPC status is returned, along with
 the error that caused the validation failure.
 
-While it is generic, it is intended to be used with plugins like 
-https://github.com/mwitkow/go-proto-validators or https://github.com/lyft/protoc-gen-validate, Go protocol buffers codegen
+It is intended to be used with plugins like https://github.com/lyft/protoc-gen-validate, Go protocol buffers codegen
 plugins that create the `Validate` methods (including nested messages) based on declarative options in the `.proto` files themselves. 
 
 ## Usage
@@ -37,6 +36,41 @@ func DefaultMapping() errors.MapFunc
 ```
 DefaultMapping returns a mapper that parses through the lyft protoc-gen-validate errors and only returns a user friendly error. 
 
+Example Usage: 
+
+1. Add validationerrors and errors interceptors to your application:
+
+    ```go
+    errors.UnaryServerInterceptor(ErrorMappings...),
+    validationerrors.UnaryServerInterceptor(),
+    ```
+
+2. Create an ErrorMapping variable with all your mappings. 
+3. Add DefaultMapping as part of your ErrorMapping variable or add custom validation mappings.
+
+     ```go
+    var ErrorMappings = []errors.MapFunc{
+        // Adding Default Validations Mapping
+        validationerrors.DefaultMapping(), 
+
+        // Adding custom Validation Mapping based on the known field and error from lyft
+       errors.NewMapping(
+			errors.CondAnd(
+				CondValidation(),
+                CondFieldEq("primary_email"),
+				CondReasonEq("value must be a valid email address"),
+			),
+			errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
+				vErr, _ := err.(*ValidationError)
+				return errors.NewContainer(codes.InvalidArgument, "Custom error message for field: %v reason: %v", vErr.Field, vErr.Reason), true
+            }),
+       ),
+    }
+
+    ```
+
+
+
 Example return after DefaultMapping on a invalid email: 
 
 ```json
@@ -44,10 +78,10 @@ Example return after DefaultMapping on a invalid email:
     "error": {
         "status": 400,
         "code": "INVALID_ARGUMENT",
-        "message": "Invalid PrimaryEmail: value must be a valid email address"
+        "message": "Invalid primary_email: value must be a valid email address"
     },
     "fields": {
-        "PrimaryEmail": [
+        "primary_email": [
             "value must be a valid email address"
         ]
     }
