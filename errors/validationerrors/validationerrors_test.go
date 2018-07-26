@@ -20,11 +20,11 @@ func TestCond(t *testing.T) {
 	}{
 		{
 			name: "Validation Error non pointer",
-			cond: CondValidation(), in: ValidationError{}, expected: false,
+			cond: CondValidation(), in: &ValidationError{}, expected: false,
 		},
 		{
 			name: "Validation Error base",
-			cond: CondValidation(), in: &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"}, expected: true,
+			cond: CondValidation(), in: ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"}, expected: true,
 		},
 		{
 			name: "None Validation Error",
@@ -32,15 +32,15 @@ func TestCond(t *testing.T) {
 		},
 		{
 			name: "CondFieldEq non pointer",
-			cond: CondFieldEq("bar"), in: ValidationError{Field: "bar"}, expected: false,
+			cond: CondFieldEq("bar"), in: &ValidationError{Field: "bar"}, expected: false,
 		},
 		{
 			name: "CondFieldEq base",
-			cond: CondFieldEq("foo"), in: &ValidationError{Field: "foo"}, expected: true,
+			cond: CondFieldEq("foo"), in: ValidationError{Field: "foo"}, expected: true,
 		},
 		{
 			name: "CondFieldEq base bad",
-			cond: CondFieldEq("foo"), in: &ValidationError{Field: "bar"}, expected: false,
+			cond: CondFieldEq("foo"), in: ValidationError{Field: "bar"}, expected: false,
 		},
 		{
 			name: "CondFieldEq bad",
@@ -48,15 +48,15 @@ func TestCond(t *testing.T) {
 		},
 		{
 			name: "CondReasonEq non pointer",
-			cond: CondReasonEq("foo bar"), in: ValidationError{Reason: "foo bar"}, expected: false,
+			cond: CondReasonEq("foo bar"), in: &ValidationError{Reason: "foo bar"}, expected: false,
 		},
 		{
 			name: "CondReasonEq base",
-			cond: CondReasonEq("foo bar"), in: &ValidationError{Reason: "foo bar"}, expected: true,
+			cond: CondReasonEq("foo bar"), in: ValidationError{Reason: "foo bar"}, expected: true,
 		},
 		{
 			name: "CondReasonEq base bad",
-			cond: CondReasonEq("foo"), in: &ValidationError{Reason: "foo foo"}, expected: false,
+			cond: CondReasonEq("foo"), in: ValidationError{Reason: "foo foo"}, expected: false,
 		},
 		{
 			name: "CondReasonEq bad",
@@ -76,7 +76,7 @@ func TestCond(t *testing.T) {
 func TestMapping(t *testing.T) {
 
 	// ToMapFunc Custom Mapping
-	f := ToMapFunc(func(ctx context.Context, err *ValidationError) (error, bool) {
+	f := ToMapFunc(func(ctx context.Context, err ValidationError) (error, bool) {
 		return errors.NewContainer(codes.InvalidArgument, "custom error message for field: %v", err.Field), true
 	})
 
@@ -90,7 +90,7 @@ func TestMapping(t *testing.T) {
 	}{
 		{
 			name:       "DefaultMapping base",
-			in:         &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:         ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected:   true,
 			mapping:    DefaultMapping(),
 			statusCode: codes.InvalidArgument,
@@ -98,20 +98,20 @@ func TestMapping(t *testing.T) {
 		},
 		{
 			name:       "DefaultMapping empty",
-			in:         &ValidationError{},
+			in:         ValidationError{},
 			expected:   false,
 			mapping:    DefaultMapping(),
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:     "DefaultMapping empty field",
-			in:       &ValidationError{Key: true, Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping:  DefaultMapping(),
 		},
 		{
 			name:     "DefaultMapping empty reason",
-			in:       &ValidationError{Key: true, Field: "foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping:  DefaultMapping(),
 		},
@@ -131,7 +131,7 @@ func TestMapping(t *testing.T) {
 		},
 		{
 			name:     "CustomMapping CondFieldEq base",
-			in:       &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: true,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -139,7 +139,7 @@ func TestMapping(t *testing.T) {
 					CondFieldEq("foo"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for field: %v", vErr.Field), true
 				}),
 			),
@@ -148,7 +148,7 @@ func TestMapping(t *testing.T) {
 		},
 		{
 			name:     "CustomMapping CondFieldEq bad",
-			in:       &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -156,14 +156,14 @@ func TestMapping(t *testing.T) {
 					CondFieldEq("bar"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for field: %v", vErr.Field), true
 				}),
 			),
 		},
 		{
 			name:     "CustomMapping CondFieldEq empty",
-			in:       &ValidationError{Key: true, Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -171,7 +171,7 @@ func TestMapping(t *testing.T) {
 					CondFieldEq("bar"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for field: %v", vErr.Field), true
 				}),
 			),
@@ -183,14 +183,14 @@ func TestMapping(t *testing.T) {
 			mapping: errors.NewMapping(
 				CondFieldEq("bar"),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for field: %v", vErr.Field), true
 				}),
 			),
 		},
 		{
 			name:     "CustomMapping CondReasonEq base",
-			in:       &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: true,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -198,7 +198,7 @@ func TestMapping(t *testing.T) {
 					CondReasonEq("bad foo"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for reason: %s", vErr.Reason), true
 				}),
 			),
@@ -207,7 +207,7 @@ func TestMapping(t *testing.T) {
 		},
 		{
 			name:     "CustomMapping CondReasonEq bad",
-			in:       &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -215,14 +215,14 @@ func TestMapping(t *testing.T) {
 					CondReasonEq("bar"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for reason: %v", vErr.Reason), true
 				}),
 			),
 		},
 		{
 			name:     "CustomMapping CondReasonEq empty",
-			in:       &ValidationError{Key: true, Field: "foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:       ValidationError{Key: true, Field: "foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			expected: false,
 			mapping: errors.NewMapping(
 				errors.CondAnd(
@@ -230,7 +230,7 @@ func TestMapping(t *testing.T) {
 					CondReasonEq("bar"),
 				),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for reason: %v", vErr.Reason), true
 				}),
 			),
@@ -242,14 +242,14 @@ func TestMapping(t *testing.T) {
 			mapping: errors.NewMapping(
 				CondReasonEq("bar"),
 				errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-					vErr, _ := err.(*ValidationError)
+					vErr, _ := err.(ValidationError)
 					return errors.NewContainer(codes.InvalidArgument, "custom error message for reason: %v", vErr.Reason), true
 				}),
 			),
 		},
 		{
 			name: "ToMapFunc base",
-			in:   &ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
+			in:   ValidationError{Key: true, Field: "foo", Reason: "bad foo", Cause: fmt.Errorf("bad input"), ErrorTypeName: "ValidationError"},
 			mapping: errors.NewMapping(
 				errors.CondAnd(
 					CondValidation(),

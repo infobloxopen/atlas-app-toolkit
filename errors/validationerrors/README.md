@@ -1,8 +1,8 @@
-# validationerrors
+# Validation Errors
 
     import "github.com/infobloxopen/atlas-app-toolkit/errors/validationerrors"
 
-`validationerrors` is a generic request contents validator server-side middleware for
+`validationerrors` is a request contents validator server-side middleware for
 gRPC.
 
 
@@ -46,22 +46,47 @@ Example Usage:
     ```
 
 2. Create an ErrorMapping variable with all your mappings. 
-3. Add DefaultMapping as part of your ErrorMapping variable or add custom validation mappings.
+3. Add DefaultMapping as part of your ErrorMapping variable
 
      ```go
     var ErrorMappings = []errors.MapFunc{
         // Adding Default Validations Mapping
         validationerrors.DefaultMapping(), 
 
-        // Adding custom Validation Mapping based on the known field and error from lyft
+    }
+    ```
+
+
+    Example return after DefaultMapping on a invalid email: 
+
+    ```json
+    {
+        "error": {
+            "status": 400,
+            "code": "INVALID_ARGUMENT",
+            "message": "Invalid primary_email: value must be a valid email address"
+        },
+        "fields": {
+            "primary_email": [
+                "value must be a valid email address"
+            ]
+        }
+    }
+    ```
+
+4. You can also add custom validation mappings:
+
+    ```go
+    var ErrorMappings = []errors.MapFunc{
+        // Adding custom Validation Mapping based on the known field and reason from lyft
        errors.NewMapping(
 			errors.CondAnd(
-				CondValidation(),
-                CondFieldEq("primary_email"),
-				CondReasonEq("value must be a valid email address"),
+				validationerrors.CondValidation(),
+                validationerrors.CondFieldEq("primary_email"),
+				validationerrors.CondReasonEq("value must be a valid email address"),
 			),
 			errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
-				vErr, _ := err.(*ValidationError)
+				vErr, _ := err.(validationerrors.ValidationError)
 				return errors.NewContainer(codes.InvalidArgument, "Custom error message for field: %v reason: %v", vErr.Field, vErr.Reason), true
             }),
        ),
@@ -70,20 +95,3 @@ Example Usage:
     ```
 
 
-
-Example return after DefaultMapping on a invalid email: 
-
-```json
-{
-    "error": {
-        "status": 400,
-        "code": "INVALID_ARGUMENT",
-        "message": "Invalid primary_email: value must be a valid email address"
-    },
-    "fields": {
-        "primary_email": [
-            "value must be a valid email address"
-        ]
-    }
-}
-```
