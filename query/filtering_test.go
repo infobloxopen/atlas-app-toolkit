@@ -101,6 +101,26 @@ func TestFiltering(t *testing.T) {
 			res:    false,
 		},
 		{
+			obj:    &TestProtoMessage{Str: "aaa"},
+			filter: "str > 'aaa'",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Str: "aaa"},
+			filter: "str >= 'aaa'",
+			res:    true,
+		},
+		{
+			obj:    &TestProtoMessage{Str: "aaa"},
+			filter: "str < 'aaa'",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Str: "aaa"},
+			filter: "str <= 'aaa'",
+			res:    true,
+		},
+		{
 			obj:    &TestProtoMessage{Int: 111},
 			filter: "int == 111",
 			res:    true,

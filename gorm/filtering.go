@@ -114,6 +114,14 @@ func StringConditionToGorm(c *query.StringCondition, obj interface{}) (string, [
 		o = "="
 	case query.StringCondition_MATCH:
 		o = "~"
+	case query.StringCondition_GT:
+		o = ">"
+	case query.StringCondition_GE:
+		o = ">="
+	case query.StringCondition_LT:
+		o = "<"
+	case query.StringCondition_LE:
+		o = "<="
 	}
 	var neg string
 	if c.IsNegative {

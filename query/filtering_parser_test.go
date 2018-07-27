@@ -338,8 +338,6 @@ func TestFilteringParserNegative(t *testing.T) {
 		"field1 != field1",
 		"field1 ~ 123",
 		"field1 !~ 123",
-		"field1 > 'abc'",
-		"field1 >= 'bcd'",
 		"field1 < or",
 		"field1 <= null",
 		"field1 or field2",
