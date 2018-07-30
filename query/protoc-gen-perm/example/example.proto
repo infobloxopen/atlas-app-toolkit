@@ -1,0 +1,42 @@
+
+syntax = "proto3";
+package example;
+
+import "github.com/infobloxopen/atlas-app-toolkit/query/protoc-gen-perm/options/collection_permissions.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
+
+message User {
+    string first_name = 2 [(atlas.api.permissions).filters.allow = "MATCH"];
+    string middle_name = 3 [(atlas.api.permissions).disable_sorting = true];
+    string last_name = 4 [(atlas.api.permissions) = {filters: {allow: "EQ"}, disable_sorting: false}];
+    string age = 7 [(atlas.api.permissions).filters.allow = "MATCH"];;
+    int64 height = 15 [(atlas.api.permissions).filters.allow = "GE"];
+    float weight = 16 [(atlas.api.permissions).filters.deny = "LE"];
+    bool OnVacation = 17 [(atlas.api.permissions).disable_sorting = true];
+}
+
+
+message ListRequest {
+    infoblox.api.Filtering filter = 1;
+    infoblox.api.Sorting order_by = 2;
+    infoblox.api.FieldSelection fields = 3;
+    infoblox.api.Pagination paging = 4;
+}
+
+message ReadRequest {
+    infoblox.api.Sorting order_by = 1;
+    infoblox.api.FieldSelection fields = 2;
+    infoblox.api.Pagination paging = 3;
+}
+
+message UserResponse {
+    repeated User data = 1;
+}
+
+service TstService {
+    rpc List (ListRequest) returns (UserResponse) {
+    }
+
+    rpc Read (ReadRequest) returns (UserResponse) {
+    }
+}
