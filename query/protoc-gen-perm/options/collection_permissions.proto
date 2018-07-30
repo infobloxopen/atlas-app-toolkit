@@ -1,0 +1,40 @@
+syntax = "proto2";
+package atlas.api;
+
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/query/protoc-gen-perm/options/;options";
+
+import "google/protobuf/descriptor.proto";
+
+// Field level specifications
+extend google.protobuf.FieldOptions {
+  optional CollectionPermissions permissions = 52121;
+}
+
+message CollectionPermissions {
+  optional bool disable_sorting = 1;
+  optional FilterOptions filters = 2;
+}
+
+message FilterOptions {
+  oneof operators {
+    string allow = 1;
+    string deny = 2;
+  }
+}
+
+// RPC specifications
+extend google.protobuf.MethodOptions {
+  optional MethodOptions method_permissions = 52121;
+}
+
+message FieldPermissions {
+  required string name = 1;
+  optional bool disable_sorting = 2;
+  optional FilterOptions filters = 3;
+}
+
+message MethodOptions {
+  optional string for_message = 1;
+  repeated FieldPermissions fields = 2;
+  optional bool allow_missing_fields = 3;
+}

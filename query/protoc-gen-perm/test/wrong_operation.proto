@@ -1,0 +1,8 @@
+syntax = "proto3";
+package tst;
+
+import "github.com/infobloxopen/atlas-app-toolkit/query/protoc-gen-perm/options/collection_permissions.proto";
+
+message User {
+    string first_name = 2 [(atlas.api.permissions).filters.allow = "SORT"];
+}

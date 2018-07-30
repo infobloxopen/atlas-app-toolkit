@@ -38,4 +38,7 @@ check-fmt:
 	--go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
 
 .PHONY: gen
-gen: .gen-query .gen-errdetails .gen-errfields
+gen: .gen-query .gen-errdetails .gen-errfields .gen-perm
+
+.gen-perm:
+	$(MAKE) -C ./query/protoc-gen-perm/
