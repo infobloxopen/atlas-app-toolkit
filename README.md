@@ -1031,8 +1031,8 @@ Using the toolkit's Server Wrapper functionality, you can optionally enable
 automatic filling of a FieldMask within the gateway.
 
 As a prerequisite, the request passing through the gateway must match the list
-of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask named
-"Fields" at the top level.
+of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the 
+top level.
 ```proto
 import "google/protobuf/field_mask.proto";
 message MyRequest {

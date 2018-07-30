@@ -14,10 +14,10 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
-  version = "v3.2.0"
+  revision = "0b96aaa707760d6ab28d9b9d1913ff5993328bae"
 
 [[projects]]
   branch = "master"
@@ -36,7 +36,7 @@
     "ptypes/timestamp",
     "ptypes/wrappers"
   ]
-  revision = "1325a051a2753cd67556b182843b1b693d0854cd"
+  revision = "93b26e6a70e37abb14f2f88194949312b0592a84"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -99,7 +99,6 @@
   revision = "a1e500cde93cdca91ae6c7366e0cb9f477c63603"
 
 [[projects]]
-  branch = "master"
   name = "github.com/infobloxopen/themis"
   packages = [
     "pdp",
@@ -110,7 +109,10 @@
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
-  packages = ["."]
+  packages = [
+    ".",
+    "dialects/postgres"
+  ]
   revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
   version = "v1.9.1"
 
@@ -119,6 +121,16 @@
   name = "github.com/jinzhu/inflection"
   packages = ["."]
   revision = "04140366298a54a039076d798123ffa108fff46c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "hstore",
+    "oid"
+  ]
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
 
 [[projects]]
   name = "github.com/opentracing/opentracing-go"
@@ -139,8 +151,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
+  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -152,7 +164,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
+  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
 
 [[projects]]
   branch = "master"
@@ -166,7 +178,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "c21de06aaf072cea07f3a65d6970e5c7d8b6cd6d"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   branch = "master"
@@ -175,7 +187,7 @@
     "unix",
     "windows"
   ]
-  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
+  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -207,7 +219,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "8b2cc369ab52e0003a878865c9372afdd6ca5c5a"
+  revision = "02b4e95473316948020af0b7a4f0f22c73929b0e"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -244,6 +256,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "41d2b551d00cbc494bad24365f4eaab347577e20128c12788105d58376bb88c5"
+  inputs-digest = "310dce3383d3c7b0478732c33873a6f051f8d5aa49caadea81ba907e49c86bb5"
   solver-name = "gps-cdcl"
   solver-version = 1
