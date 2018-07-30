@@ -764,6 +764,49 @@ interceptor := errros.UnaryServerInterceptor(
 See [README](errors/README.md)
 for further details.
 
+##### lib/pq Error Mapping
+
+Dedicated error mapper for go postgres driver (lib/pq.Error) package is included under
+the path of github.com/atlas-app-toolkit/errors/mappers/pqerrors. This package includes
+following components:
+
+ * Condition function CondPQ, CondConstraintEq, CondCodeEq for conditions involved in \*pq.Error detection,
+specific constraint name and specific status code of postgres error respectively.
+
+ * ToMapFunc function that converts mapping function that deals with pq.Error to avoid burden of
+casting errors back and forth.
+
+ * Default mapping function that can be included into errors interceptor for FK contraints (NewForeignKeyMapping),
+RESTRICT (NewRestrictMapping), NOT NULL (NewNotNullMapping), PK/UNIQUE (NewUniqueMapping)
+
+Example usage:
+
+```
+import (
+	...
+	"github.com/atlas-app-toolkit/errors/mappers/pqerrors"
+)
+
+interceptor := errros.UnaryServerInterceptor(
+	...
+	pqerrors.NewUniqueMapping("emails_address_key", "Contacts", "Primary Email Address"),
+	...
+)
+```
+
+Any violation of UNIQUE constraint "email_address_key" will result in following error:
+
+
+```
+{
+  "error": {
+    "status": 409,
+    "code": "ALREADY_EXISTS",
+    "message": "There is already an existing 'Contacts' object with the same 'Primary Email Address'."
+  }
+}
+```
+
 ### Collection Operators
 
 For methods that return collections, operations may be implemented using the following conventions.
