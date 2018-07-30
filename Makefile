@@ -6,7 +6,7 @@ PROJECT_ROOT = $(CURDIR)
 
 # Utility docker image to generate Go files from .proto definition.
 # https://github.com/infobloxopen/atlas-gentool
-GENTOOL_IMAGE := infoblox/atlas-gentool:v3
+GENTOOL_IMAGE := infoblox/atlas-gentool:latest
 
 .PHONY: default
 default: test
@@ -38,4 +38,4 @@ check-fmt:
 	--go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
 
 .PHONY: gen
-gen: .gen-op .gen-errdetails .gen-errfields
+gen: .gen-query .gen-errdetails .gen-errfields
