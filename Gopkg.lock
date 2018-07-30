@@ -20,6 +20,38 @@
   revision = "0b96aaa707760d6ab28d9b9d1913ff5993328bae"
 
 [[projects]]
+  name = "github.com/gogo/protobuf"
+  packages = [
+    "gogoproto",
+    "plugin/compare",
+    "plugin/defaultcheck",
+    "plugin/description",
+    "plugin/embedcheck",
+    "plugin/enumstringer",
+    "plugin/equal",
+    "plugin/face",
+    "plugin/gostring",
+    "plugin/marshalto",
+    "plugin/oneofcheck",
+    "plugin/populate",
+    "plugin/size",
+    "plugin/stringer",
+    "plugin/testgen",
+    "plugin/union",
+    "plugin/unmarshal",
+    "proto",
+    "protoc-gen-gogo/descriptor",
+    "protoc-gen-gogo/generator",
+    "protoc-gen-gogo/generator/internal/remap",
+    "protoc-gen-gogo/grpc",
+    "protoc-gen-gogo/plugin",
+    "vanity",
+    "vanity/command"
+  ]
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
   packages = [
@@ -36,7 +68,7 @@
     "ptypes/timestamp",
     "ptypes/wrappers"
   ]
-  revision = "93b26e6a70e37abb14f2f88194949312b0592a84"
+  revision = "11bd559057bb9c65e24d1bd7f436d375323a8565"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -178,7 +210,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+  revision = "c4299a1a0d8524c11563db160fbf9bddbceadb21"
 
 [[projects]]
   branch = "master"
@@ -187,7 +219,7 @@
     "unix",
     "windows"
   ]
-  revision = "e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311"
+  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -219,7 +251,7 @@
     "googleapis/rpc/status",
     "protobuf/field_mask"
   ]
-  revision = "02b4e95473316948020af0b7a4f0f22c73929b0e"
+  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -256,6 +288,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "310dce3383d3c7b0478732c33873a6f051f8d5aa49caadea81ba907e49c86bb5"
+  inputs-digest = "b9701464ba14c4fb9c096628c4160e03e6b7eefde7ab5dc7ea6f9bd7235ec3ed"
   solver-name = "gps-cdcl"
   solver-version = 1
