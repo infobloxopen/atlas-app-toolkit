@@ -38,10 +38,7 @@ pathsloop:
 				srcVal = srcVal.Elem()
 			}
 			// For safety, skip paths that will cause a panic to call FieldByName on
-			if dstVal.Kind() == reflect.Invalid || dstVal.Kind() == reflect.Array ||
-				dstVal.Kind() == reflect.Chan || dstVal.Kind() == reflect.Func ||
-				dstVal.Kind() == reflect.Interface || dstVal.Kind() == reflect.Map ||
-				dstVal.Kind() == reflect.Slice {
+			if dstVal.Kind() != reflect.Struct {
 				continue pathsloop
 			}
 			srcVal = srcVal.FieldByName(path)
