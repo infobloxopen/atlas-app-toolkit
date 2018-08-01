@@ -58,4 +58,10 @@ func TestMergeWithMask(t *testing.T) {
 	assert.Equal(t, errors.New("Destination object is nil"), err)
 	err = MergeWithMask(source, dest.FieldA, &field_mask.FieldMask{Paths: []string{"FieldB"}})
 	assert.Equal(t, errors.New("Types of source and destination objects do not match"), err)
+	dest = &topTest{}
+	err = MergeWithMask(source, dest, &field_mask.FieldMask{Paths: []string{"FieldA.FieldTwo", "FieldA.FieldFour.Anything"}})
+	assert.Equal(t, &topTest{
+		FieldA: childTest{FieldTwo: "catch"},
+	}, dest)
+	assert.Nil(t, err)
 }
