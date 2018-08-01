@@ -54,9 +54,13 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 			item := queue[0]
 			queue = queue[1:]
 			if m, ok := item.node.(map[string]interface{}); ok {
+				l := len(item.path)
 				// if the item is an object, then enqueue all of its children
 				for k, v := range m {
-					queue = append(queue, pathItem{path: append(item.path, generator.CamelCase(k)), node: v})
+					newPath := make([]string, l+1)
+					copy(newPath, item.path)
+					newPath[l] = generator.CamelCase(k)
+					queue = append(queue, pathItem{path: newPath, node: v})
 				}
 			} else if len(item.path) > 0 {
 				// otherwise, it's a leaf node so print its path
