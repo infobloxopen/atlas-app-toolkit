@@ -22,6 +22,12 @@ var (
 	errMissingField     = errors.New("unable to get field from token")
 	errMissingToken     = errors.New("unable to get token from context")
 	errInvalidAssertion = errors.New("unable to assert value as jwt.MapClaims")
+
+	// multiTenancyVariants all possible multi-tenant names
+	multiTenancyVariants = []string{
+		MultiTenancyField,
+		"AccountID",
+	}
 )
 
 // GetJWTFieldWithTokenType gets the JWT from a context and returns the
@@ -51,7 +57,12 @@ func GetJWTField(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (s
 
 // GetAccountID gets the JWT from a context and returns the AccountID field
 func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
-	return GetJWTField(ctx, MultiTenancyField, keyfunc)
+	for _, tenantField := range multiTenancyVariants {
+		if val, err := GetJWTField(ctx, tenantField, keyfunc); err == nil {
+			return val, nil
+		}
+	}
+	return "", errMissingField
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.

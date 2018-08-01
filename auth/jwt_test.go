@@ -140,6 +140,13 @@ func TestGetAccountID(t *testing.T) {
 			err:      nil,
 		},
 		{
+			claims: jwt.MapClaims{
+				"AccountID": "id-abc-123",
+			},
+			expected: "id-abc-123",
+			err:      nil,
+		},
+		{
 			claims:   jwt.MapClaims{},
 			expected: "",
 			err:      errMissingField,
