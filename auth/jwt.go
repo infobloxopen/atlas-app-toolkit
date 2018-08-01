@@ -10,12 +10,8 @@ import (
 )
 
 const (
-	// TODO: Field is tentatively called "AccountID" but will probably need to be
-	// changed. We don't know what the JWT will look like, so we're giving it our
-	// best guess for the time being.
-
 	// MultiTenancyField the field name for a specific tenant
-	MultiTenancyField = "AccountID"
+	MultiTenancyField = "account_id"
 
 	// DefaultTokenType is the name of the authorization token (e.g. "Bearer"
 	// or "token")
@@ -26,6 +22,12 @@ var (
 	errMissingField     = errors.New("unable to get field from token")
 	errMissingToken     = errors.New("unable to get token from context")
 	errInvalidAssertion = errors.New("unable to assert value as jwt.MapClaims")
+
+	// multiTenancyVariants all possible multi-tenant names
+	multiTenancyVariants = []string{
+		MultiTenancyField,
+		"AccountID",
+	}
 )
 
 // GetJWTFieldWithTokenType gets the JWT from a context and returns the
@@ -55,7 +57,12 @@ func GetJWTField(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (s
 
 // GetAccountID gets the JWT from a context and returns the AccountID field
 func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
-	return GetJWTField(ctx, MultiTenancyField, keyfunc)
+	for _, tenantField := range multiTenancyVariants {
+		if val, err := GetJWTField(ctx, tenantField, keyfunc); err == nil {
+			return val, nil
+		}
+	}
+	return "", errMissingField
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.
@@ -63,6 +70,9 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 // because it has been checked previously in the stack. More information
 // here: https://godoc.org/github.com/dgrijalva/jwt-go#Parser.ParseUnverified
 func getToken(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (jwt.Token, error) {
+	if ctx == nil {
+		return jwt.Token{}, ErrUnauthorized
+	}
 	tokenStr, err := grpc_auth.AuthFromMD(ctx, tokenField)
 	if err != nil {
 		return jwt.Token{}, ErrUnauthorized

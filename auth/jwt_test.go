@@ -16,45 +16,70 @@ const (
 
 func TestGetJWTFieldWithTokenType(t *testing.T) {
 	var jwtFieldTests = []struct {
-		claims    jwt.MapClaims
-		tokenType string
-		field     string
-		expected  string
-		err       error
+		claims         jwt.MapClaims
+		contextFactory func(t *testing.T) context.Context
+		tokenType      string
+		field          string
+		expected       string
+		err            error
 	}{
 		{
-			claims:    jwt.MapClaims{"some-field": "id-abc-123"},
-			tokenType: "token",
+			contextFactory: func(t *testing.T) context.Context {
+				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
+				ctx, err := contextWithToken(token, "Bearer")
+				if err != nil {
+					t.Fatalf("Error when building request context: %v", err)
+				}
+				return ctx
+			},
+			tokenType: "Bearer",
 			field:     "some-field",
 			expected:  "id-abc-123",
 			err:       nil,
 		},
 		{
-			claims:    jwt.MapClaims{"some-field": "id-abc-123"},
+			contextFactory: func(t *testing.T) context.Context {
+				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
+				ctx, err := contextWithToken(token, "Bearer")
+				if err != nil {
+					t.Fatalf("Error when building request context: %v", err)
+				}
+				return ctx
+			},
 			tokenType: "Bearer",
 			field:     "some-other-field",
 			expected:  "",
 			err:       errMissingField,
 		},
 		{
-			claims:    jwt.MapClaims{},
+			contextFactory: func(t *testing.T) context.Context {
+				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
+				ctx, err := contextWithToken(token, "Bearer")
+				if err != nil {
+					t.Fatalf("Error when building request context: %v", err)
+				}
+				return ctx
+			},
 			tokenType: "token",
+			field:     "some-field",
+			expected:  "",
+			err:       errMissingToken,
+		},
+		{
+			contextFactory: func(t *testing.T) context.Context {
+				return nil
+			},
+			tokenType: "Bearer",
 			field:     "some-field",
 			expected:  "",
 			err:       errMissingToken,
 		},
 	}
 	for _, test := range jwtFieldTests {
-		ctx := context.Background()
-		if len(test.claims) != 0 {
-			token := makeToken(test.claims, t)
-			c, err := contextWithToken(token, test.tokenType)
-			if err != nil {
-				t.Fatalf("Error when building request context: %v", err)
-			}
-			ctx = c
-		}
+		ctx := test.contextFactory(t)
+
 		actual, err := GetJWTFieldWithTokenType(ctx, test.tokenType, test.field, nil)
+
 		if err != test.err {
 			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
 		}
@@ -107,6 +132,13 @@ func TestGetAccountID(t *testing.T) {
 		expected string
 		err      error
 	}{
+		{
+			claims: jwt.MapClaims{
+				MultiTenancyField: "id-abc-123",
+			},
+			expected: "id-abc-123",
+			err:      nil,
+		},
 		{
 			claims: jwt.MapClaims{
 				"AccountID": "id-abc-123",
