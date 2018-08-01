@@ -59,6 +59,9 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 // because it has been checked previously in the stack. More information
 // here: https://godoc.org/github.com/dgrijalva/jwt-go#Parser.ParseUnverified
 func getToken(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (jwt.Token, error) {
+	if ctx == nil {
+		return jwt.Token{}, ErrUnauthorized
+	}
 	tokenStr, err := grpc_auth.AuthFromMD(ctx, tokenField)
 	if err != nil {
 		return jwt.Token{}, ErrUnauthorized
