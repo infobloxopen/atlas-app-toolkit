@@ -109,7 +109,7 @@ func TestGetAccountID(t *testing.T) {
 	}{
 		{
 			claims: jwt.MapClaims{
-				"AccountID": "id-abc-123",
+				MultiTenancyField: "id-abc-123",
 			},
 			expected: "id-abc-123",
 			err:      nil,

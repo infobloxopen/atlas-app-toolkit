@@ -10,12 +10,8 @@ import (
 )
 
 const (
-	// TODO: Field is tentatively called "AccountID" but will probably need to be
-	// changed. We don't know what the JWT will look like, so we're giving it our
-	// best guess for the time being.
-
 	// MultiTenancyField the field name for a specific tenant
-	MultiTenancyField = "AccountID"
+	MultiTenancyField = "account_id"
 
 	// DefaultTokenType is the name of the authorization token (e.g. "Bearer"
 	// or "token")
