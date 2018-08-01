@@ -20,6 +20,27 @@ func TestAnnotator(t *testing.T) {
 		`{}`: metadata.MD{},
 		`{`:  nil,
 		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
+		`{
+  "name": "atlas",
+  "burden": {
+    "duration": "forever",
+    "weight": "earth",
+    "breaks": [],
+    "replacements": {
+			"hero": {
+	        "name": "hercules",
+	        "duration": "temporary",
+					"lineage": {
+						"mother": "alcmena",
+						"father": "zeus"
+					}
+	      },
+			"mortals": []
+		}
+  }
+}`: {fieldPresenceMetaKey: []string{"Name", "Burden.Duration", "Burden.Weight",
+			"Burden.Breaks", "Burden.Replacements.Hero.Name", "Burden.Replacements.Hero.Duration",
+			"Burden.Replacements.Hero.Lineage.Mother", "Burden.Replacements.Hero.Lineage.Father", "Burden.Replacements.Mortals"}},
 	} {
 		postReq := &http.Request{
 			Method: "POST",
