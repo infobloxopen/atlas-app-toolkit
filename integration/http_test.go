@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
 )
 
 func TestMakeStandardRequest(t *testing.T) {
@@ -26,7 +28,7 @@ func TestMakeStandardRequest(t *testing.T) {
 				func(w http.ResponseWriter, r *http.Request) {
 					authHeader := r.Header.Get("Authorization")
 					if expected := fmt.Sprintf(
-						"%s %s", "token", standardToken,
+						"%s %s", auth.DefaultTokenType, standardToken,
 					); expected != authHeader {
 						t.Error("token missing in standard request")
 					}

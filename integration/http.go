@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
 )
 
 // MakeStandardRequest issues an HTTP request a specific endpoint with Atlas-specific
@@ -22,6 +24,6 @@ func MakeStandardRequest(method, url string, payload interface{}) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("%s %s", "token", token))
+	req.Header.Set("Authorization", fmt.Sprintf("%s %s", auth.DefaultTokenType, token))
 	return req, nil
 }
