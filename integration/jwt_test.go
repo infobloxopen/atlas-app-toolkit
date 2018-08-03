@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	// break apart the token so it isn't one huge line
+	// standardToken is the raw jwt that gets used in test requests. it is signed
+	// with the "testSecret" secret in jwt.go
 	standardToken = fmt.Sprintf("%s%s%s",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.",
-		"eyJBY2NvdW50SUQiOiJUZXN0QWNjb3VudCJ9.",
-		"Qt7yYMcN2rEYavhgbhVMV762RBmAVUd32mW_VDIAKvM",
+		"eyJhY2NvdW50X2lkIjoiVGVzdEFjY291bnQifQ.",
+		"_Ow6QeeUlW-u1qxAKklmyGOlSeJDaFnwELs-8RPwgBY",
 	)
 )
 

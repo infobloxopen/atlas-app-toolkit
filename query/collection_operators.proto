@@ -85,6 +85,10 @@ message StringCondition {
     enum Type {
         EQ = 0;
         MATCH = 1;
+        GT = 2;
+        GE = 3;
+        LT = 4;
+        LE = 5;
     }
     Type type = 3;
     bool is_negative = 4;
