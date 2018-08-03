@@ -31,3 +31,25 @@ message MyMessage {
 
 Please give a read to [README](../../gorm/resource/README.md) of `gorm/resource`
 package to see how it could be used with gorm and `protoc-gen-gorm` generated code. 
+
+# How to check empty Identifier?
+
+In order to check that identifier is empty use `String` method. 
+**It is safe to invoke any method on nil Identifier**.
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+)
+
+func main() {
+	var id *resource.Identifier
+    if !resource.Valid(id) {
+    	fmt.Println("resource is not valid")
+    }
+}
+```
