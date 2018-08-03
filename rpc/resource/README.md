@@ -32,10 +32,9 @@ message MyMessage {
 Please give a read to [README](../../gorm/resource/README.md) of `gorm/resource`
 package to see how it could be used with gorm and `protoc-gen-gorm` generated code. 
 
-# How to check empty Identifier?
+# How to check that an Identifier is nil?
 
-In order to check that identifier is empty use `String` method. 
-**It is safe to invoke any method on nil Identifier**.
+In order to check that an identifier is nil use `resource.Nil` function.
 
 ```go
 package main
@@ -47,9 +46,12 @@ import (
 )
 
 func main() {
-	var id *resource.Identifier
-    if !resource.Valid(id) {
-    	fmt.Println("resource is not valid")
+    var id *resource.Identifier
+	
+    if resource.Nil(id) {
+    	fmt.Println("resource is nil identifier")
     }
 }
 ```
+
+See [Unit test](nil_test.go).

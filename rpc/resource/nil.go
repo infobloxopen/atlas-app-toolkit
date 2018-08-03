@@ -5,13 +5,13 @@ package resource
 // The "<nil>" string is common representation of nil value in Go code. See fmt package.
 const pbnil = "<nil>"
 
-// Valid reports whether id valid ot not.
-// The id is valid if it is neither nil nor empty string.
-func Valid(id *Identifier) (ok bool) {
+// Nil reports whether id is empty identifier or not.
+// The id is empty if it is either nil or could be converted to the empty string by its String method.
+func Nil(id *Identifier) (ok bool) {
 	// comparison with pbnil is mostly paranoid check
 	// should never happen
 	if id == nil || id.String() == "" || id.String() == pbnil {
-		return
+		return true
 	}
-	return true
+	return
 }
