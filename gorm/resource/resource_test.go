@@ -111,6 +111,8 @@ func Cleanup(t *testing.T) {
 	// cleanup
 	registry = make(map[string]Codec)
 	appname = ""
+	asEmpty = false
+	asPlural = false
 }
 
 func TestRegisterCodec(t *testing.T) {
@@ -412,7 +414,7 @@ func TestEncode(t *testing.T) {
 			Message: &resourcepb.Identifier{},
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
-				ResourceType:    "identifiers",
+				ResourceType:    "identifier",
 				ResourceId:      "1",
 			},
 		},
@@ -481,6 +483,58 @@ func TestEncode(t *testing.T) {
 		}
 		if v := id.GetResourceId(); v != tc.Identifier.GetResourceId() {
 			t.Errorf("tc %d: invalid resource id %s, expected %s", n, v, tc.Identifier.ResourceId)
+		}
+	}
+}
+
+type NamerMessage string
+
+func (m NamerMessage) ResourceName() string { return string(m) }
+func (NamerMessage) ProtoMessage()          {}
+func (NamerMessage) Reset()                 {}
+func (NamerMessage) String() string         { return "" }
+
+func TestName(t *testing.T) {
+	tcases := []struct {
+		Message      proto.Message
+		ExpectedName string
+	}{
+		{
+			Message:      NamerMessage("books"),
+			ExpectedName: "books",
+		},
+		{
+			Message:      TestProtoMessage{},
+			ExpectedName: "testprotomessage",
+		},
+	}
+	for n, tc := range tcases {
+		if name := Name(tc.Message); name != tc.ExpectedName {
+			t.Errorf("tc %d: invalid resource name %s, expected %s", n, name, tc.ExpectedName)
+		}
+	}
+}
+
+func TestNamePlural(t *testing.T) {
+	SetPlural()
+	defer Cleanup(t)
+
+	tcases := []struct {
+		Message      proto.Message
+		ExpectedName string
+	}{
+		{
+			Message:      NamerMessage("books"),
+			ExpectedName: "books",
+		},
+		{
+			Message:      TestProtoMessage{},
+			ExpectedName: "testprotomessages",
+		},
+	}
+	for n, tc := range tcases {
+		if name := Name(tc.Message); name != tc.ExpectedName {
+			t.Errorf("tc %d: invalid resource name %s, expected %s", n, name, tc.ExpectedName)
 		}
 	}
 }
