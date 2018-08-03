@@ -116,6 +116,14 @@ func (c *StringCondition) Filter(obj interface{}) (bool, error) {
 			return false, err
 		}
 		return negateIfNeeded(matched, c.IsNegative), nil
+	case StringCondition_GT:
+		return negateIfNeeded(s > c.Value, c.IsNegative), nil
+	case StringCondition_GE:
+		return negateIfNeeded(s >= c.Value, c.IsNegative), nil
+	case StringCondition_LT:
+		return negateIfNeeded(s < c.Value, c.IsNegative), nil
+	case StringCondition_LE:
+		return negateIfNeeded(s <= c.Value, c.IsNegative), nil
 	default:
 		return false, &UnsupportedOperatorError{"string", c.Type.String()}
 	}

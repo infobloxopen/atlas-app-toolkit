@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -25,5 +26,5 @@ func StandardTestingContext() (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	return AppendTokenToOutgoingContext(context.Background(), "token", token), nil
+	return AppendTokenToOutgoingContext(context.Background(), auth.DefaultTokenType, token), nil
 }

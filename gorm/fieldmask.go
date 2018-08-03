@@ -24,6 +24,7 @@ func MergeWithMask(source, dest interface{}, mask *fieldmask.FieldMask) error {
 	if reflect.TypeOf(source) != reflect.TypeOf(dest) {
 		return errors.New("Types of source and destination objects do not match")
 	}
+pathsloop:
 	for _, fullpath := range mask.GetPaths() {
 		subpaths := strings.Split(fullpath, ".")
 		srcVal := reflect.ValueOf(source).Elem()
@@ -35,6 +36,10 @@ func MergeWithMask(source, dest interface{}, mask *fieldmask.FieldMask) error {
 				}
 				dstVal = dstVal.Elem()
 				srcVal = srcVal.Elem()
+			}
+			// For safety, skip paths that will cause a panic to call FieldByName on
+			if dstVal.Kind() != reflect.Struct {
+				continue pathsloop
 			}
 			srcVal = srcVal.FieldByName(path)
 			dstVal = dstVal.FieldByName(path)

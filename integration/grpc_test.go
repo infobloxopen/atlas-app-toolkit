@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -69,7 +70,7 @@ func TestStandardTestingContext(t *testing.T) {
 	if !ok {
 		t.Fatal("unable to get metadata from context")
 	}
-	if md["authorization"][0] != fmt.Sprintf("token %s", standardToken) {
+	if md["authorization"][0] != fmt.Sprintf("%s %s", auth.DefaultTokenType, standardToken) {
 		t.Fatalf("context does not contain token in metadata")
 	}
 }

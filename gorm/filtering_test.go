@@ -12,6 +12,7 @@ type Entity struct {
 	Field1       int
 	Field2       int
 	Field3       int
+	FieldString  string
 	NestedEntity NestedEntity
 }
 
@@ -117,6 +118,34 @@ func TestGormFiltering(t *testing.T) {
 			"not field1 <= 22",
 			"NOT(entities.field1 <= ?)",
 			[]interface{}{22.0},
+			nil,
+			nil,
+		},
+		{
+			"field_string > 'str'",
+			"(entities.field_string > ?)",
+			[]interface{}{"str"},
+			nil,
+			nil,
+		},
+		{
+			"field_string >= 'str'",
+			"(entities.field_string >= ?)",
+			[]interface{}{"str"},
+			nil,
+			nil,
+		},
+		{
+			"field_string < 'str'",
+			"(entities.field_string < ?)",
+			[]interface{}{"str"},
+			nil,
+			nil,
+		},
+		{
+			"field_string <= 'str'",
+			"(entities.field_string <= ?)",
+			[]interface{}{"str"},
 			nil,
 			nil,
 		},

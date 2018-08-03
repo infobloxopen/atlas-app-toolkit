@@ -40,7 +40,7 @@ type filteringParser struct {
 // expr      : term (OR term)*
 // term      : factor (AND factor)*
 // factor    : ?NOT (LPAREN expr RPAREN | condition)
-// condition : FIELD ((== | !=) (STRING | NUMBER | NULL) | (~ | !~) STRING | (> | >= | < | <=) NUMBER).
+// condition : FIELD ((== | !=) (STRING | NUMBER | NULL) | (~ | !~) STRING | (> | >= | < | <=) (NUMBER | STRING).
 func (p *filteringParser) Parse(text string) (*Filtering, error) {
 	p.lexer = NewFilteringLexer(text)
 	token, err := p.lexer.NextToken()
@@ -323,6 +323,16 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				Type:       NumberCondition_GT,
 				IsNegative: false,
 			}, nil
+		case StringToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+			return &StringCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Value:      token.Value,
+				Type:       StringCondition_GT,
+				IsNegative: false,
+			}, nil
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
@@ -339,6 +349,16 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				FieldPath:  strings.Split(field.Value, "."),
 				Value:      token.Value,
 				Type:       NumberCondition_GE,
+				IsNegative: false,
+			}, nil
+		case StringToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+			return &StringCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Value:      token.Value,
+				Type:       StringCondition_GE,
 				IsNegative: false,
 			}, nil
 		default:
@@ -359,6 +379,16 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				Type:       NumberCondition_LT,
 				IsNegative: false,
 			}, nil
+		case StringToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+			return &StringCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Value:      token.Value,
+				Type:       StringCondition_LT,
+				IsNegative: false,
+			}, nil
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
@@ -375,6 +405,16 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				FieldPath:  strings.Split(field.Value, "."),
 				Value:      token.Value,
 				Type:       NumberCondition_LE,
+				IsNegative: false,
+			}, nil
+		case StringToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+			return &StringCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Value:      token.Value,
+				Type:       StringCondition_LE,
 				IsNegative: false,
 			}, nil
 		default:
