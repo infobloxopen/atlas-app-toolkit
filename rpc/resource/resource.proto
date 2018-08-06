@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package atlas.rpc;
 
+import "protoc-gen-swagger/options/annotations.proto";
+
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;resource";
 
 // A number of application services require a mechanism to
@@ -10,6 +12,13 @@ option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;reso
 // an application-defined resource type,
 // and an application-defined ID for that resource
 message Identifier {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            type: STRING;
+            description: "atlas.api.identifier";
+        };
+    };
+
     // An application identifier that will be used among
     // other infrastructure services to identify the application
     string application_name = 1;
