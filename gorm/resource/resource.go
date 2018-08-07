@@ -19,6 +19,7 @@ var (
 	registry = make(map[string]Codec)
 	appname  string
 	asEmpty  bool
+	asPlural bool
 )
 
 // Codec defines the interface package uses to encode and decode Protocol Buffer
@@ -29,6 +30,12 @@ type Codec interface {
 	Encode(driver.Value) (*resourcepb.Identifier, error)
 	// Decode decodes Protocol Buffer representation to the driver.Value
 	Decode(*resourcepb.Identifier) (driver.Value, error)
+}
+
+// Namer is the interface that names resource.
+type Namer interface {
+	// ResourceName returns the name of a resource.
+	ResourceName() string
 }
 
 // RegisterApplication registers name of the application.
@@ -58,6 +65,22 @@ func ReturnEmpty() bool {
 	mu.RLock()
 	defer mu.RUnlock()
 	return asEmpty
+}
+
+// SetPlural sets package flag that instructs resource.Name to
+// return name in plural form by adding 's' at the end of the name.
+func SetPlural() {
+	mu.Lock()
+	defer mu.Unlock()
+	asPlural = true
+}
+
+// Plural returns true if resource.SetPlural was called,
+// otherwise returns false.
+func Plural() bool {
+	mu.RLock()
+	defer mu.RUnlock()
+	return asPlural
 }
 
 // RegisterCodec registers codec for a given pb.
@@ -219,27 +242,27 @@ func Encode(pb proto.Message, value driver.Value) (*resourcepb.Identifier, error
 }
 
 // Name returns name of pb.
-// If pb implements XXX_MessageName then it is used to return name, otherwise
-// proto.MessageName is used and "s" symbol is added at the end of the message name.
+// If pb implements Namer interface it is used to return name,
+// otherwise the the proto.MessageName is used to obtain fully qualified resource name.
+//
+// The only last part of fully qualified resource name is used and converted to lower case.
+// E.g. infoblox.rpc.Identifier -> identifier
+//
+// If SetPlural is called the 's' symbol is added at the end of resource name.
 func Name(pb proto.Message) string {
 	if pb == nil {
 		return ""
 	}
-	type xname interface {
-		XXX_MessageName() string
+
+	if v, ok := pb.(Namer); ok {
+		return v.ResourceName()
 	}
-	var (
-		name string
-		udef bool
-	)
-	if m, ok := pb.(xname); ok {
-		name, udef = m.XXX_MessageName(), true
-	}
-	name = proto.MessageName(pb)
+
+	name := proto.MessageName(pb)
 
 	v := strings.Split(name, ".")
 	name = strings.ToLower(v[len(v)-1])
-	if !udef {
+	if Plural() {
 		name += "s"
 	}
 	return name
