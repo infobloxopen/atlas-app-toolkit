@@ -173,7 +173,7 @@ func ensureRetain(t *testing.T, input, fields, expected string) {
 	}
 
 	flds := query.ParseFieldSelection(fields)
-	doRetainFields(indata, flds.Fields)
+	doRetainFields(indata, flds.GetFields())
 
 	if !reflect.DeepEqual(indata, expdata) {
 		t.Errorf("Filtering input %s on fields %s returned %v while expecting %v", input, fields, indata, expdata)

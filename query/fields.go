@@ -31,7 +31,7 @@ func toParts(input string, delimiter ...string) []string {
 //default, but it is also possible to specify a different delimiter.
 func ParseFieldSelection(input string, delimiter ...string) *FieldSelection {
 	if len(input) == 0 {
-		return &FieldSelection{Fields: nil}
+		return nil
 	}
 
 	fields := strings.Split(input, opCommonDelimiter)
