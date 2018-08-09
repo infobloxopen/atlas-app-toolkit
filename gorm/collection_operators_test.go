@@ -22,6 +22,19 @@ type Person struct {
 	SubPerson SubPerson `gorm:"foreignkey:PersonId;association_foreignkey:Id"`
 }
 
+type PersonProto struct {
+}
+
+func (*PersonProto) Reset() {
+}
+
+func (*PersonProto) ProtoMessage() {
+}
+
+func (*PersonProto) String() string {
+	return "Person"
+}
+
 type SubPerson struct {
 	Id       int64
 	Name     string
@@ -71,7 +84,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 		gormDB, mock := setUp(t)
 
 		rq := req.(*testRequest)
-		gormDB, err = ApplyCollectionOperators(gormDB, &Person{}, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
+		gormDB, err = ApplyCollectionOperators(ctx, gormDB, &Person{}, &PersonProto{}, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
 		if err != nil {
 			t.Fatal(err)
 		}

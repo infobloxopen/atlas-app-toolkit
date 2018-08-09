@@ -6,7 +6,10 @@ import (
 	"reflect"
 	"strings"
 
+	"context"
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/inflection"
 )
@@ -15,7 +18,7 @@ import (
 // according to obj GORM model. If fieldPath cannot be found in obj then original fieldPath is returned
 // to allow tables joined by a third party.
 // If association join is required to resolve the field path then it's name is returned as a second return value.
-func HandleFieldPath(fieldPath []string, obj interface{}) (string, string, error) {
+func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (string, string, error) {
 	if len(fieldPath) > 2 {
 		return "", "", fmt.Errorf("Field path longer than 2 is not supported")
 	}
@@ -114,6 +117,16 @@ func isModel(t reflect.Type) bool {
 		return true
 	}
 	return false
+}
+
+func isProtoMessage(t reflect.Type) bool {
+	_, isProtoMessage := reflect.Zero(t).Interface().(proto.Message)
+	return isProtoMessage
+}
+
+func isIdentifier(t reflect.Type) bool {
+	_, isIdentifier := reflect.Zero(t).Interface().(resource.Identifier)
+	return isIdentifier
 }
 
 type EmptyFieldPathError struct {

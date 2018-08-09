@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -41,7 +42,7 @@ func TestJoinInfo(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		tableName, sourceKeys, targetKeys, err := JoinInfo(&JoinsModel{}, test.assoc)
+		tableName, sourceKeys, targetKeys, err := JoinInfo(context.Background(), &JoinsModel{}, test.assoc)
 		assert.Equal(t, test.tableName, tableName)
 		assert.Equal(t, test.sourceKeys, sourceKeys)
 		assert.Equal(t, test.targetKeys, targetKeys)

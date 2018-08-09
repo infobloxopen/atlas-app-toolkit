@@ -1,21 +1,24 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/gorm"
+
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 // ApplyCollectionOperators applies collection operators to gorm instance db.
-func ApplyCollectionOperators(db *gorm.DB, obj interface{}, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
-	db, fAssocToJoin, err := ApplyFiltering(db, f, obj)
+func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	db, fAssocToJoin, err := ApplyFiltering(ctx, db, f, obj, pb)
 	if err != nil {
 		return nil, err
 	}
 
-	db, sAssocToJoin, err := ApplySorting(db, s, obj)
+	db, sAssocToJoin, err := ApplySorting(ctx, db, s, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -26,14 +29,14 @@ func ApplyCollectionOperators(db *gorm.DB, obj interface{}, f *query.Filtering, 
 	for k := range sAssocToJoin {
 		fAssocToJoin[k] = struct{}{}
 	}
-	db, err = JoinAssociations(db, fAssocToJoin, obj)
+	db, err = JoinAssociations(ctx, db, fAssocToJoin, obj)
 	if err != nil {
 		return nil, err
 	}
 
-	db = ApplyPagination(db, p)
+	db = ApplyPagination(ctx, db, p)
 
-	db, err = ApplyFieldSelection(db, fs, obj)
+	db, err = ApplyFieldSelection(ctx, db, fs, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +45,8 @@ func ApplyCollectionOperators(db *gorm.DB, obj interface{}, f *query.Filtering, 
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
-	str, args, assocToJoin, err := FilteringToGorm(f, obj)
+func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
+	str, args, assocToJoin, err := FilteringToGorm(ctx, f, obj, pb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -54,11 +57,11 @@ func ApplyFiltering(db *gorm.DB, f *query.Filtering, obj interface{}) (*gorm.DB,
 }
 
 // ApplySorting applies sorting operator s to gorm instance db.
-func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
+func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
 	var crs []string
 	var assocToJoin map[string]struct{}
 	for _, cr := range s.GetCriterias() {
-		dbName, assoc, err := HandleFieldPath(strings.Split(cr.GetTag(), "."), obj)
+		dbName, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -81,9 +84,9 @@ func ApplySorting(db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map
 }
 
 // JoinAssociations joins obj's associations from assoc to the current gorm query.
-func JoinAssociations(db *gorm.DB, assoc map[string]struct{}, obj interface{}) (*gorm.DB, error) {
+func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{}, obj interface{}) (*gorm.DB, error) {
 	for k := range assoc {
-		tableName, sourceKeys, targetKeys, err := JoinInfo(obj, k)
+		tableName, sourceKeys, targetKeys, err := JoinInfo(ctx, obj, k)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +100,7 @@ func JoinAssociations(db *gorm.DB, assoc map[string]struct{}, obj interface{}) (
 }
 
 // ApplyPagination applies pagination operator p to gorm instance db.
-func ApplyPagination(db *gorm.DB, p *query.Pagination) *gorm.DB {
+func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
 	if p != nil {
 		return db.Offset(p.GetOffset()).Limit(p.DefaultLimit())
 	}
@@ -105,8 +108,8 @@ func ApplyPagination(db *gorm.DB, p *query.Pagination) *gorm.DB {
 }
 
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
-	toPreload, err := FieldSelectionToGorm(fs, obj)
+func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
+	toPreload, err := FieldSelectionToGorm(ctx, fs, obj)
 	if err != nil {
 		return nil, err
 	}
