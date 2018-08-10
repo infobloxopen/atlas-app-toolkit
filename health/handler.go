@@ -78,7 +78,7 @@ func (ch *checksHandler) healthEndpoint(rw http.ResponseWriter, r *http.Request)
 }
 
 func (ch *checksHandler) readyEndpoint(rw http.ResponseWriter, r *http.Request) {
-	ch.handle(rw, r, ch.readinessChecks, ch.livenessChecks)
+	ch.handle(rw, r, ch.readinessChecks)
 }
 
 func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checksSets ...map[string]Check) {
