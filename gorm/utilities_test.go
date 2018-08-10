@@ -1,8 +1,10 @@
 package gorm
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Human struct {
@@ -32,7 +34,7 @@ func TestHandleFieldPath(t *testing.T) {
 		{[]string{}, "", "", true},
 	}
 	for _, test := range tests {
-		dbName, assoc, err := HandleFieldPath(test.fieldPath, &Human{})
+		dbName, assoc, err := HandleFieldPath(context.Background(), test.fieldPath, &Human{})
 		if test.err {
 			assert.Equal(t, "", dbName)
 			assert.Equal(t, "", assoc)

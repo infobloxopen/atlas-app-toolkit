@@ -1,8 +1,10 @@
 package gorm
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Model struct {
@@ -63,7 +65,7 @@ func TestGormFieldSelection(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		toPreload, err := FieldSelectionStringToGorm(test.fs, &Model{})
+		toPreload, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{})
 		if test.err {
 			assert.Nil(t, toPreload)
 			assert.NotNil(t, err)

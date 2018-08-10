@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 type Person struct {
@@ -20,6 +21,19 @@ type Person struct {
 	Name      string
 	Age       int
 	SubPerson SubPerson `gorm:"foreignkey:PersonId;association_foreignkey:Id"`
+}
+
+type PersonProto struct {
+}
+
+func (*PersonProto) Reset() {
+}
+
+func (*PersonProto) ProtoMessage() {
+}
+
+func (*PersonProto) String() string {
+	return "Person"
 }
 
 type SubPerson struct {
@@ -71,7 +85,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 		gormDB, mock := setUp(t)
 
 		rq := req.(*testRequest)
-		gormDB, err = ApplyCollectionOperators(gormDB, &Person{}, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
+		gormDB, err = ApplyCollectionOperators(ctx, gormDB, &Person{}, &PersonProto{}, rq.Filtering, rq.Sorting, rq.Pagination, rq.FieldSelection)
 		if err != nil {
 			t.Fatal(err)
 		}

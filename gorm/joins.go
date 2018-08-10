@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,7 +11,7 @@ import (
 // - association table name
 // - source join keys
 // - target join keys
-func JoinInfo(obj interface{}, assoc string) (string, []string, []string, error) {
+func JoinInfo(ctx context.Context, obj interface{}, assoc string) (string, []string, []string, error) {
 	objType := indirectType(reflect.ValueOf(obj).Type())
 	sf, ok := objType.FieldByName(assoc)
 	if !ok {

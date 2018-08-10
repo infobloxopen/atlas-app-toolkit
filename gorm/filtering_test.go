@@ -1,11 +1,13 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 type Entity struct {
@@ -14,6 +16,29 @@ type Entity struct {
 	Field3       int
 	FieldString  string
 	NestedEntity NestedEntity
+	Id           string
+	Ref          *string
+}
+
+type EntityProto struct {
+	Id  *resource.Identifier
+	Ref *resource.Identifier
+}
+
+func (*EntityProto) Reset() {
+}
+
+func (*EntityProto) ProtoMessage() {
+}
+
+func (*EntityProto) String() string {
+	return "Entity"
+}
+
+func (*EntityProto) ToORM(ctx context.Context) (Entity, error) {
+	id := "convertedid"
+	ref := "convertedref"
+	return Entity{Id: id, Ref: &ref}, nil
 }
 
 type NestedEntity struct {
@@ -174,7 +199,7 @@ func TestGormFiltering(t *testing.T) {
 			"nested_entity.nested_field1 == 11 and nested_entity.nested_field2 == 22",
 			"((nested_entities.nested_field1 = ?) AND (nested_entities.nested_field2 = ?))",
 			[]interface{}{11.0, 22.0},
-			map[string]struct{}{"NestedEntity": struct{}{}},
+			map[string]struct{}{"NestedEntity": {}},
 			nil,
 		},
 		{
@@ -184,10 +209,17 @@ func TestGormFiltering(t *testing.T) {
 			nil,
 			&query.UnexpectedSymbolError{},
 		},
+		{
+			"id == 'id' and ref == 'ref'",
+			"((entities.id = ?) AND (entities.ref = ?))",
+			[]interface{}{"convertedid", "convertedref"},
+			nil,
+			nil,
+		},
 	}
 
 	for _, test := range tests {
-		gorm, args, assoc, err := FilterStringToGorm(test.rest, &Entity{})
+		gorm, args, assoc, err := FilterStringToGorm(context.Background(), test.rest, &Entity{}, &EntityProto{})
 		assert.Equal(t, test.gorm, gorm)
 		assert.Equal(t, test.args, args)
 		assert.Equal(t, test.assoc, assoc)

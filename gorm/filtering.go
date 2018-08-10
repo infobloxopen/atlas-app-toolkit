@@ -1,55 +1,62 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
+	"reflect"
+
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/generator"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 // FilterStringToGorm is a shortcut to parse a filter string using default FilteringParser implementation
 // and call FilteringToGorm on the returned filtering expression.
-func FilterStringToGorm(filter string, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	f, err := query.ParseFiltering(filter)
 	if err != nil {
 		return "", nil, nil, err
 	}
-	return FilteringToGorm(f, obj)
+	return FilteringToGorm(ctx, f, obj, pb)
 }
 
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
-func FilteringToGorm(m *query.Filtering, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	if m == nil || m.Root == nil {
 		return "", nil, nil, nil
 	}
 	switch r := m.Root.(type) {
 	case *query.Filtering_Operator:
-		return LogicalOperatorToGorm(r.Operator, obj)
+		return LogicalOperatorToGorm(ctx, r.Operator, obj, pb)
 	case *query.Filtering_StringCondition:
-		return StringConditionToGorm(r.StringCondition, obj)
+		return StringConditionToGorm(ctx, r.StringCondition, obj, pb)
 	case *query.Filtering_NumberCondition:
-		return NumberConditionToGorm(r.NumberCondition, obj)
+		return NumberConditionToGorm(ctx, r.NumberCondition, obj, pb)
 	case *query.Filtering_NullCondition:
-		return NullConditionToGorm(r.NullCondition, obj)
+		return NullConditionToGorm(ctx, r.NullCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
 }
 
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
-func LogicalOperatorToGorm(lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	var lres string
 	var largs []interface{}
 	var lAssocToJoin map[string]struct{}
 	var err error
 	switch l := lop.Left.(type) {
 	case *query.LogicalOperator_LeftOperator:
-		lres, largs, lAssocToJoin, err = LogicalOperatorToGorm(l.LeftOperator, obj)
+		lres, largs, lAssocToJoin, err = LogicalOperatorToGorm(ctx, l.LeftOperator, obj, pb)
 	case *query.LogicalOperator_LeftStringCondition:
-		lres, largs, lAssocToJoin, err = StringConditionToGorm(l.LeftStringCondition, obj)
+		lres, largs, lAssocToJoin, err = StringConditionToGorm(ctx, l.LeftStringCondition, obj, pb)
 	case *query.LogicalOperator_LeftNumberCondition:
-		lres, largs, lAssocToJoin, err = NumberConditionToGorm(l.LeftNumberCondition, obj)
+		lres, largs, lAssocToJoin, err = NumberConditionToGorm(ctx, l.LeftNumberCondition, obj, pb)
 	case *query.LogicalOperator_LeftNullCondition:
-		lres, largs, lAssocToJoin, err = NullConditionToGorm(l.LeftNullCondition, obj)
+		lres, largs, lAssocToJoin, err = NullConditionToGorm(ctx, l.LeftNullCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
@@ -62,13 +69,13 @@ func LogicalOperatorToGorm(lop *query.LogicalOperator, obj interface{}) (string,
 	var rAssocToJoin map[string]struct{}
 	switch r := lop.Right.(type) {
 	case *query.LogicalOperator_RightOperator:
-		rres, rargs, rAssocToJoin, err = LogicalOperatorToGorm(r.RightOperator, obj)
+		rres, rargs, rAssocToJoin, err = LogicalOperatorToGorm(ctx, r.RightOperator, obj, pb)
 	case *query.LogicalOperator_RightStringCondition:
-		rres, rargs, rAssocToJoin, err = StringConditionToGorm(r.RightStringCondition, obj)
+		rres, rargs, rAssocToJoin, err = StringConditionToGorm(ctx, r.RightStringCondition, obj, pb)
 	case *query.LogicalOperator_RightNumberCondition:
-		rres, rargs, rAssocToJoin, err = NumberConditionToGorm(r.RightNumberCondition, obj)
+		rres, rargs, rAssocToJoin, err = NumberConditionToGorm(ctx, r.RightNumberCondition, obj, pb)
 	case *query.LogicalOperator_RightNullCondition:
-		rres, rargs, rAssocToJoin, err = NullConditionToGorm(r.RightNullCondition, obj)
+		rres, rargs, rAssocToJoin, err = NullConditionToGorm(ctx, r.RightNullCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -98,9 +105,9 @@ func LogicalOperatorToGorm(lop *query.LogicalOperator, obj interface{}) (string,
 }
 
 // StringConditionToGorm returns GORM Plain SQL representation of the string condition.
-func StringConditionToGorm(c *query.StringCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
-	dbName, assoc, err := HandleFieldPath(c.FieldPath, obj)
+	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -128,13 +135,71 @@ func StringConditionToGorm(c *query.StringCondition, obj interface{}) (string, [
 		neg = "NOT"
 	}
 
-	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{c.Value}, assocToJoin, nil
+	var value interface{}
+	if v, err := processStringCondition(ctx, c, pb); err != nil {
+		value = c.Value
+	} else {
+		value = v
+	}
+
+	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
+}
+
+func processStringCondition(ctx context.Context, c *query.StringCondition, pb proto.Message) (interface{}, error) {
+	objType := indirectType(reflect.ValueOf(pb).Type())
+	pathLength := len(c.FieldPath)
+	for i, part := range c.FieldPath {
+		sf, ok := objType.FieldByName(generator.CamelCase(part))
+		if !ok {
+			return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
+		}
+		if i < pathLength-1 {
+			objType = indirectType(sf.Type)
+			if !isProtoMessage(objType) {
+				return nil, fmt.Errorf("%s: non-last field of %s field path should be a proto message", objType, c.FieldPath)
+			}
+		} else {
+			if isIdentifier(indirectType(sf.Type)) {
+				id := &resource.Identifier{}
+				if err := jsonpb.UnmarshalString(fmt.Sprintf("\"%s\"", c.Value), id); err != nil {
+					return nil, err
+				}
+				newPb := reflect.New(objType)
+				v := newPb.Elem().FieldByName(generator.CamelCase(part))
+				v.Set(reflect.ValueOf(id))
+				toOrm := newPb.MethodByName("ToORM")
+				if !toOrm.IsValid() {
+					return nil, fmt.Errorf("ToORM method cannot be found for %s", objType)
+				}
+				res := toOrm.Call([]reflect.Value{reflect.ValueOf(ctx)})
+				if len(res) != 2 {
+					return nil, fmt.Errorf("ToORM signature of %s is unknown", objType)
+				}
+				orm := res[0]
+				err := res[1]
+				if !err.IsNil() {
+					if tErr, ok := err.Interface().(error); ok {
+						return nil, tErr
+					} else {
+						return nil, fmt.Errorf("ToOrm second return value of %s is expected to be error", objType)
+					}
+				}
+				ormId := orm.FieldByName(generator.CamelCase(part))
+				if !ormId.IsValid() {
+					return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
+				}
+				return reflect.Indirect(ormId).Interface(), nil
+
+			}
+		}
+	}
+	return c.Value, nil
 }
 
 // NumberConditionToGorm returns GORM Plain SQL representation of the number condition.
-func NumberConditionToGorm(c *query.NumberCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
-	dbName, assoc, err := HandleFieldPath(c.FieldPath, obj)
+	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -163,9 +228,9 @@ func NumberConditionToGorm(c *query.NumberCondition, obj interface{}) (string, [
 }
 
 // NullConditionToGorm returns GORM Plain SQL representation of the null condition.
-func NullConditionToGorm(c *query.NullCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
-	dbName, assoc, err := HandleFieldPath(c.FieldPath, obj)
+	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
 		return "", nil, nil, err
 	}

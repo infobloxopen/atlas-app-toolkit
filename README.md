@@ -883,7 +883,7 @@ f := &query.Filtering{}
 s := &query.Sorting{}
 p := &query.Pagination{}
 fs := &query.FieldSelection{}
-gormDB, err = ApplyCollectionOperators(gormDB, f, s, p, fs)
+gormDB, err = ApplyCollectionOperators(ctx, gormDB, &PersonORM{}, &Person{}, f, s, p, fs)
 if err != nil {
     ...
 }

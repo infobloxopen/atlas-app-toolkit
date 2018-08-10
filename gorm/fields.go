@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sort"
@@ -12,12 +13,12 @@ import (
 
 // FieldSelectionStringToGorm is a shortcut to parse a string into FieldSelection struct and
 // receive a list of associations to preload.
-func FieldSelectionStringToGorm(fs string, obj interface{}) ([]string, error) {
-	return FieldSelectionToGorm(query.ParseFieldSelection(fs), obj)
+func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}) ([]string, error) {
+	return FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj)
 }
 
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
-func FieldSelectionToGorm(fs *query.FieldSelection, obj interface{}) ([]string, error) {
+func FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
 	if fs == nil {
 		return nil, nil
 	}
