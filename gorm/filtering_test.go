@@ -1,11 +1,11 @@
 package gorm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"context"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )

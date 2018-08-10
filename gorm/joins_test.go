@@ -2,8 +2,9 @@ package gorm
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type JoinsModel struct {

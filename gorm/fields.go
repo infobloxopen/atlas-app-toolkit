@@ -1,13 +1,13 @@
 package gorm
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 
-	"context"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 

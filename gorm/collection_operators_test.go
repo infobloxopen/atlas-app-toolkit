@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
 type Person struct {
