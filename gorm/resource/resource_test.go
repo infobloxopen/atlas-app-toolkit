@@ -505,7 +505,7 @@ func TestName(t *testing.T) {
 		},
 		{
 			Message:      TestProtoMessage{},
-			ExpectedName: "testprotomessage",
+			ExpectedName: "test_proto_message",
 		},
 	}
 	for n, tc := range tcases {
@@ -529,7 +529,7 @@ func TestNamePlural(t *testing.T) {
 		},
 		{
 			Message:      TestProtoMessage{},
-			ExpectedName: "testprotomessages",
+			ExpectedName: "test_proto_messages",
 		},
 	}
 	for n, tc := range tcases {

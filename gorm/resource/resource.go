@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 const defaultResource = "<default>"
@@ -261,7 +262,7 @@ func Name(pb proto.Message) string {
 	name := proto.MessageName(pb)
 
 	v := strings.Split(name, ".")
-	name = strings.ToLower(v[len(v)-1])
+	name = util.CamelToSnake(v[len(v)-1])
 	if Plural() {
 		name += "s"
 	}
