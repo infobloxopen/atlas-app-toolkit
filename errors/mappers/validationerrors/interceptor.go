@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"google.golang.org/grpc"
+
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 type validator interface {
@@ -48,7 +49,7 @@ func GetValidationError(err error) error {
 			!valueOfCause.FieldByName("Cause").IsNil() {
 			// Retrieve the field and reason from the error
 			field := valueOfCause.FieldByName("Field").String()
-			field = CamelToSnake(field)
+			field = util.CamelToSnake(field)
 			reason := valueOfCause.FieldByName("Reason").String()
 			key := valueOfCause.FieldByName("Key").Bool()
 			causeValue := valueOfCause.FieldByName("Cause").Interface()
@@ -98,12 +99,3 @@ func (e ValidationError) Error() string {
 }
 
 var _ error = ValidationError{}
-
-// CamelToSnake takes a camelcase string and returns a snake case string.
-func CamelToSnake(str string) string {
-	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
-	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
-	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
-	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
-	return strings.ToLower(snake)
-}
