@@ -8,9 +8,15 @@ import (
 )
 
 type Model struct {
-	Property  string
-	SubModel  SubModel
-	SubModels []SubModel
+	Property   string
+	SubModel   SubModel
+	SubModels  []SubModel
+	CycleModel *CycleModel
+}
+
+type CycleModel struct {
+	Property string
+	Model    *Model
 }
 
 type SubModel struct {
@@ -61,6 +67,11 @@ func TestGormFieldSelection(t *testing.T) {
 		{
 			"unknown_property",
 			nil,
+			false,
+		},
+		{
+			"",
+			[]string{"SubModel.SubSubModel", "SubModels.SubSubModel", "CycleModel"},
 			false,
 		},
 	}

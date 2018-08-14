@@ -12,7 +12,7 @@ import (
 // - source join keys
 // - target join keys
 func JoinInfo(ctx context.Context, obj interface{}, assoc string) (string, []string, []string, error) {
-	objType := indirectType(reflect.ValueOf(obj).Type())
+	objType := indirectType(reflect.TypeOf(obj))
 	sf, ok := objType.FieldByName(assoc)
 	if !ok {
 		return "", nil, nil, fmt.Errorf("Cannot find field %s in %s", assoc, objType)
