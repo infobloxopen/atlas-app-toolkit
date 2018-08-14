@@ -90,9 +90,9 @@ func TestWithHealthChecks(t *testing.T) {
 		{"liveness-pass", nil, "healthz", 200},
 		{"liveness-pass", nil, "/healthz", 200},
 		{"liveness-fail", errors.New(""), "/healthz", 503},
-		{"readiness-pass", nil, "ready", 200},
-		{"readiness-pass", nil, "/ready", 200},
-		{"readiness-fail", errors.New(""), "ready", 503},
+		{"readiness-does-not-impact-liveness", nil, "ready", 200},
+		{"readiness-does-not-impact-liveness", nil, "/ready", 200},
+		{"readiness-does-not-impact-liveness", errors.New(""), "ready", 200},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

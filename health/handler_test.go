@@ -73,7 +73,7 @@ func TestNewHandler(t *testing.T) {
 			name:         "Health fail Ready succeed ready",
 			method:       http.MethodGet,
 			path:         "/ready",
-			expectedCode: http.StatusServiceUnavailable,
+			expectedCode: http.StatusOK,
 			failHealth:   true,
 		},
 	}
