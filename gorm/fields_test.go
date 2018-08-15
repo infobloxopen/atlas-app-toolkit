@@ -61,7 +61,7 @@ func TestGormFieldSelection(t *testing.T) {
 		},
 		{
 			"sub_model,sub_model.sub_sub_model.sub_sub_property",
-			[]string{"SubModel.SubSubModel"},
+			[]string{"SubModel.SubSubModel", "SubModel"},
 			false,
 		},
 		{
@@ -71,7 +71,7 @@ func TestGormFieldSelection(t *testing.T) {
 		},
 		{
 			"",
-			[]string{"SubModel.SubSubModel", "SubModels.SubSubModel", "CycleModel"},
+			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels", "CycleModel"},
 			false,
 		},
 	}

@@ -58,14 +58,11 @@ fields:
 			if err != nil {
 				return nil, err
 			}
-			if subPreload != nil {
-				for i, e := range subPreload {
-					subPreload[i] = sf.Name + "." + e
-				}
-				toPreload = append(toPreload, subPreload...)
-			} else {
-				toPreload = append(toPreload, sf.Name)
+			for i, e := range subPreload {
+				subPreload[i] = sf.Name + "." + e
 			}
+			toPreload = append(toPreload, subPreload...)
+			toPreload = append(toPreload, sf.Name)
 		}
 	}
 	return toPreload, nil
@@ -100,10 +97,7 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	if toPreload == nil {
-		return []string{generator.CamelCase(f.GetName())}, nil
-	}
-	return toPreload, nil
+	return append(toPreload, generator.CamelCase(f.GetName())), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {
