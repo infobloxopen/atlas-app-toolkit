@@ -146,7 +146,7 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 }
 
 func processStringCondition(ctx context.Context, c *query.StringCondition, pb proto.Message) (interface{}, error) {
-	objType := indirectType(reflect.ValueOf(pb).Type())
+	objType := indirectType(reflect.TypeOf(pb))
 	pathLength := len(c.FieldPath)
 	for i, part := range c.FieldPath {
 		sf, ok := objType.FieldByName(generator.CamelCase(part))

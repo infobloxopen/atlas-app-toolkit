@@ -114,7 +114,10 @@ func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelect
 		return nil, err
 	}
 	for _, assoc := range toPreload {
-		db = db.Preload(assoc)
+		db, err = preload(db, obj, assoc)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return db, nil
 }

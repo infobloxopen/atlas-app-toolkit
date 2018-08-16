@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/generator"
+	"github.com/jinzhu/gorm"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
@@ -19,10 +21,10 @@ func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{})
 
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
 func FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
-	if fs == nil {
-		return nil, nil
+	objType := indirectType(reflect.TypeOf(obj))
+	if fs.GetFields() == nil {
+		return preloadEverything(objType, nil)
 	}
-	objType := indirectType(reflect.ValueOf(obj).Type())
 	var toPreload []string
 	fieldNames := getSortedFieldNames(fs.GetFields())
 	for _, fieldName := range fieldNames {
@@ -32,6 +34,36 @@ func FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj int
 			return nil, err
 		}
 		toPreload = append(toPreload, subPreload...)
+	}
+	return toPreload, nil
+}
+
+func preloadEverything(objType reflect.Type, path []reflect.Type) ([]string, error) {
+	if !isModel(objType) {
+		return nil, fmt.Errorf("%s is not a model", objType)
+	}
+	numField := objType.NumField()
+	var toPreload []string
+fields:
+	for i := 0; i < numField; i++ {
+		sf := objType.Field(i)
+		fType := indirectType(sf.Type)
+		for _, e := range path {
+			if fType == e {
+				continue fields
+			}
+		}
+		if isModel(fType) {
+			subPreload, err := preloadEverything(fType, append(path, objType))
+			if err != nil {
+				return nil, err
+			}
+			for i, e := range subPreload {
+				subPreload[i] = sf.Name + "." + e
+			}
+			toPreload = append(toPreload, subPreload...)
+			toPreload = append(toPreload, sf.Name)
+		}
 	}
 	return toPreload, nil
 }
@@ -65,10 +97,7 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	if toPreload == nil {
-		return []string{generator.CamelCase(f.GetName())}, nil
-	}
-	return toPreload, nil
+	return append(toPreload, generator.CamelCase(f.GetName())), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {
@@ -78,4 +107,34 @@ func getSortedFieldNames(fields map[string]*query.Field) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func preload(db *gorm.DB, obj interface{}, assoc string) (*gorm.DB, error) {
+	objType := indirectType(reflect.TypeOf(obj))
+	if !isModel(objType) {
+		return nil, fmt.Errorf("%s is not a model", objType)
+	}
+	assocPath := strings.Split(assoc, ".")
+	pathLength := len(assocPath)
+	for i, part := range assocPath {
+		sf, ok := objType.FieldByName(part)
+		if !ok {
+			return nil, fmt.Errorf("Cannot find %s in %s", part, objType)
+		}
+		objType = indirectType(sf.Type)
+		if !isModel(objType) {
+			return nil, fmt.Errorf("%s is not a model", objType)
+		}
+		if i == pathLength-1 {
+			ok, pos := atlasTag(&sf, "position")
+			if !ok {
+				return db.Preload(assoc), nil
+			} else {
+				return db.Preload(assoc, func(db *gorm.DB) *gorm.DB {
+					return db.Order(gorm.ToDBName(pos))
+				}), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("Cannot preload empty association")
 }

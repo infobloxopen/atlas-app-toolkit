@@ -39,7 +39,7 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 }
 
 func fieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
-	objType := indirectType(reflect.ValueOf(obj).Type())
+	objType := indirectType(reflect.TypeOf(obj))
 	pathLength := len(fieldPath)
 	for i, part := range fieldPath {
 		if !isModel(objType) {
@@ -78,7 +78,15 @@ func columnName(sf *reflect.StructField) string {
 }
 
 func gormTag(sf *reflect.StructField, tag string) (bool, string) {
-	gormTags := strings.Split(sf.Tag.Get("gorm"), ";")
+	return extractTag(sf, "gorm", tag)
+}
+
+func atlasTag(sf *reflect.StructField, tag string) (bool, string) {
+	return extractTag(sf, "atlas", tag)
+}
+
+func extractTag(sf *reflect.StructField, tag string, subTag string) (bool, string) {
+	gormTags := strings.Split(sf.Tag.Get(tag), ";")
 	for _, t := range gormTags {
 		var key, value string
 		keyValue := strings.Split(t, ":")
@@ -89,7 +97,7 @@ func gormTag(sf *reflect.StructField, tag string) (bool, string) {
 		case 1:
 			key = keyValue[0]
 		}
-		if strings.ToLower(key) == strings.ToLower(tag) {
+		if strings.ToLower(key) == strings.ToLower(subTag) {
 			return true, value
 		}
 	}
