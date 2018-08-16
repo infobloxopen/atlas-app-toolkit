@@ -32,6 +32,8 @@ func retainFields(ctx context.Context, req *http.Request, dynmap map[string]inte
 						doRetainFields(m, fields.Fields)
 					}
 				}
+			} else if m, ok := result.(map[string]interface{}); ok {
+				doRetainFields(m, fields.Fields)
 			}
 		}
 	}
