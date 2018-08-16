@@ -63,6 +63,50 @@ func TestRetain(t *testing.T) {
 
 }
 
+func TestRetainSingleResult(t *testing.T) {
+	data := `
+	{
+		"result":
+		  {
+			"x": "3",
+			"y": "4",
+			"z": "5"
+		  }
+	 }`
+
+	expected := `
+	 {
+		 "result":
+		   {
+			 "y": "4"
+		   }
+	  }`
+
+	var indata map[string]interface{}
+	err := json.Unmarshal([]byte(data), &indata)
+	if err != nil {
+		t.Errorf("Error parsing test input %s", data)
+		return
+	}
+
+	var expdata map[string]interface{}
+	err = json.Unmarshal([]byte(expected), &expdata)
+	if err != nil {
+		t.Errorf("Error parsing test expected result %s", expected)
+		return
+	}
+
+	req, _ := http.NewRequest("GET", "http://example.com?_fields=y", nil)
+
+	ctx := context.Background()
+	retainFields(ctx, req, indata)
+
+	if !reflect.DeepEqual(indata, expdata) {
+		t.Errorf("Unexpected result %v while expecting %v", indata, expdata)
+	}
+
+}
+
 func TestDoRetain(t *testing.T) {
 	data := `
 	{
