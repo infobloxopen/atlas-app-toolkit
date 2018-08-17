@@ -2,7 +2,10 @@ package gorm
 
 import (
 	"context"
+	"reflect"
 	"testing"
+
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -44,5 +47,21 @@ func TestHandleFieldPath(t *testing.T) {
 			assert.Equal(t, test.assoc, assoc)
 			assert.Nil(t, err)
 		}
+	}
+}
+
+func TestIsModel(t *testing.T) {
+	for tName, tCase := range map[string]struct {
+		input reflect.Type
+		want  bool
+	}{
+		"time.Time":  {reflect.TypeOf(time.Time{}), false},
+		"*time.Time": {reflect.TypeOf(&time.Time{}), false},
+	} {
+		t.Run(tName, func(t *testing.T) {
+			if got, want := isModel(tCase.input), tCase.want; got != want {
+				t.Errorf("got %v; want %v", got, want)
+			}
+		})
 	}
 }
