@@ -7,6 +7,15 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+)
+
+var (
+	// ErrInternal indicates a server-side error occured during authorization
+	ErrInternal = grpc.Errorf(codes.Internal, "unable to process request")
+	// ErrUnauthorized indicates that a given request has been denied
+	ErrUnauthorized = grpc.Errorf(codes.PermissionDenied, "unauthorized")
 )
 
 const (
