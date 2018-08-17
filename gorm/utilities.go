@@ -12,6 +12,8 @@ import (
 	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/inflection"
 
+	"time"
+
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
@@ -122,7 +124,7 @@ func indirectType(t reflect.Type) reflect.Type {
 func isModel(t reflect.Type) bool {
 	kind := t.Kind()
 	_, isValuer := reflect.Zero(t).Interface().(driver.Valuer)
-	if (kind == reflect.Struct || kind == reflect.Slice) && !isValuer {
+	if (kind == reflect.Struct || kind == reflect.Slice) && !isValuer && t != reflect.TypeOf(time.Time{}) {
 		return true
 	}
 	return false
