@@ -56,14 +56,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8fc303858c39e0afe678a634f6a051e177fd6f95d10d6aa686325fb6737481d5"
+  digest = "1:a35934b7fbebbc8c1c3f06661907202f7ce6bf36375730642d049f77c86db341"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
   packages = [
     ".",
     "auth",
     "logging/logrus/ctxlogrus",
     "tags",
-    "tags/logrus",
     "util/metautils",
   ]
   pruneopts = "UT"
@@ -80,52 +79,6 @@
   pruneopts = "UT"
   revision = "92583770e3f01b09a0d3e9bdf64321d8bebd48f2"
   version = "v1.4.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:1a1206efd03a54d336dce7bb8719e74f2f8932f661cb9f57d5813a1d99c083d8"
-  name = "github.com/grpc-ecosystem/grpc-opentracing"
-  packages = ["go/otgrpc"]
-  pruneopts = "UT"
-  revision = "8e809c8a86450a29b90dcc9efbf062d0fe6d9746"
-
-[[projects]]
-  branch = "master"
-  digest = "1:e1f607322ae1aba3fc6ffaa75994ab56d894f31a39d2e025783382f1cb625829"
-  name = "github.com/infobloxopen/go-trees"
-  packages = [
-    "dltree",
-    "domain",
-    "domaintree",
-    "iptree",
-    "numtree",
-    "strtree",
-    "uintX/domaintree16",
-    "uintX/domaintree32",
-    "uintX/domaintree64",
-    "uintX/domaintree8",
-    "uintX/iptree16",
-    "uintX/iptree32",
-    "uintX/iptree64",
-    "uintX/iptree8",
-    "uintX/strtree16",
-    "uintX/strtree32",
-    "uintX/strtree64",
-    "uintX/strtree8",
-  ]
-  pruneopts = "UT"
-  revision = "a1e500cde93cdca91ae6c7366e0cb9f477c63603"
-
-[[projects]]
-  digest = "1:34447b2d58a54b71add4438870fd15f44041961b6fbf129432b5745c11796962"
-  name = "github.com/infobloxopen/themis"
-  packages = [
-    "pdp",
-    "pdp-service",
-    "pep",
-  ]
-  pruneopts = "UT"
-  revision = "d62bb103665cf16dfcee5083f4557163fb7a68ff"
 
 [[projects]]
   digest = "1:6895fbe5a10c5aebd1965cac6f6905dcdb21bee01e08912d3ba6a805c2485f6a"
@@ -157,18 +110,6 @@
   ]
   pruneopts = "UT"
   revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
-
-[[projects]]
-  digest = "1:450b7623b185031f3a456801155c8320209f75d0d4c4e633c6b1e59d44d6e392"
-  name = "github.com/opentracing/opentracing-go"
-  packages = [
-    ".",
-    "ext",
-    "log",
-  ]
-  pruneopts = "UT"
-  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
-  version = "v1.0.2"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -312,11 +253,8 @@
     "github.com/google/uuid",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
-    "github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus",
     "github.com/grpc-ecosystem/grpc-gateway/runtime",
     "github.com/grpc-ecosystem/grpc-gateway/utilities",
-    "github.com/infobloxopen/themis/pdp-service",
-    "github.com/infobloxopen/themis/pep",
     "github.com/jinzhu/gorm",
     "github.com/jinzhu/gorm/dialects/postgres",
     "github.com/jinzhu/inflection",
@@ -332,7 +270,6 @@
     "google.golang.org/grpc/credentials",
     "google.golang.org/grpc/grpclog",
     "google.golang.org/grpc/metadata",
-    "google.golang.org/grpc/peer",
     "google.golang.org/grpc/status",
     "google.golang.org/grpc/transport",
   ]

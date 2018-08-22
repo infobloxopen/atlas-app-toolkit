@@ -1,8 +1,4 @@
 [[constraint]]
-  name = "github.com/infobloxopen/themis"
-  revision = "d62bb103665cf16dfcee5083f4557163fb7a68ff"
-
-[[constraint]]
   branch = "master"
   name = "github.com/dgrijalva/jwt-go"
 
