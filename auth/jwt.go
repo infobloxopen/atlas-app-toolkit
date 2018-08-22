@@ -21,7 +21,7 @@ const (
 var (
 	errMissingField     = errors.New("unable to get field from token")
 	errMissingToken     = errors.New("unable to get token from context")
-	errInvalidAssertion = errors.New("unable to assert value as jwt.MapClaims")
+	errInvalidAssertion = errors.New("unable to assert token as jwt.MapClaims")
 
 	// multiTenancyVariants all possible multi-tenant names
 	multiTenancyVariants = []string{
@@ -71,23 +71,23 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 // here: https://godoc.org/github.com/dgrijalva/jwt-go#Parser.ParseUnverified
 func getToken(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (jwt.Token, error) {
 	if ctx == nil {
-		return jwt.Token{}, ErrUnauthorized
+		return jwt.Token{}, errMissingToken
 	}
 	tokenStr, err := grpc_auth.AuthFromMD(ctx, tokenField)
 	if err != nil {
-		return jwt.Token{}, ErrUnauthorized
+		return jwt.Token{}, err
 	}
 	parser := jwt.Parser{}
 	if keyfunc != nil {
 		token, err := parser.Parse(tokenStr, keyfunc)
 		if err != nil {
-			return jwt.Token{}, ErrUnauthorized
+			return jwt.Token{}, err
 		}
 		return *token, nil
 	}
 	token, _, err := parser.ParseUnverified(tokenStr, jwt.MapClaims{})
 	if err != nil {
-		return jwt.Token{}, ErrUnauthorized
+		return jwt.Token{}, err
 	}
 	return *token, nil
 }
