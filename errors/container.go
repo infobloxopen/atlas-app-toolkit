@@ -48,8 +48,8 @@ func InitContainer() *Container {
 	return (&Container{}).New(codes.Unknown, "Unknown")
 }
 
-// Error function returns "Unknown".
-func (c Container) Error() string { return "Unknown" }
+// Error function returns error message currently associated with container.
+func (c Container) Error() string { return c.errMessage }
 
 // GRPCStatus function returns an error container as GRPC status.
 func (c *Container) GRPCStatus() *status.Status {

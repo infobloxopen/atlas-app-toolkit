@@ -52,6 +52,12 @@ func TestError(t *testing.T) {
 	if c.Error() != "Unknown" {
 		t.Errorf("Unexpected error: expected %q, got %q", "Unknown", c.Error())
 	}
+
+	c.New(codes.InvalidArgument, "Custom error %v", "message")
+	expected := "Custom error message"
+	if c.Error() != expected {
+		t.Errorf("Unexpected error: expected %q, got %q", expected, c.Error())
+	}
 }
 
 func TestSet(t *testing.T) {
