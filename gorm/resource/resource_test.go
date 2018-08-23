@@ -216,6 +216,15 @@ func TestDecode(t *testing.T) {
 			Message:    nil,
 			Value:      nil,
 		},
+		{
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "",
+				ResourceType:    "",
+				ResourceId:      "",
+			},
+			Message: &resourcepb.Identifier{},
+			Value:   nil,
+		},
 	}
 
 	for n, tc := range tcases {

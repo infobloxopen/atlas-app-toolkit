@@ -121,7 +121,7 @@ func Decode(pb proto.Message, id *resourcepb.Identifier) (driver.Value, error) {
 		return c.Decode(id)
 	}
 
-	if id == nil {
+	if resourcepb.Nil(id) {
 		return nil, nil
 	}
 
