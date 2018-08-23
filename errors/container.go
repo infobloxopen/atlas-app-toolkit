@@ -49,7 +49,7 @@ func InitContainer() *Container {
 }
 
 // Error function returns "Unknown".
-func (c Container) Error() string { return "Unknown" }
+func (c Container) Error() string { return c.errMessage }
 
 // GRPCStatus function returns an error container as GRPC status.
 func (c *Container) GRPCStatus() *status.Status {
