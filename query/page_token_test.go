@@ -49,10 +49,10 @@ func TestDecodePageToken(t *testing.T) {
 			t.Fatalf("tc %d: invalid error %q, expected %q", n, err, tc.ExpectedError)
 		}
 		if limit != tc.Limit {
-			t.Fatalf("tc %d: invalid limit %s, expected %s", n, limit, tc.Limit)
+			t.Fatalf("tc %d: invalid limit %d, expected %d", n, limit, tc.Limit)
 		}
 		if offset != tc.Offset {
-			t.Fatalf("tc %d: invalid offset %s, expected %s", n, offset, tc.Offset)
+			t.Fatalf("tc %d: invalid offset %d, expected %d", n, offset, tc.Offset)
 		}
 	}
 }
