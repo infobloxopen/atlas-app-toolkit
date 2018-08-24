@@ -17,7 +17,7 @@ import (
 
 func TestAnnotator(t *testing.T) {
 	for input, expect := range map[string]metadata.MD{
-		`{}`: metadata.MD{},
+		`{}`: metadata.MD{fieldPresenceMetaKey: nil},
 		`{`:  nil,
 		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
 		`{
@@ -92,6 +92,25 @@ func TestUnaryServerInterceptor(t *testing.T) {
 			t.Fatal("For some reason it deleted the request object")
 		}
 		got, want := req.SomeFieldMaskField, &field_mask.FieldMask{Paths: []string{"one.two.three", "one.four"}}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Didn't properly set the fieldmask in the request.\ngot :%v\nwant:%v", got, want)
+		}
+	})
+	t.Run("sets FieldMask to empty if nil", func(t *testing.T) {
+		md := runtime.ServerMetadata{
+			HeaderMD: metadata.MD{
+				fieldPresenceMetaKey: nil,
+			},
+		}
+		ctx1 := runtime.NewServerMetadataContext(context.Background(), md)
+		req := &dummyReq{}
+		if err := interceptor(ctx1, "POST", req, nil, nil, dummyInvoker); err != nil {
+			t.Fatal(err)
+		}
+		if req == nil {
+			t.Fatal("For some reason it deleted the request object")
+		}
+		got, want := req.SomeFieldMaskField, &field_mask.FieldMask{Paths: nil}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Didn't properly set the fieldmask in the request.\ngot :%v\nwant:%v", got, want)
 		}
