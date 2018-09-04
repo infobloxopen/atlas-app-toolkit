@@ -115,11 +115,11 @@ func TestRetainArray(t *testing.T) {
 			"y": [
 				{
 				 "a": "2", 
-                 "b": "3"
+				 "b": "3"
 				},
 				{
 				 "a": "22", 
-                 "b": "33"
+				 "b": "33"
 				}
 			 ]
 		  },
@@ -128,7 +128,7 @@ func TestRetainArray(t *testing.T) {
 			"y": [
 				{
 				 "a": "5", 
-                 "b": "6"
+				 "b": "6"
 				}
 			 ],
 			"z": "5"
@@ -187,14 +187,19 @@ func TestDoRetain(t *testing.T) {
 	data := `
 	{
 		"a":{
-		   "b":[
-			  {"c":"ccc",
+		   "b":{
+			   "c":"ccc",
 			   "d":"ddd",
 			   "x":"xxx"
 		      },
-			  {"c":"ccc2",
-			   "d":"ddd2",
-			   "x":"xxx2"
+			"arr":[
+			  {"one":"v1",
+			   "two":"v2",
+			   "three":"v3"
+		      },
+			  {"one":"v11",
+			   "two":"v22",
+			   "three":"v33"
 		      }
 			],
 		   "e":"eee",
@@ -205,37 +210,44 @@ func TestDoRetain(t *testing.T) {
 	 }`
 
 	ensureRetain(t, data, "", `
-		{
-			"a":{
-				"b":[
-				  {"c":"ccc",
-				   "d":"ddd",
-				   "x":"xxx"
-				  },
- 				  {"c":"ccc2",
-			   	   "d":"ddd2",
-			   	   "x":"xxx2"
-		      	  }
-				],
-				"e":"eee",
-				"r":"rrr"
-			 },
-			 "z":"zzz",
-			 "q":"qqq"
-	     }
+	{
+		"a":{
+		   "b":{
+			   "c":"ccc",
+			   "d":"ddd",
+			   "x":"xxx"
+		      },
+			"arr":[
+			  {"one":"v1",
+			   "two":"v2",
+			   "three":"v3"
+		      },
+			  {"one":"v11",
+			   "two":"v22",
+			   "three":"v33"
+		      }
+			],
+		   "e":"eee",
+		   "r":"rrr"
+		},
+		"z":"zzz",
+		"q":"qqq"
+     }
 	`)
 
-	ensureRetain(t, data, "a.b.c,a.b.d,a.e,z", `
+	ensureRetain(t, data, "a.b.c,a.b.d,a.e,z,a.arr.one", `
 		{
 			"a":{
-			   "b":[
-				  {"c":"ccc",
-				   "d":"ddd"
+			   "b":{
+				  "c":"ccc",
+				  "d":"ddd"
 				  },
- 				  {"c":"ccc2",
-			   	   "d":"ddd2"
-		      	  }
-				],
+			"arr":[
+			  {"one":"v1"
+			  },
+			  {"one":"v11"
+			  }
+			],
 			   "e":"eee"
 			},
 			"z":"zzz"
@@ -245,16 +257,11 @@ func TestDoRetain(t *testing.T) {
 	ensureRetain(t, data, "a.b", `
 		{
 			"a":{
-				"b":[
-				  {"c":"ccc",
+				"b":{
+				   "c":"ccc",
 				   "d":"ddd",
 				   "x":"xxx"
-				  },
- 				  {"c":"ccc2",
-			   	   "d":"ddd2",
-			   	   "x":"xxx2"
-		      	  }
-				]
+				  }
 			}
 		 }
 	`)
@@ -289,7 +296,7 @@ func TestDoRetain(t *testing.T) {
 	ensureRetain(t, data, "a.b.mmm", `
 		{
 			"a":{
-				"b":[{}, {}]
+				"b": {}
 			}
 		 }
 	`)
