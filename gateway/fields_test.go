@@ -104,7 +104,83 @@ func TestRetainSingleResult(t *testing.T) {
 	if !reflect.DeepEqual(indata, expdata) {
 		t.Errorf("Unexpected result %v while expecting %v", indata, expdata)
 	}
+}
 
+func TestRetainArray(t *testing.T) {
+	data := `
+	{
+		"result": [
+		  {
+			"x": "1",
+			"y": [
+				{
+				 "a": "2", 
+				 "b": "3"
+				},
+				{
+				 "a": "22", 
+				 "b": "33"
+				}
+			 ]
+		  },
+		  {
+			"x": "4",
+			"y": [
+				{
+				 "a": "5", 
+				 "b": "6"
+				}
+			 ],
+			"z": "5"
+		  }
+		]
+	 }`
+
+	expected := `
+	 {
+		 "result": [
+		   {
+			 "y": [
+				{
+				 "b":"3"
+				},
+				 {
+				 "b":"33"
+				 }
+			  ]
+		   },
+		   {
+			 "y": [
+				{
+				 "b":"6"
+				}
+			 ]
+		   }
+		 ]
+	  }`
+
+	var indata map[string]interface{}
+	err := json.Unmarshal([]byte(data), &indata)
+	if err != nil {
+		t.Errorf("Error parsing test input %s", data)
+		return
+	}
+
+	var expdata map[string]interface{}
+	err = json.Unmarshal([]byte(expected), &expdata)
+	if err != nil {
+		t.Errorf("Error parsing test expected result %s", expected)
+		return
+	}
+
+	req, _ := http.NewRequest("GET", "http://example.com?_fields=y.b", nil)
+
+	ctx := context.Background()
+	retainFields(ctx, req, indata)
+
+	if !reflect.DeepEqual(indata, expdata) {
+		t.Errorf("Unexpected result %v while expecting %v", indata, expdata)
+	}
 }
 
 func TestDoRetain(t *testing.T) {
@@ -112,10 +188,20 @@ func TestDoRetain(t *testing.T) {
 	{
 		"a":{
 		   "b":{
-			  "c":"ccc",
-			  "d":"ddd",
-			  "x":"xxx"
-		   },
+			   "c":"ccc",
+			   "d":"ddd",
+			   "x":"xxx"
+		      },
+			"arr":[
+			  {"one":"v1",
+			   "two":"v2",
+			   "three":"v3"
+		      },
+			  {"one":"v11",
+			   "two":"v22",
+			   "three":"v33"
+		      }
+			],
 		   "e":"eee",
 		   "r":"rrr"
 		},
@@ -124,28 +210,44 @@ func TestDoRetain(t *testing.T) {
 	 }`
 
 	ensureRetain(t, data, "", `
-		{
-			"a":{
-				"b":{
-				   "c":"ccc",
-				   "d":"ddd",
-				   "x":"xxx"
-				},
-				"e":"eee",
-				"r":"rrr"
-			 },
-			 "z":"zzz",
-			 "q":"qqq"
-	     }
+	{
+		"a":{
+		   "b":{
+			   "c":"ccc",
+			   "d":"ddd",
+			   "x":"xxx"
+		      },
+			"arr":[
+			  {"one":"v1",
+			   "two":"v2",
+			   "three":"v3"
+		      },
+			  {"one":"v11",
+			   "two":"v22",
+			   "three":"v33"
+		      }
+			],
+		   "e":"eee",
+		   "r":"rrr"
+		},
+		"z":"zzz",
+		"q":"qqq"
+     }
 	`)
 
-	ensureRetain(t, data, "a.b.c,a.b.d,a.e,z", `
+	ensureRetain(t, data, "a.b.c,a.b.d,a.e,z,a.arr.one", `
 		{
 			"a":{
 			   "b":{
 				  "c":"ccc",
 				  "d":"ddd"
-			   },
+				  },
+			"arr":[
+			  {"one":"v1"
+			  },
+			  {"one":"v11"
+			  }
+			],
 			   "e":"eee"
 			},
 			"z":"zzz"
@@ -156,10 +258,10 @@ func TestDoRetain(t *testing.T) {
 		{
 			"a":{
 				"b":{
-					"c":"ccc",
-					"d":"ddd",
-					"x":"xxx"
-				 }
+				   "c":"ccc",
+				   "d":"ddd",
+				   "x":"xxx"
+				  }
 			}
 		 }
 	`)
@@ -194,7 +296,7 @@ func TestDoRetain(t *testing.T) {
 	ensureRetain(t, data, "a.b.mmm", `
 		{
 			"a":{
-				"b":{}
+				"b": {}
 			}
 		 }
 	`)

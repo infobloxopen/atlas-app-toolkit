@@ -55,7 +55,12 @@ func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) 
 					doRetainFields(x, fds)
 				}
 			case []interface{}:
-				//ingnoring arrays for now
+				for _, r := range obj[key].([]interface{}) {
+					if m, ok := r.(map[string]interface{}); ok {
+						fds := fields[key].Subs
+						doRetainFields(m, fds)
+					}
+				}
 			}
 		}
 	}
