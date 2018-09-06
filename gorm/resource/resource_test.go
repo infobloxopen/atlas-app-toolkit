@@ -196,16 +196,16 @@ func TestDecode(t *testing.T) {
 		{
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
-				ResourceType:    "res",
+				ResourceType:    "identifier",
 				ResourceId:      "1",
 			},
 			Message: nil,
-			Value:   "app/res/1",
+			Value:   "app/identifier/1",
 		},
 		{
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
-				ResourceType:    "res",
+				ResourceType:    "identifier",
 				ResourceId:      "1",
 			},
 			Message: &resourcepb.Identifier{}, // any proto not registered
