@@ -196,11 +196,11 @@ func TestDecode(t *testing.T) {
 		{
 			Identifier: &resourcepb.Identifier{
 				ApplicationName: "app",
-				ResourceType:    "identifier",
+				ResourceType:    "res",
 				ResourceId:      "1",
 			},
 			Message: nil,
-			Value:   "app/identifier/1",
+			Value:   "app/res/1",
 		},
 		{
 			Identifier: &resourcepb.Identifier{
@@ -224,6 +224,26 @@ func TestDecode(t *testing.T) {
 			},
 			Message: &resourcepb.Identifier{},
 			Value:   nil,
+		},
+		{
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "noValidApp",
+				ResourceType:    "identifier",
+				ResourceId:      "1",
+			},
+			Message:       &resourcepb.Identifier{},
+			Value:         0,
+			ExpectedError: "resource: invalid application name, expected app",
+		},
+		{
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "app",
+				ResourceType:    "noValidResource",
+				ResourceId:      "1",
+			},
+			Message:       &resourcepb.Identifier{},
+			Value:         0,
+			ExpectedError: "resource: invalid resource name, expected identifier",
 		},
 	}
 
@@ -290,7 +310,9 @@ func TestDecodeInt64(t *testing.T) {
 		},
 		{
 			Identifier: &resourcepb.Identifier{
-				ResourceId: "s",
+				ApplicationName: "app",
+				ResourceType:    "identifier",
+				ResourceId:      "s",
 			},
 			Message:       &resourcepb.Identifier{}, // any proto not registered
 			ExpectedError: "resource: invalid value type, expected int64",

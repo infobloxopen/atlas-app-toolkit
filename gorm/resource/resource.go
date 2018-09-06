@@ -131,14 +131,14 @@ func Decode(pb proto.Message, id *resourcepb.Identifier) (driver.Value, error) {
 	}
 
 	appName := ApplicationName()
-	nameObj := Name(pb)
+	resourceName := Name(pb)
 
-	if id.ApplicationName != appName && id.ApplicationName != "" {
-		return 0, fmt.Errorf("resource: invalid application name, expected", appName)
+	if id.ApplicationName != appName {
+		return 0, fmt.Errorf("resource: invalid application name, expected %s", appName)
 	}
 
-	if id.ResourceType != nameObj && id.ResourceType != "" {
-		return 0, fmt.Errorf("resource: invalid resource name, expected", nameObj)
+	if id.ResourceType != resourceName {
+		return 0, fmt.Errorf("resource: invalid resource name, expected %s", resourceName)
 	}
 
 	// resource id
