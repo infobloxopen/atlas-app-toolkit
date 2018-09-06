@@ -25,7 +25,7 @@ func (ExampleProtoMessage) String() string          { return "ExampleProtoMessag
 func (ExampleProtoMessage) ProtoMessage()           {}
 
 func Example() {
-	RegisterApplication("app")
+	RegisterApplication("simpleapp")
 
 	// you want to convert PB type to your application type
 	toGoTypeFunc := func(msg *ExampleProtoMessage) (*ExampleGoType, error) {
@@ -53,7 +53,7 @@ func Example() {
 	pb := &ExampleProtoMessage{
 		Id: &resourcepb.Identifier{
 			ApplicationName: "simpleapp",
-			ResourceType:    "examples",
+			ResourceType:    "example_proto_message",
 			ResourceId:      "12",
 		},
 		// ExternalId stores data about "external_resource" that belongs to
@@ -114,7 +114,7 @@ func Example() {
 	// Output:
 	//application name of integer id: 12
 	//application name of fqstring id: externalapp/external_resource/id
-	//application name of internal id: app
+	//application name of internal id: simpleapp
 	//resource type of internal id: example_proto_message
 	//resource id of internal id: 12
 	//application name of fqstring id: externalapp
