@@ -17,6 +17,7 @@ import (
 
 func TestAnnotator(t *testing.T) {
 	for input, expect := range map[string]metadata.MD{
+		``:   metadata.MD{fieldPresenceMetaKey: nil},
 		`{}`: metadata.MD{fieldPresenceMetaKey: nil},
 		`{`:  nil,
 		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
