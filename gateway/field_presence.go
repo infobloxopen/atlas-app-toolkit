@@ -42,13 +42,16 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 			return nil
 		}
 
-		var paths []string
-		var root interface{}
 		md := make(metadata.MD)
-		md[fieldPresenceMetaKey] = paths
+
 		if len(body) == 0 {
+			md[fieldPresenceMetaKey] = nil
 			return md
 		}
+
+		var paths []string
+		var root interface{}
+
 		if err := json.Unmarshal(body, &root); err != nil {
 			return nil
 		}
