@@ -212,6 +212,15 @@ func TestDecode(t *testing.T) {
 			Value:   "1",
 		},
 		{
+			Identifier: &resourcepb.Identifier{
+				ApplicationName: "",
+				ResourceType:    "",
+				ResourceId:      "1",
+			},
+			Message: &resourcepb.Identifier{}, // any proto not registered
+			Value:   "1",
+		},
+		{
 			Identifier: nil,
 			Message:    nil,
 			Value:      nil,
@@ -233,7 +242,7 @@ func TestDecode(t *testing.T) {
 			},
 			Message:       &resourcepb.Identifier{},
 			Value:         0,
-			ExpectedError: "resource: invalid application name, expected app",
+			ExpectedError: "resource: invalid application name - noValidApp, expected app",
 		},
 		{
 			Identifier: &resourcepb.Identifier{
@@ -243,7 +252,7 @@ func TestDecode(t *testing.T) {
 			},
 			Message:       &resourcepb.Identifier{},
 			Value:         0,
-			ExpectedError: "resource: invalid resource name, expected identifier",
+			ExpectedError: "resource: invalid resource name - noValidResource, expected identifier",
 		},
 	}
 
