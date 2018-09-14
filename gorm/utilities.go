@@ -43,6 +43,7 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 func fieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
 	objType := indirectType(reflect.TypeOf(obj))
 	pathLength := len(fieldPath)
+	assocAlias := ""
 	for i, part := range fieldPath {
 		if !isModel(objType) {
 			return "", fmt.Errorf("%s: non-last field of %s field path should be a model", objType, fieldPath)
@@ -53,11 +54,18 @@ func fieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
 		}
 		if i < pathLength-1 {
 			objType = indirectType(sf.Type)
+			assocAlias = part
 		} else {
 			if isModel(indirectType(sf.Type)) {
 				return "", fmt.Errorf("%s: last field of %s field path should be a model", objType, fieldPath)
 			}
-			return tableName(objType) + "." + columnName(&sf), nil
+			var dbPrefix string
+			if assocAlias != "" {
+				dbPrefix = assocAlias
+			} else {
+				dbPrefix = tableName(objType)
+			}
+			return dbPrefix + "." + columnName(&sf), nil
 		}
 	}
 	return "", &EmptyFieldPathError{}

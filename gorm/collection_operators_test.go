@@ -20,8 +20,15 @@ type Person struct {
 	Id        int64
 	Name      string
 	Age       int
+	ParentId  int64
+	Parent    Parent        `gorm:"foreignkey:ParentId;association_foreignkey:Id"`
 	SubPerson SubPerson     `gorm:"foreignkey:PersonId;association_foreignkey:Id"`
 	Items     []OrderedItem `gorm:"foreignkey:PersonId;association_foreignkey:Id" atlas:"position:Position"`
+}
+
+type Parent struct {
+	Id   int64
+	Name string
 }
 
 type SubPerson struct {
@@ -80,7 +87,7 @@ type testResponse struct {
 
 func TestApplyCollectionOperators(t *testing.T) {
 
-	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person,items&_filter=age<=25 and sub_person.name=='Mike'&_order_by=age,sub_person.name desc&_limit=2&_offset=1", nil)
+	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person,items&_filter=age<=25 and sub_person.name=='Mike'&_order_by=age,sub_person.name,parent.name desc&_limit=2&_offset=1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +104,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		mock.ExpectQuery(fixedFullRe("SELECT \"people\".* FROM \"people\" LEFT JOIN sub_people ON people.id = sub_people.person_id WHERE (((people.age <= $1) AND (sub_people.name = $2))) ORDER BY people.age,sub_people.name desc LIMIT 2 OFFSET 1")).WithArgs(25.0, "Mike").
+		mock.ExpectQuery(fixedFullRe("SELECT \"people\".* FROM \"people\" LEFT JOIN sub_people sub_person ON people.id = sub_person.person_id LEFT JOIN parents parent ON people.parent_id = parent.id WHERE (((people.age <= $1) AND (sub_person.name = $2))) ORDER BY people.age,sub_person.name,parent.name desc LIMIT 2 OFFSET 1")).WithArgs(25.0, "Mike").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
 
 		mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"ordered_items\" WHERE (\"person_id\" IN ($1)) ORDER BY \"position\"")).WithArgs(111).

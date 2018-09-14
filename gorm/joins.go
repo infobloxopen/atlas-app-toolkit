@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"reflect"
 	"strings"
 )
@@ -34,10 +35,9 @@ of foreign keys in %s association`, objType, assoc)
 	}
 
 	assocType := indirectType(sf.Type)
-
-	_, childTableName, dbAssocKeys, dbFKeys, err := parseParentChildAssoc(objType, assocType, assocKeys, fKeys)
+	_, childTableName, dbAssocKeys, dbFKeys, err := parseParentChildAssoc(assoc, true, objType, assocType, assocKeys, fKeys)
 	if err != nil {
-		parentTableName, _, dbAssocKeys, dbFKeys, err := parseParentChildAssoc(assocType, objType, assocKeys, fKeys)
+		parentTableName, _, dbAssocKeys, dbFKeys, err := parseParentChildAssoc(assoc, false, assocType, objType, assocKeys, fKeys)
 		if err != nil {
 			return "", nil, nil, err
 		}
@@ -46,23 +46,33 @@ of foreign keys in %s association`, objType, assoc)
 	return childTableName, dbAssocKeys, dbFKeys, nil
 }
 
-func parseParentChildAssoc(parent reflect.Type, child reflect.Type, assocKeys []string, fKeys []string) (string, string, []string, []string, error) {
+func parseParentChildAssoc(assoc string, assocChild bool, parent reflect.Type, child reflect.Type, assocKeys []string, fKeys []string) (string, string, []string, []string, error) {
 	parentTableName := tableName(parent)
 	childTableName := tableName(child)
+	alias := gorm.ToDBName(assoc)
 	var dbAssocKeys, dbFKeys []string
 	for _, k := range assocKeys {
 		sf, ok := parent.FieldByName(k)
 		if !ok {
 			return "", "", nil, nil, fmt.Errorf("Association key %s is not found in %s", k, parent)
 		}
-		dbAssocKeys = append(dbAssocKeys, parentTableName+"."+columnName(&sf))
+		if assocChild {
+			dbAssocKeys = append(dbAssocKeys, parentTableName+"."+columnName(&sf))
+		} else {
+			dbAssocKeys = append(dbAssocKeys, alias+"."+columnName(&sf))
+		}
+
 	}
 	for _, k := range fKeys {
 		sf, ok := child.FieldByName(k)
 		if !ok {
 			return "", "", nil, nil, fmt.Errorf("Foreign key %s is not found in %s", k, child)
 		}
-		dbFKeys = append(dbFKeys, childTableName+"."+columnName(&sf))
+		if assocChild {
+			dbFKeys = append(dbFKeys, alias+"."+columnName(&sf))
+		} else {
+			dbFKeys = append(dbFKeys, childTableName+"."+columnName(&sf))
+		}
 	}
 	return parentTableName, childTableName, dbAssocKeys, dbFKeys, nil
 }

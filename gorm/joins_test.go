@@ -33,13 +33,13 @@ func TestJoinInfo(t *testing.T) {
 			"Child",
 			"joins_children",
 			[]string{"joins_models.id"},
-			[]string{"joins_children.model_id"},
+			[]string{"child.model_id"},
 		},
 		{
 			"Parent",
 			"joins_parents",
 			[]string{"joins_models.parent_name"},
-			[]string{"joins_parents.name"},
+			[]string{"parent.name"},
 		},
 	}
 	for _, test := range tests {
