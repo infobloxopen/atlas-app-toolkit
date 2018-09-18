@@ -197,7 +197,7 @@ func TestGormFiltering(t *testing.T) {
 		},
 		{
 			"nested_entity.nested_field1 == 11 and nested_entity.nested_field2 == 22",
-			"((nested_entities.nested_field1 = ?) AND (nested_entities.nested_field2 = ?))",
+			"((nested_entity.nested_field1 = ?) AND (nested_entity.nested_field2 = ?))",
 			[]interface{}{11.0, 22.0},
 			map[string]struct{}{"NestedEntity": {}},
 			nil,
