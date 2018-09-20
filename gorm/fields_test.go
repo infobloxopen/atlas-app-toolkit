@@ -8,10 +8,12 @@ import (
 )
 
 type Model struct {
-	Property   string
-	SubModel   SubModel
-	SubModels  []SubModel
-	CycleModel *CycleModel
+	Property      string
+	SubModel      SubModel
+	SubModels     []SubModel
+	CycleModel    *CycleModel
+	NotPreloadObj SubModel `gorm:"preload:false"`
+	PreloadObj    SubModel `gorm:"preload:true"`
 }
 
 type CycleModel struct {
@@ -70,8 +72,13 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
+			"not_preload_obj,preload_obj",
+			[]string{"NotPreloadObj", "PreloadObj"},
+			false,
+		},
+		{
 			"",
-			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels", "CycleModel"},
+			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels", "CycleModel", "PreloadObj.SubSubModel", "PreloadObj"},
 			false,
 		},
 	}

@@ -54,6 +54,9 @@ fields:
 			}
 		}
 		if isModel(fType) {
+			if ok, flag := gormTag(&sf, "preload"); ok && flag == "false" {
+				continue
+			}
 			subPreload, err := preloadEverything(fType, append(path, objType))
 			if err != nil {
 				return nil, err
