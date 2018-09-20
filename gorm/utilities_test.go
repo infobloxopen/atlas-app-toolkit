@@ -33,7 +33,7 @@ func TestHandleFieldPath(t *testing.T) {
 	}{
 		{[]string{"name"}, "db_humans.name", "", false},
 		{[]string{"age"}, "db_humans.years", "", false},
-		{[]string{"child", "name"}, "children.name", "Child", false},
+		{[]string{"child", "name"}, "child.name", "Child", false},
 		{[]string{}, "", "", true},
 	}
 	for _, test := range tests {

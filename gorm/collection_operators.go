@@ -94,7 +94,9 @@ func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{
 		for i, k := range sourceKeys {
 			keyPairs = append(keyPairs, k+" = "+targetKeys[i])
 		}
-		db = db.Joins(fmt.Sprintf("LEFT JOIN %s ON %s", tableName, strings.Join(keyPairs, " AND ")))
+		alias := gorm.ToDBName(k)
+		join := fmt.Sprintf("LEFT JOIN %s %s ON %s", tableName, alias, strings.Join(keyPairs, " AND "))
+		db = db.Joins(join)
 	}
 	return db, nil
 }
