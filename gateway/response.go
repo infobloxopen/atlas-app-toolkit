@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"io"
 	"net/http"
 
@@ -89,6 +90,19 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
 
+	pgInf := &query.PageInfo{"some", 0, 0}
+	namePageInfo, err := getAndUnsetOp(resp, pgInf, false)
+	if err != nil {
+		grpclog.Infof("forward response: failed to get name of field response.PageInfo: %v", err)
+		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
+	}
+	if namePageInfo != "" {
+		pgInf = dynmap[namePageInfo].(*query.PageInfo)
+		delete(dynmap, namePageInfo)
+	} else {
+		pgInf = nil
+	}
+
 	retainFields(ctx, req, dynmap)
 
 	// FIXME: standard grpc JSON marshaller doesn't handle
@@ -100,6 +114,11 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	// Here we set "Location" header which contains a url to a long running task
 	// Using it we can retrieve its status
 	rst := Status(ctx, nil)
+	if pgInf != nil {
+		rst.Offset = string(pgInf.Offset)
+		rst.PageToken = pgInf.PageToken
+		rst.Size = string(pgInf.Size)
+	}
 	if rst.Code == CodeName(LongRunning) {
 		location, exists := Header(ctx, "Location")
 

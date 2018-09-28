@@ -78,27 +78,29 @@ func SetCollectionOps(req, op interface{}) error {
 }
 
 func GetCollectionOp(res, op interface{}) error {
-	return getAndUnsetOp(res, op, false)
+	_, err := getAndUnsetOp(res, op, false)
+	return err
 }
 
 func unsetOp(res, op interface{}) error {
-	return getAndUnsetOp(res, op, true)
+	_, err := getAndUnsetOp(res, op, true)
+	return err
 }
 
-func getAndUnsetOp(res, op interface{}, unset bool) error {
+func getAndUnsetOp(res, op interface{}, unset bool) (fildName string, err error) {
 	resval := reflect.ValueOf(res)
 	if resval.Kind() != reflect.Ptr {
-		return fmt.Errorf("response is not a pointer - %s", resval.Kind())
+		return "", fmt.Errorf("response is not a pointer - %s", resval.Kind())
 	}
 
 	resval = resval.Elem()
 	if resval.Kind() != reflect.Struct {
-		return fmt.Errorf("response value is not a struct - %s", resval.Kind())
+		return "", fmt.Errorf("response value is not a struct - %s", resval.Kind())
 	}
 
 	opval := reflect.ValueOf(op)
 	if opval.Kind() != reflect.Ptr {
-		return fmt.Errorf("operator is not a pointer - %s", opval.Kind())
+		return "", fmt.Errorf("operator is not a pointer - %s", opval.Kind())
 	}
 
 	for i := 0; i < resval.NumField(); i++ {
@@ -109,15 +111,17 @@ func getAndUnsetOp(res, op interface{}, unset bool) error {
 		}
 
 		if !f.IsValid() || !f.CanSet() || f.Kind() != reflect.Ptr {
-			return fmt.Errorf("operation field %T in response %+v is invalid or cannot be set", op, res)
+			return "", fmt.Errorf("operation field %T in response %+v is invalid or cannot be set", op, res)
 		}
 
 		if o := opval.Elem(); o.IsValid() && o.CanSet() && f.Elem().IsValid() {
 			o.Set(f.Elem())
 		}
+		fildName = reflect.TypeOf(res).Elem().Field(i).Name
 		if unset {
 			f.Set(reflect.Zero(f.Type()))
 		}
+
 	}
-	return nil
+	return fildName, nil
 }
