@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -87,7 +88,7 @@ func unsetOp(res, op interface{}) error {
 	return err
 }
 
-func getAndUnsetOp(res, op interface{}, unset bool) (fildName string, err error) {
+func getAndUnsetOp(res, op interface{}, unset bool) (fieldName string, err error) {
 	resval := reflect.ValueOf(res)
 	if resval.Kind() != reflect.Ptr {
 		return "", fmt.Errorf("response is not a pointer - %s", resval.Kind())
@@ -117,11 +118,56 @@ func getAndUnsetOp(res, op interface{}, unset bool) (fildName string, err error)
 		if o := opval.Elem(); o.IsValid() && o.CanSet() && f.Elem().IsValid() {
 			o.Set(f.Elem())
 		}
-		fildName = reflect.TypeOf(res).Elem().Field(i).Name
+		fieldName = reflect.TypeOf(res).Elem().Field(i).Name
 		if unset {
 			f.Set(reflect.Zero(f.Type()))
 		}
 
 	}
-	return fildName, nil
+	return fieldName, nil
+}
+
+func GetPageInfo(resp proto.Message) (fieldName string, pg *query.PageInfo, err error) {
+	pg = new(query.PageInfo)
+	fieldName, err = getAndUnsetOp(&resp, pg, false)
+	if fieldName == "" {
+		pg = nil
+	}
+	return
+}
+
+func GetFiltering(req proto.Message) (fieldName string, f *query.Filtering, err error) {
+	f = new(query.Filtering)
+	fieldName, err = getAndUnsetOp(&req, f, false)
+	if fieldName == "" {
+		f = nil
+	}
+	return
+}
+
+func GetSorting(req proto.Message) (fieldName string, s *query.Sorting, err error) {
+	s = new(query.Sorting)
+	fieldName, err = getAndUnsetOp(&req, s, false)
+	if fieldName == "" {
+		s = nil
+	}
+	return
+}
+
+func GetPagination(req proto.Message) (fieldName string, p *query.Pagination, err error) {
+	p = new(query.Pagination)
+	fieldName, err = getAndUnsetOp(&req, p, false)
+	if fieldName == "" {
+		p = nil
+	}
+	return
+}
+
+func GetFeldSelection(req proto.Message) (fieldName string, fs *query.FieldSelection, err error) {
+	fs = new(query.FieldSelection)
+	fieldName, err = getAndUnsetOp(&req, fs, false)
+	if fieldName == "" {
+		fs = nil
+	}
+	return
 }
