@@ -3,10 +3,10 @@ package gateway
 import (
 	"context"
 	"fmt"
-	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/codes"
@@ -91,16 +91,10 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
 	pageInfoName, pg, err := GetPageInfo(resp)
-	//pageInfoName, pg, err := GetPageInfo(dynmap["Users"])
-	//pg := &query.PageInfo{}
-	//namePageInfo, err := getAndUnsetOp(&resp, pg, false)
-	/*if err != nil {
-		grpclog.Infof("forward response: failed to get name of field response.PageInfo: %v", err)
-		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
-	}*/
+
 	if pageInfoName != "" {
 		name := util.CamelToSnake(pageInfoName)
-		pg, ok = dynmap[name].(*query.PageInfo)
+		_, ok := dynmap[name]
 		if ok {
 			delete(dynmap, name)
 		}
@@ -119,10 +113,10 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	rst := Status(ctx, nil)
 	if pageInfoName != "" {
 		if pg.Offset != 0 {
-			rst.Offset = string(pg.Offset)
+			rst.Offset = strconv.Itoa(int(pg.Offset))
 		}
 		if pg.Size != 0 {
-			rst.Size = string(pg.Size)
+			rst.Size = strconv.Itoa(int(pg.Size))
 		}
 		rst.PageToken = pg.PageToken
 	}

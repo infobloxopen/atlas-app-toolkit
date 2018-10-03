@@ -129,7 +129,7 @@ func getAndUnsetOp(res, op interface{}, unset bool) (fieldName string, err error
 
 func GetPageInfo(resp proto.Message) (fieldName string, pg *query.PageInfo, err error) {
 	pg = new(query.PageInfo)
-	fieldName, err = getAndUnsetOp(&resp, pg, false)
+	fieldName, err = getAndUnsetOp(resp, pg, false)
 	if fieldName == "" {
 		pg = nil
 	}
@@ -138,7 +138,7 @@ func GetPageInfo(resp proto.Message) (fieldName string, pg *query.PageInfo, err 
 
 func GetFiltering(req proto.Message) (fieldName string, f *query.Filtering, err error) {
 	f = new(query.Filtering)
-	fieldName, err = getAndUnsetOp(&req, f, false)
+	fieldName, err = getAndUnsetOp(req, f, false)
 	if fieldName == "" {
 		f = nil
 	}
@@ -147,7 +147,7 @@ func GetFiltering(req proto.Message) (fieldName string, f *query.Filtering, err 
 
 func GetSorting(req proto.Message) (fieldName string, s *query.Sorting, err error) {
 	s = new(query.Sorting)
-	fieldName, err = getAndUnsetOp(&req, s, false)
+	fieldName, err = getAndUnsetOp(req, s, false)
 	if fieldName == "" {
 		s = nil
 	}
@@ -156,7 +156,7 @@ func GetSorting(req proto.Message) (fieldName string, s *query.Sorting, err erro
 
 func GetPagination(req proto.Message) (fieldName string, p *query.Pagination, err error) {
 	p = new(query.Pagination)
-	fieldName, err = getAndUnsetOp(&req, p, false)
+	fieldName, err = getAndUnsetOp(req, p, false)
 	if fieldName == "" {
 		p = nil
 	}
@@ -165,7 +165,7 @@ func GetPagination(req proto.Message) (fieldName string, p *query.Pagination, er
 
 func GetFeldSelection(req proto.Message) (fieldName string, fs *query.FieldSelection, err error) {
 	fs = new(query.FieldSelection)
-	fieldName, err = getAndUnsetOp(&req, fs, false)
+	fieldName, err = getAndUnsetOp(req, fs, false)
 	if fieldName == "" {
 		fs = nil
 	}
