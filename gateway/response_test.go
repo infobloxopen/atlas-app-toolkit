@@ -205,7 +205,7 @@ func TestForwardResponseMessageWithPagingInMetadata(t *testing.T) {
 	}
 }
 
-func TestForwardResponseMessageWithPagingInResponce(t *testing.T) {
+func TestForwardResponseMessageWithPagingInResponse(t *testing.T) {
 	ctx := runtime.NewServerMetadataContext(context.Background(), runtime.ServerMetadata{})
 	rw := httptest.NewRecorder()
 

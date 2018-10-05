@@ -163,7 +163,7 @@ func GetPagination(req proto.Message) (fieldName string, p *query.Pagination, er
 	return
 }
 
-func GetFeldSelection(req proto.Message) (fieldName string, fs *query.FieldSelection, err error) {
+func GetFieldSelection(req proto.Message) (fieldName string, fs *query.FieldSelection, err error) {
 	fs = new(query.FieldSelection)
 	fieldName, err = getAndUnsetOp(req, fs, false)
 	if fieldName == "" {
