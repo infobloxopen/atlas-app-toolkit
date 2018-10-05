@@ -118,7 +118,9 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		if pg.Size != 0 {
 			rst.Size = strconv.Itoa(int(pg.Size))
 		}
-		rst.PageToken = pg.PageToken
+		if pg.PageToken != "" {
+			rst.PageToken = pg.PageToken
+		}
 	}
 	if rst.Code == CodeName(LongRunning) {
 		location, exists := Header(ctx, "Location")
