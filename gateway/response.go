@@ -3,8 +3,10 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/codes"
@@ -88,6 +90,15 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		grpclog.Infof("forward response: failed to unmarshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
+	pageInfoName, pg, err := GetPageInfo(resp)
+
+	if pageInfoName != "" {
+		name := util.CamelToSnake(pageInfoName)
+		_, ok := dynmap[name]
+		if ok {
+			delete(dynmap, name)
+		}
+	}
 
 	retainFields(ctx, req, dynmap)
 
@@ -100,6 +111,17 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	// Here we set "Location" header which contains a url to a long running task
 	// Using it we can retrieve its status
 	rst := Status(ctx, nil)
+	if pageInfoName != "" {
+		if pg.Offset != 0 {
+			rst.Offset = strconv.Itoa(int(pg.Offset))
+		}
+		if pg.Size != 0 {
+			rst.Size = strconv.Itoa(int(pg.Size))
+		}
+		if pg.PageToken != "" {
+			rst.PageToken = pg.PageToken
+		}
+	}
 	if rst.Code == CodeName(LongRunning) {
 		location, exists := Header(ctx, "Location")
 
