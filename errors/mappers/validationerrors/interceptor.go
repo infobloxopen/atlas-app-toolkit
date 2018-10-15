@@ -3,12 +3,9 @@ package validationerrors
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strings"
-
-	"google.golang.org/grpc"
 
 	"github.com/infobloxopen/atlas-app-toolkit/util"
+	"google.golang.org/grpc"
 )
 
 type validator interface {
@@ -32,70 +29,74 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 // GetValidationError function returns a validation error from an error.
 func GetValidationError(err error) error {
-	// Check if the error is of type of validation
-	typeOfError := reflect.TypeOf(err)
-	valueOfError := reflect.ValueOf(err)
-
-	// Check if the error is a struct and a type of validation error that contains a cause.
-	if valueOfError.Kind() == reflect.Struct && strings.Contains(typeOfError.String(), "ValidationError") &&
-		!valueOfError.FieldByName("Cause").IsNil() {
-		cause := valueOfError.FieldByName("Cause")
-		typeOfCause := reflect.TypeOf(cause.Interface())
-
-		valueOfCause := reflect.ValueOf(cause.Interface())
-		if strings.Contains(typeOfCause.String(), "ValidationError") &&
-			valueOfCause.FieldByName("Field").String() != "" &&
-			valueOfCause.FieldByName("Reason").String() != "" &&
-			!valueOfCause.FieldByName("Cause").IsNil() {
-			// Retrieve the field and reason from the error
-			field := valueOfCause.FieldByName("Field").String()
-			field = util.CamelToSnake(field)
-			reason := valueOfCause.FieldByName("Reason").String()
-			key := valueOfCause.FieldByName("Key").Bool()
-			causeValue := valueOfCause.FieldByName("Cause").Interface()
-			if causeErr, ok := causeValue.(error); ok {
-				return ValidationError{
-					Field:         field,
-					Reason:        reason,
-					Key:           key,
-					Cause:         causeErr,
-					ErrorTypeName: typeOfCause.String(),
-				}
+	// Check if the error is type of validation
+	if vErr, ok := err.(RequestValidationError); ok {
+		if causeErr, ok := vErr.Cause().(RequestValidationError); ok {
+			return ValidationError{
+				field:  util.CamelToSnake(causeErr.Field()),
+				reason: causeErr.Reason(),
+				key:    causeErr.Key(),
+				cause:  causeErr.Cause(),
 			}
 		}
 	}
-	// If it isn't a lyft validation error return the error
 	return err
 }
 
 // ValidationError represents the validation error that contains which field failed and the reasoning behind it.
 type ValidationError struct {
-	Field         string
-	Reason        string
-	Key           bool
-	Cause         error
-	ErrorTypeName string // Error Name (“ABValidationError”)
+	field  string
+	reason string
+	cause  error
+	key    bool
 }
 
-// Error satisfies the builtin error interface.
+// Field function returns field value.
+func (e ValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ValidationError) ErrorName() string {
+	return "ValidationError"
+}
+
+// Error satisfies the builtin error interface
 func (e ValidationError) Error() string {
 	cause := ""
-	if e.Cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.Cause.Error())
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
 	}
 
 	key := ""
-	if e.Key {
+	if e.key {
 		key = "key for "
 	}
 
 	return fmt.Sprintf(
-		"invalid %s%s.%s: %s%s",
+		"invalid %sValidationError.%s: %s%s",
 		key,
-		e.ErrorTypeName,
-		e.Field,
-		e.Reason,
+		e.field,
+		e.reason,
 		cause)
 }
 
 var _ error = ValidationError{}
+
+// RequestValidationError represent a validation error
+type RequestValidationError interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+}
+
+var _ RequestValidationError = ValidationError{}

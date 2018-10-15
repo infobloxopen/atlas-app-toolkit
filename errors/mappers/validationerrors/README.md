@@ -87,7 +87,7 @@ Example Usage:
 			),
 			errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
 				vErr, _ := err.(validationerrors.ValidationError)
-				return errors.NewContainer(codes.InvalidArgument, "Custom error message for field: %v reason: %v", vErr.Field, vErr.Reason), true
+				return errors.NewContainer(codes.InvalidArgument, "Custom error message for field: %v reason: %v", vErr.Field(), vErr.Reason()), true
             }),
        ),
     }

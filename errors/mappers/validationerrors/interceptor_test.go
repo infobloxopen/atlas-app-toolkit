@@ -28,48 +28,48 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 		// Test cases
 		{
 			"ValidationErrorEmail",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause: mockValidationError{
-					Field:  "PrimaryEmail",
-					Reason: "value must be a valid email address",
-					Cause:  fmt.Errorf("mail: no angle-addr"),
-					Key:    true,
+			mocReqValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				cause: mocReqValidationError{
+					field:  "PrimaryEmail",
+					reason: "value must be a valid email address",
+					cause:  fmt.Errorf("mail: no angle-addr"),
+					key:    true,
 				},
-				Key: true,
+				key: true,
 			},
-			&ValidationError{Key: true, Field: "primary_email", Reason: "value must be a valid email address", Cause: fmt.Errorf("mail: no angle-addr"), ErrorTypeName: "validationerrors.mockValidationError"},
+			&ValidationError{key: true, field: "primary_email", reason: "value must be a valid email address", cause: fmt.Errorf("mail: no angle-addr")},
 		},
 		{
 			"ValidationErrorInt",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause: mockValidationError{
-					Field:  "Id",
-					Reason: "value must be greater than 50",
-					Cause:  fmt.Errorf("invalid Contact.Id"),
-					Key:    true,
+			mocReqValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				cause: mocReqValidationError{
+					field:  "Id",
+					reason: "value must be greater than 50",
+					cause:  fmt.Errorf("invalid Contact.Id"),
+					key:    true,
 				},
-				Key: true,
+				key: true,
 			},
-			&ValidationError{Key: true, Field: "id", Reason: "value must be greater than 50", Cause: fmt.Errorf("invalid Contact.Id"), ErrorTypeName: "validationerrors.mockValidationError"},
+			&ValidationError{key: true, field: "id", reason: "value must be greater than 50", cause: fmt.Errorf("invalid Contact.Id")},
 		},
 		{
 			"ValidationErrorList",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause: mockValidationError{
-					Field:  "FirstName",
-					Reason: "value must not be in list [fizz buzz]",
-					Cause:  fmt.Errorf("invalid Contact.MiddleName"),
-					Key:    true,
+			mocReqValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				cause: mocReqValidationError{
+					field:  "FirstName",
+					reason: "value must not be in list [fizz buzz]",
+					cause:  fmt.Errorf("invalid Contact.MiddleName"),
+					key:    true,
 				},
-				Key: true,
+				key: true,
 			},
-			&ValidationError{Key: true, Field: "first_name", Reason: "value must not be in list [fizz buzz]", Cause: fmt.Errorf("invalid Contact.MiddleName"), ErrorTypeName: "validationerrors.mockValidationError"},
+			&ValidationError{key: true, field: "first_name", reason: "value must not be in list [fizz buzz]", cause: fmt.Errorf("invalid Contact.MiddleName")},
 		},
 		{
 			"NotValidationError",
@@ -82,58 +82,27 @@ func TestUnaryServerInterceptor_ValidationErrors(t *testing.T) {
 		},
 		{
 			"ValidationErrorNoCause",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Key:    true,
+			mocReqValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				key:    true,
 			},
-			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation"),
+			fmt.Errorf("invalid key for ValidationError.Payload: embedded message failed validation"),
 		},
 		{
 			"ValidationErrorBadCause",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause:  fmt.Errorf("Not validation"),
-				Key:    true,
+			mocReqValidationError{
+				field:  "Payload",
+				reason: "embedded message failed validation",
+				cause:  fmt.Errorf("Not validation"),
+				key:    true,
 			},
-			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: Not validation"),
-		},
-		{
-			"ValidationErrorBadField",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause: mockValidationError{
-					Reason: "no field",
-					Cause:  fmt.Errorf("bad test"),
-					Key:    true,
-				},
-				Key: true,
-			},
-			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.: no field | caused by: bad test"),
-		},
-		{
-			"ValidationErrorBadReason",
-			mockRequestValidationError{
-				Field:  "Payload",
-				Reason: "embedded message failed validation",
-				Cause: mockValidationError{
-					Field: "testField",
-					Cause: fmt.Errorf("bad test"),
-					Key:   true,
-				},
-				Key: true,
-			},
-			fmt.Errorf("invalid key for CreateRequest.Payload: embedded message failed validation | caused by: invalid key for CreateRequest.testField:  | caused by: bad test"),
+			fmt.Errorf("invalid key for ValidationError.Payload: embedded message failed validation | caused by: Not validation"),
 		},
 	}
 	for _, tt := range tests {
-		fmt.Println("THE ACTUAL method ")
 		_, actual := UnaryServerInterceptor()(ctx, tt.actual, nil, nil)
-		fmt.Println("THE ACTUAL ERROR   ", actual)
 		expected := tt.expected
-		fmt.Println("THE EXPECTED ERROR ", expected)
 		if actual.Error() != expected.Error() {
 			t.Errorf("Error received was incorrect for test %s, expected: \"%s\", actual: \"%s\"", tt.name, expected, actual)
 		}
@@ -172,71 +141,6 @@ func TestUnaryServerInterceptor_Success(t *testing.T) {
 // testResponse represents a mock response.
 type testResponse struct{}
 
-// mockRequestValidationError represents a validation request error.
-type mockRequestValidationError struct {
-	Field  string
-	Reason string
-	Cause  error
-	Key    bool
-}
-
-// Error satisfies the builtin error interface
-func (e mockRequestValidationError) Error() string {
-	cause := ""
-	if e.Cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
-	}
-
-	key := ""
-	if e.Key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCreateRequest.%s: %s%s",
-		key,
-		e.Field,
-		e.Reason,
-		cause)
-}
-
-// Error satisfies the builtin error interface
-func (e mockRequestValidationError) Validate() error {
-	return e
-}
-
-var _ error = mockRequestValidationError{}
-
-// mockValidationError represents a validation error.
-type mockValidationError struct {
-	Field  string
-	Reason string
-	Cause  error
-	Key    bool
-}
-
-// Error satisfies the builtin error interface
-func (e mockValidationError) Error() string {
-	cause := ""
-	if e.Cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
-	}
-
-	key := ""
-	if e.Key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sCreateRequest.%s: %s%s",
-		key,
-		e.Field,
-		e.Reason,
-		cause)
-}
-
-var _ error = mockValidationError{}
-
 // mockNotValidation represents anoter validate error but not validation error.
 type mockNotValidation struct {
 	Field  string
@@ -271,3 +175,66 @@ func (e mockNotValidation) Error() string {
 }
 
 var _ error = mockNotValidation{}
+
+// mocReqValidationError is the validation error returned by
+// mocReqValidationError.Validate if the designated constraints aren't met.
+type mocReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e mocReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e mocReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e mocReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e mocReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e mocReqValidationError) ErrorName() string {
+	return "ValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e mocReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sValidationError.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = mocReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = mocReqValidationError{}
+
+// Validate checks the field values on mocReqValidationError with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (e mocReqValidationError) Validate() error {
+	return e
+}

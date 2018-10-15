@@ -23,7 +23,7 @@ func ToMapFunc(f func(context.Context, ValidationError) (error, bool)) errors.Ma
 func CondValidation() errors.MapCond {
 	return func(err error) bool {
 		if vErr, ok := err.(ValidationError); ok {
-			if vErr.Field != "" && vErr.Reason != "" {
+			if vErr.Field() != "" && vErr.Reason() != "" {
 				return true
 			}
 		}
@@ -36,7 +36,7 @@ func CondValidation() errors.MapCond {
 func CondFieldEq(theField string) errors.MapCond {
 	return func(err error) bool {
 		if vErr, ok := err.(ValidationError); ok {
-			if vErr.Field == theField {
+			if vErr.Field() == theField {
 				return true
 			}
 		}
@@ -49,7 +49,7 @@ func CondFieldEq(theField string) errors.MapCond {
 func CondReasonEq(theReason string) errors.MapCond {
 	return func(err error) bool {
 		if vErr, ok := err.(ValidationError); ok {
-			if vErr.Reason == theReason {
+			if vErr.Reason() == theReason {
 				return true
 			}
 		}
@@ -63,7 +63,7 @@ func DefaultMapping() errors.MapFunc {
 		CondValidation(),
 		errors.MapFunc(func(ctx context.Context, err error) (error, bool) {
 			vErr, _ := err.(ValidationError)
-			return errors.NewContainer(codes.InvalidArgument, "Invalid %s: %s", vErr.Field, vErr.Reason).WithField(vErr.Field, vErr.Reason), true
+			return errors.NewContainer(codes.InvalidArgument, "Invalid %s: %s", vErr.Field(), vErr.Reason()).WithField(vErr.Field(), vErr.Reason()), true
 		}),
 	)
 }

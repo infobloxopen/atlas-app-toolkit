@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -78,27 +79,29 @@ func SetCollectionOps(req, op interface{}) error {
 }
 
 func GetCollectionOp(res, op interface{}) error {
-	return getAndUnsetOp(res, op, false)
+	_, err := getAndUnsetOp(res, op, false)
+	return err
 }
 
 func unsetOp(res, op interface{}) error {
-	return getAndUnsetOp(res, op, true)
+	_, err := getAndUnsetOp(res, op, true)
+	return err
 }
 
-func getAndUnsetOp(res, op interface{}, unset bool) error {
+func getAndUnsetOp(res, op interface{}, unset bool) (fieldName string, err error) {
 	resval := reflect.ValueOf(res)
 	if resval.Kind() != reflect.Ptr {
-		return fmt.Errorf("response is not a pointer - %s", resval.Kind())
+		return "", fmt.Errorf("response is not a pointer - %s", resval.Kind())
 	}
 
 	resval = resval.Elem()
 	if resval.Kind() != reflect.Struct {
-		return fmt.Errorf("response value is not a struct - %s", resval.Kind())
+		return "", fmt.Errorf("response value is not a struct - %s", resval.Kind())
 	}
 
 	opval := reflect.ValueOf(op)
 	if opval.Kind() != reflect.Ptr {
-		return fmt.Errorf("operator is not a pointer - %s", opval.Kind())
+		return "", fmt.Errorf("operator is not a pointer - %s", opval.Kind())
 	}
 
 	for i := 0; i < resval.NumField(); i++ {
@@ -109,15 +112,62 @@ func getAndUnsetOp(res, op interface{}, unset bool) error {
 		}
 
 		if !f.IsValid() || !f.CanSet() || f.Kind() != reflect.Ptr {
-			return fmt.Errorf("operation field %T in response %+v is invalid or cannot be set", op, res)
+			return "", fmt.Errorf("operation field %T in response %+v is invalid or cannot be set", op, res)
 		}
 
 		if o := opval.Elem(); o.IsValid() && o.CanSet() && f.Elem().IsValid() {
 			o.Set(f.Elem())
 		}
+		fieldName = reflect.TypeOf(res).Elem().Field(i).Name
 		if unset {
 			f.Set(reflect.Zero(f.Type()))
 		}
+
 	}
-	return nil
+	return fieldName, nil
+}
+
+func GetPageInfo(resp proto.Message) (fieldName string, pg *query.PageInfo, err error) {
+	pg = new(query.PageInfo)
+	fieldName, err = getAndUnsetOp(resp, pg, false)
+	if fieldName == "" {
+		pg = nil
+	}
+	return
+}
+
+func GetFiltering(req proto.Message) (fieldName string, f *query.Filtering, err error) {
+	f = new(query.Filtering)
+	fieldName, err = getAndUnsetOp(req, f, false)
+	if fieldName == "" {
+		f = nil
+	}
+	return
+}
+
+func GetSorting(req proto.Message) (fieldName string, s *query.Sorting, err error) {
+	s = new(query.Sorting)
+	fieldName, err = getAndUnsetOp(req, s, false)
+	if fieldName == "" {
+		s = nil
+	}
+	return
+}
+
+func GetPagination(req proto.Message) (fieldName string, p *query.Pagination, err error) {
+	p = new(query.Pagination)
+	fieldName, err = getAndUnsetOp(req, p, false)
+	if fieldName == "" {
+		p = nil
+	}
+	return
+}
+
+func GetFieldSelection(req proto.Message) (fieldName string, fs *query.FieldSelection, err error) {
+	fs = new(query.FieldSelection)
+	fieldName, err = getAndUnsetOp(req, fs, false)
+	if fieldName == "" {
+		fs = nil
+	}
+	return
 }
