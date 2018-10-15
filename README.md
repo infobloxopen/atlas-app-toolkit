@@ -12,7 +12,8 @@
         6. [Swagger](#swagger)
     2. [Build image](#build-image)
     3. [Server Wrapper](#server-wrapper)
-    4. [Example](#example)
+    4. [Database Migrations](#db-migrations)
+    5. [Example](#example)
 2. [REST API Syntax Specification](#rest-api-syntax-specification)
     1. [Resources and Collections](#resources-and-collections)
     2. [HTTP Headers](#http-headers)
@@ -309,6 +310,11 @@ if err := s.Serve(grpcListener, httpListener); err != nil {
 }
 ```
 You can see a full example [here](server/server_example_test.go).
+
+## Database Migrations
+
+The toolkit does not require any specific method for database provisioning and setup.
+However, if [golang-migrate](https://github.com/golang-migrate/migrate) or the [infobloxopen fork](https://github.com/infobloxopen/migrate) of it is used, a couple helper functions are provided [here](gorm/version.go) for verifying that the database version matches a required version without having to import the entire migration package.
 
 ## Example
 
@@ -1074,7 +1080,7 @@ Using the toolkit's Server Wrapper functionality, you can optionally enable
 automatic filling of a FieldMask within the gateway.
 
 As a prerequisite, the request passing through the gateway must match the list
-of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the 
+of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the
 top level.
 ```proto
 import "google/protobuf/field_mask.proto";
