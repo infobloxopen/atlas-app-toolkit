@@ -13,14 +13,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-func TestUnaryServerInterceptor(t *testing.T) {
+func TestLogrusUnaryServerInterceptor(t *testing.T) {
 	testAccountId := "some-ib-customer"
 	testHandler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		logger := ctxlogrus.Extract(ctx)
 		assert.Equal(t, logger.Data[MultiTenancyField], testAccountId)
 		return nil, nil
 	}
-	chain := grpc_middleware.ChainUnaryServer(grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logrus.StandardLogger())), UnaryServerInterceptor())
+	chain := grpc_middleware.ChainUnaryServer(grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logrus.StandardLogger())), LogrusUnaryServerInterceptor())
 	ctx := contextWithToken(makeToken(jwt.MapClaims{MultiTenancyField: testAccountId}, t), DefaultTokenType)
 	chain(ctx, nil, &grpc.UnaryServerInfo{}, testHandler)
 

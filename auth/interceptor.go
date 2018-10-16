@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// UnaryServerInterceptor returns grpc.UnaryServerInterceptor which populates request-scoped logrus logger with account_id field
-func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+// LogrusUnaryServerInterceptor returns grpc.UnaryServerInterceptor which populates request-scoped logrus logger with account_id field
+func LogrusUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		addAccountIdToLogger(ctx)
 		return handler(ctx, req)
