@@ -216,6 +216,27 @@ func TestGormFiltering(t *testing.T) {
 			nil,
 			nil,
 		},
+		{
+			"id := 'ID'",
+			"(lower(entities.id) = lower(?))",
+			[]interface{}{"convertedid"},
+			nil,
+			nil,
+		},
+		{
+			"(id := 'sOmeId') and (ref := 'sOmeRef')",
+			"((lower(entities.id) = lower(?)) AND (lower(entities.ref) = lower(?)))",
+			[]interface{}{"convertedid", "convertedref"},
+			nil,
+			nil,
+		},
+		{
+			"not(id := 'sOmeId') and not(ref := 'sOmeRef')",
+			"(NOT(lower(entities.id) = lower(?)) AND NOT(lower(entities.ref) = lower(?)))",
+			[]interface{}{"convertedid", "convertedref"},
+			nil,
+			nil,
+		},
 	}
 
 	for _, test := range tests {

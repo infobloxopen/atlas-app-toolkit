@@ -117,7 +117,7 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 	}
 	var o string
 	switch c.Type {
-	case query.StringCondition_EQ:
+	case query.StringCondition_EQ, query.StringCondition_IE:
 		o = "="
 	case query.StringCondition_MATCH:
 		o = "~"
@@ -142,7 +142,15 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 		value = v
 	}
 
+	if c.Type == query.StringCondition_IE {
+		return insensitiveCaseStringConditionToGorm(neg, dbName, o), []interface{}{value}, assocToJoin, nil
+	}
+
 	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
+}
+
+func insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
+	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
 }
 
 func processStringCondition(ctx context.Context, c *query.StringCondition, pb proto.Message) (interface{}, error) {

@@ -308,6 +308,24 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
+	case InsensitiveEqToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+		switch token := p.curToken.(type) {
+		case StringToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+			return &StringCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Value:      token.Value,
+				Type:       StringCondition_IE,
+				IsNegative: false,
+			}, nil
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
 	case GtToken:
 		if err := p.eatToken(); err != nil {
 			return nil, err

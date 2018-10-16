@@ -132,6 +132,14 @@ func (t EqToken) String() string {
 	return "=="
 }
 
+type InsensitiveEqToken struct {
+	TokenBase
+}
+
+func (t InsensitiveEqToken) String() string {
+	return ":="
+}
+
 // NeToken represents not equals operator.
 type NeToken struct {
 	TokenBase
@@ -360,6 +368,13 @@ func (lexer *filteringLexer) NextToken() (Token, error) {
 				return LeToken{}, nil
 			}
 			return LtToken{}, nil
+		case lexer.curChar == ':':
+			lexer.advance()
+			if lexer.curChar == '=' {
+				lexer.advance()
+				return InsensitiveEqToken{}, nil
+			}
+			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
 		case lexer.curChar == '\'' || lexer.curChar == '"':
 			return lexer.string()
 		case unicode.IsDigit(lexer.curChar):

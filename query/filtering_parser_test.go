@@ -163,6 +163,84 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
+			text: "field := 'AbC'",
+			exp: &Filtering{
+				&Filtering_StringCondition{
+					&StringCondition{
+						FieldPath:  []string{"field"},
+						Value:      "AbC",
+						Type:       StringCondition_IE,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not field := 'AbC'",
+			exp: &Filtering{
+				&Filtering_StringCondition{
+					&StringCondition{
+						FieldPath:  []string{"field"},
+						Value:      "AbC",
+						Type:       StringCondition_IE,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "(field := 'AbC') and (field1 := 'BcD')",
+			exp: &Filtering{
+				&Filtering_Operator{
+					Operator: &LogicalOperator{
+						Left: &LogicalOperator_LeftStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "AbC",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field1"},
+								Value:      "BcD",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+					},
+
+				},
+			},
+		},
+		{
+			text: "(field := 'AbC') and not(field1 := 'BcD')",
+			exp: &Filtering{
+				&Filtering_Operator{
+					Operator: &LogicalOperator{
+						Left: &LogicalOperator_LeftStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "AbC",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field1"},
+								Value:      "BcD",
+								Type:       StringCondition_IE,
+								IsNegative: true,
+							},
+						},
+					},
+
+				},
+			},
+		},
+		{
 			text: "field != \"abc cde\"",
 			exp: &Filtering{
 				&Filtering_StringCondition{
@@ -353,6 +431,8 @@ func TestFilteringParserNegative(t *testing.T) {
 		"field1 == 234.23.23",
 		"field1 == 'abc",
 		"field1 =! 'cdf'",
+		"field1 =: 'AbC'",
+		"field1 : = 'AbC'",
 	}
 
 	for _, test := range tests {

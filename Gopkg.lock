@@ -69,9 +69,10 @@
   revision = "498ae206fc3cfe81cd82e48c1d4354026fa5f9ec"
 
 [[projects]]
-  digest = "1:6a06217fc753e65aea71446b777393009ef6797dadc0086c4f75bd16590be04d"
+  digest = "1:36d8bdf4367306ad70e7fb62c6cd6735a3c448a5ef3ac912b384fd143a36ff3a"
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
+    "protoc-gen-swagger/options",
     "runtime",
     "runtime/internal",
     "utilities",
@@ -261,6 +262,7 @@
     "github.com/google/uuid",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
+    "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options",
     "github.com/grpc-ecosystem/grpc-gateway/runtime",
     "github.com/grpc-ecosystem/grpc-gateway/utilities",
     "github.com/jinzhu/gorm",
