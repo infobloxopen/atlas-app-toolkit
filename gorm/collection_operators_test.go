@@ -103,8 +103,7 @@ func TestApplyCollectionOperators(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		mock.ExpectQuery(fixedFullRe("SELECT \"people\".* FROM \"people\" LEFT JOIN sub_people sub_person ON people.id = sub_person.person_id LEFT JOIN parents parent ON people.parent_id = parent.id WHERE (((people.age <= $1) AND (sub_person.name = $2))) ORDER BY people.age,sub_person.name,parent.name desc LIMIT 2 OFFSET 1")).WithArgs(25.0, "Mike").
+		mock.ExpectQuery(`^SELECT "people".\* FROM "people" LEFT JOIN [[sub_people sub_person ON people.id = sub_person.person_id LEFT JOIN parents parent ON people.parent_id = parent.id]|[parents parent ON people.parent_id = parent.id LEFT JOIN sub_people sub_person ON people.id = sub_person.person_id]] WHERE (((people.age <= \$1) AND (sub_person.name = \$2))) ORDER BY people.age,sub_person.name,parent.name desc LIMIT 2 OFFSET 1$`).WithArgs(25.0, "Mike").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(111, "Mike"))
 
 		mock.ExpectQuery(fixedFullRe("SELECT * FROM  \"ordered_items\" WHERE (\"person_id\" IN ($1)) ORDER BY \"position\"")).WithArgs(111).
