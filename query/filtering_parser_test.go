@@ -210,7 +210,6 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 					},
-
 				},
 			},
 		},
@@ -236,7 +235,6 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 					},
-
 				},
 			},
 		},
@@ -385,6 +383,85 @@ func TestFilteringParser(t *testing.T) {
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_GE,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "field in [1 , 9 ,21]",
+			exp: &Filtering{
+				&Filtering_NumberArrayCondition{
+					&NumberArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []float64{1, 9, 21},
+						Type:       NumberArrayCondition_IN,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (field in [1 , 9 ,21])",
+			exp: &Filtering{
+				&Filtering_NumberArrayCondition{
+					&NumberArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []float64{1, 9, 21},
+						Type:       NumberArrayCondition_IN,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "field in ['Hello' , 'World']",
+			exp: &Filtering{
+				&Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_IN,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (field in ['Hello' , 'World'])",
+			exp: &Filtering{
+				&Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_IN,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "(not (field in ['Hello' , 'World']) and (field := 'Mike'))",
+			exp: &Filtering{
+				&Filtering_Operator{
+					&LogicalOperator{
+						Left: &LogicalOperator_LeftStringArrayCondition{
+							&StringArrayCondition{
+								FieldPath:  []string{"field"},
+								Values:     []string{"Hello", "World"},
+								Type:       StringArrayCondition_IN,
+								IsNegative: true,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "Mike",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Type:       LogicalOperator_AND,
 						IsNegative: false,
 					},
 				},

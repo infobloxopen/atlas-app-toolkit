@@ -237,6 +237,20 @@ func TestGormFiltering(t *testing.T) {
 			nil,
 			nil,
 		},
+		{
+			"(not(id in ['sOmeId', 'egegeg']) and (not(field := 'Hello')))",
+			"((entities.id NOT IN (?, ?)) AND NOT(lower(field) = lower(?)))",
+			[]interface{}{"convertedid", "convertedid", "Hello"},
+			nil,
+			nil,
+		},
+		{
+			"(not(field2 in ['sOmeId', 'egegeg']) and (not(field := 'Hello')))",
+			"((entities.field2 NOT IN (?, ?)) AND NOT(lower(field) = lower(?)))",
+			[]interface{}{"sOmeId", "egegeg", "Hello"},
+			nil,
+			nil,
+		},
 	}
 
 	for _, test := range tests {

@@ -79,6 +79,10 @@ func (p *filteringParser) negateNode(node FilteringExpression) {
 		v.IsNegative = !v.IsNegative
 	case *NullCondition:
 		v.IsNegative = !v.IsNegative
+	case *StringArrayCondition:
+		v.IsNegative = !v.IsNegative
+	case *NumberArrayCondition:
+		v.IsNegative = !v.IsNegative
 	}
 }
 
@@ -435,6 +439,39 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				Type:       StringCondition_LE,
 				IsNegative: false,
 			}, nil
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
+	case InToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+
+		switch token := p.curToken.(type) {
+		case StringArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &StringArrayCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       StringArrayCondition_IN,
+				IsNegative: false,
+			}, nil
+
+		case NumberArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &NumberArrayCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       NumberArrayCondition_IN,
+				IsNegative: false,
+			}, nil
+
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
