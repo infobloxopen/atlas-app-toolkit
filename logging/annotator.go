@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -24,10 +23,10 @@ const logFlagFieldName = "log-trace-key"
 func Annotator(ctx context.Context, req *http.Request) metadata.MD {
 	md := make(metadata.MD)
 	if lvl := req.Header.Get(logLevelHeaderKey); lvl != "" {
-		md[runtime.MetadataPrefix+logLevelMetaKey] = []string{lvl}
+		md[logLevelMetaKey] = []string{lvl}
 	}
 	if flag := req.Header.Get(logFlagHeaderKey); flag != "" {
-		md[runtime.MetadataPrefix+logFlagMetaKey] = []string{flag}
+		md[logFlagMetaKey] = []string{flag}
 	}
 
 	return md

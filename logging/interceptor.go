@@ -32,7 +32,7 @@ func LogLevelInterceptor(defaultLevel logrus.Level) grpc.UnaryServerInterceptor 
 		newCtx := ctxlogrus.ToContext(ctx, newLogger.WithFields(fields))
 		res, err = handler(newCtx, req)
 
-		// propagate any new or or changed fields from later interceptors back up
+		// propagate any new or changed fields from later interceptors back up
 		// the middleware chain
 		resLogger := ctxlogrus.Extract(newCtx)
 		ctxlogrus.AddFields(ctx, resLogger.Data)
