@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -54,7 +55,7 @@ func TestInterceptor(t *testing.T) {
 			return nil, nil
 		}
 	}
-	for _, tc := range []struct {
+	for i, tc := range []struct {
 		origLevel    logrus.Level
 		startFields  logrus.Fields
 		extraFields  logrus.Fields
@@ -103,7 +104,7 @@ func TestInterceptor(t *testing.T) {
 			mdTag:        "special value",
 		},
 	} {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("Per-request logging test - %d", i), func(t *testing.T) {
 
 			ctx := context.Background()
 			md := metadata.Pairs(logLevelMetaKey, tc.mdLevel)
