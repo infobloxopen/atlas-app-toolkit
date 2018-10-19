@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"io"
@@ -86,7 +87,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	}
 
 	var dynmap map[string]interface{}
-	if err := marshaler.Unmarshal(data, &dynmap); err != nil {
+	if err := json.Unmarshal(data, &dynmap); err != nil {
 		grpclog.Infof("forward response: failed to unmarshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
@@ -101,12 +102,6 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	}
 
 	retainFields(ctx, req, dynmap)
-
-	// FIXME: standard grpc JSON marshaller doesn't handle
-	// nil values inside maps.
-	for k := range dynmap {
-		dynmap[k] = fixNilValues(dynmap[k])
-	}
 
 	// Here we set "Location" header which contains a url to a long running task
 	// Using it we can retrieve its status
@@ -138,7 +133,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		dynmap["success"] = rst
 	}
 
-	data, err = marshaler.Marshal(dynmap)
+	data, err = json.Marshal(dynmap)
 	if err != nil {
 		grpclog.Infof("forward response: failed to marshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
@@ -253,21 +248,4 @@ func handleForwardResponseOptions(ctx context.Context, rw http.ResponseWriter, r
 		}
 	}
 	return nil
-}
-
-// fixNilValues function walks v tree and removes
-// map keys that have value nil.
-func fixNilValues(v interface{}) interface{} {
-	switch v := v.(type) {
-	case map[string]interface{}:
-		for k := range v {
-			if v[k] == nil {
-				delete(v, k)
-			} else {
-				v[k] = fixNilValues(v[k])
-			}
-		}
-	}
-
-	return v
 }

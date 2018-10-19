@@ -133,7 +133,7 @@ func TestForwardResponseMessageWithNil(t *testing.T) {
 		t.Fatalf("failed to unmarshal JSON response: %s", err)
 	}
 
-	if len(v["Results"].(map[string]interface{})) != 0 {
+	if len(v["Results"].(map[string]interface{})) != 1 {
 		t.Errorf("invalid result item: %+v - expected %+v", v["Results"], map[string]interface{}{})
 	}
 }
