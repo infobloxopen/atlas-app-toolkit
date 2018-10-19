@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -37,6 +38,10 @@ func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, p
 		return NumberConditionToGorm(ctx, r.NumberCondition, obj, pb)
 	case *query.Filtering_NullCondition:
 		return NullConditionToGorm(ctx, r.NullCondition, obj, pb)
+	case *query.Filtering_NumberArrayCondition:
+		return NumberArrayConditionToGorm(ctx, r.NumberArrayCondition, obj, pb)
+	case *query.Filtering_StringArrayCondition:
+		return StringArrayConditionToGorm(ctx, r.StringArrayCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -57,6 +62,10 @@ func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj 
 		lres, largs, lAssocToJoin, err = NumberConditionToGorm(ctx, l.LeftNumberCondition, obj, pb)
 	case *query.LogicalOperator_LeftNullCondition:
 		lres, largs, lAssocToJoin, err = NullConditionToGorm(ctx, l.LeftNullCondition, obj, pb)
+	case *query.LogicalOperator_LeftNumberArrayCondition:
+		lres, largs, lAssocToJoin, err = NumberArrayConditionToGorm(ctx, l.LeftNumberArrayCondition, obj, pb)
+	case *query.LogicalOperator_LeftStringArrayCondition:
+		lres, largs, lAssocToJoin, err = StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
@@ -76,6 +85,10 @@ func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj 
 		rres, rargs, rAssocToJoin, err = NumberConditionToGorm(ctx, r.RightNumberCondition, obj, pb)
 	case *query.LogicalOperator_RightNullCondition:
 		rres, rargs, rAssocToJoin, err = NullConditionToGorm(ctx, r.RightNullCondition, obj, pb)
+	case *query.LogicalOperator_RightNumberArrayCondition:
+		rres, rargs, rAssocToJoin, err = NumberArrayConditionToGorm(ctx, r.RightNumberArrayCondition, obj, pb)
+	case *query.LogicalOperator_RightStringArrayCondition:
+		rres, rargs, rAssocToJoin, err = StringArrayConditionToGorm(ctx, r.RightStringArrayCondition, obj, pb)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -117,7 +130,7 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 	}
 	var o string
 	switch c.Type {
-	case query.StringCondition_EQ:
+	case query.StringCondition_EQ, query.StringCondition_IE:
 		o = "="
 	case query.StringCondition_MATCH:
 		o = "~"
@@ -136,19 +149,27 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 	}
 
 	var value interface{}
-	if v, err := processStringCondition(ctx, c, pb); err != nil {
+	if v, err := processStringCondition(ctx, c.FieldPath, c.Value, pb); err != nil {
 		value = c.Value
 	} else {
 		value = v
 	}
 
+	if c.Type == query.StringCondition_IE {
+		return insensitiveCaseStringConditionToGorm(neg, dbName, o), []interface{}{value}, assocToJoin, nil
+	}
+
 	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
 }
 
-func processStringCondition(ctx context.Context, c *query.StringCondition, pb proto.Message) (interface{}, error) {
+func insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
+	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
+}
+
+func processStringCondition(ctx context.Context, fieldPath []string, value string, pb proto.Message) (interface{}, error) {
 	objType := indirectType(reflect.TypeOf(pb))
-	pathLength := len(c.FieldPath)
-	for i, part := range c.FieldPath {
+	pathLength := len(fieldPath)
+	for i, part := range fieldPath {
 		sf, ok := objType.FieldByName(generator.CamelCase(part))
 		if !ok {
 			return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
@@ -156,12 +177,12 @@ func processStringCondition(ctx context.Context, c *query.StringCondition, pb pr
 		if i < pathLength-1 {
 			objType = indirectType(sf.Type)
 			if !isProtoMessage(objType) {
-				return nil, fmt.Errorf("%s: non-last field of %s field path should be a proto message", objType, c.FieldPath)
+				return nil, fmt.Errorf("%s: non-last field of %s field path should be a proto message", objType, fieldPath)
 			}
 		} else {
 			if isIdentifier(indirectType(sf.Type)) {
 				id := &resource.Identifier{}
-				if err := jsonpb.UnmarshalString(fmt.Sprintf("\"%s\"", c.Value), id); err != nil {
+				if err := jsonpb.UnmarshalString(fmt.Sprintf("\"%s\"", value), id); err != nil {
 					return nil, err
 				}
 				newPb := reflect.New(objType)
@@ -193,7 +214,7 @@ func processStringCondition(ctx context.Context, c *query.StringCondition, pb pr
 			}
 		}
 	}
-	return c.Value, nil
+	return value, nil
 }
 
 // NumberConditionToGorm returns GORM Plain SQL representation of the number condition.
@@ -244,4 +265,63 @@ func NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interf
 		neg = "NOT"
 	}
 	return fmt.Sprintf("%s(%s %s)", neg, dbName, o), nil, assocToJoin, nil
+}
+
+func NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+	var assocToJoin map[string]struct{}
+	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	if assoc != "" {
+		assocToJoin = make(map[string]struct{})
+		assocToJoin[assoc] = struct{}{}
+	}
+	o := "IN"
+	var neg string
+	if c.IsNegative {
+		neg = "NOT"
+	}
+
+	placeholder := ""
+	values := make([]interface{}, 0, len(c.Values))
+	for _, val := range c.Values {
+		placeholder += "?, "
+		values = append(values, val)
+	}
+
+	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
+}
+
+func StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+	var assocToJoin map[string]struct{}
+	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	if assoc != "" {
+		assocToJoin = make(map[string]struct{})
+		assocToJoin[assoc] = struct{}{}
+	}
+	o := "IN"
+	var neg string
+	if c.IsNegative {
+		neg = "NOT"
+	}
+
+	values := make([]interface{}, 0, len(c.Values))
+	placeholder := ""
+	for _, str := range c.Values {
+		placeholder += "?, "
+		if val, err := processStringCondition(ctx, c.FieldPath, str, pb); err == nil {
+			values = append(values, val)
+			continue
+		}
+
+		values = append(values, str)
+	}
+
+	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }

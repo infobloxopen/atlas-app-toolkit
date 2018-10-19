@@ -132,6 +132,14 @@ func (t EqToken) String() string {
 	return "=="
 }
 
+type InsensitiveEqToken struct {
+	TokenBase
+}
+
+func (t InsensitiveEqToken) String() string {
+	return ":="
+}
+
 // NeToken represents not equals operator.
 type NeToken struct {
 	TokenBase
@@ -204,6 +212,35 @@ func (t NullToken) String() string {
 	return "null"
 }
 
+// InToken represent in operation for string and numbers arrays
+type InToken struct {
+	TokenBase
+}
+
+func (t InToken) String() string {
+	return "in"
+}
+
+//NumberArrayToken represent number array e.g. [1,2,5]
+type StringArrayToken struct {
+	TokenBase
+	Values []string
+}
+
+func (t StringArrayToken) String() string {
+	return fmt.Sprintf("%v", t.Values)
+}
+
+//NumberArrayToken represent number array e.g. [1,2,5]
+type NumberArrayToken struct {
+	TokenBase
+	Values []float64
+}
+
+func (t NumberArrayToken) String() string {
+	return fmt.Sprintf("%v", t.Values)
+}
+
 // EOFToken represents end of an expression.
 type EOFToken struct {
 	TokenBase
@@ -268,6 +305,85 @@ func (lexer *filteringLexer) string() (Token, error) {
 	return StringToken{Value: s}, nil
 }
 
+func (lexer *filteringLexer) array() (Token, error) {
+	term := ']'
+	lexer.advance()
+	if lexer.curChar == term {
+		return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+	}
+
+	if unicode.IsDigit(lexer.curChar) {
+		values := make([]float64, 0)
+		for lexer.curChar != term {
+			if unicode.IsSpace(lexer.curChar) || lexer.curChar == ',' {
+				lexer.advance()
+				continue
+			}
+
+			if lexer.eof {
+				return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+			}
+
+			t, err := lexer.number()
+			if err != nil {
+				return nil, err
+			}
+			numberToken, ok := t.(NumberToken)
+			if !ok {
+				return nil, &UnexpectedTokenError{t}
+			}
+
+			values = append(values, numberToken.Value)
+		}
+
+		if lexer.eof {
+			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+		}
+		lexer.advance()
+
+		return NumberArrayToken{
+			Values: values,
+		}, nil
+
+	} else if lexer.curChar == '\'' || lexer.curChar == '"' {
+		values := make([]string, 0)
+		for lexer.curChar != term {
+			if unicode.IsSpace(lexer.curChar) || lexer.curChar == ',' {
+				lexer.advance()
+				continue
+			}
+
+			if lexer.eof {
+				return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+			}
+
+			t, err := lexer.string()
+			if err != nil {
+				return nil, err
+			}
+
+			numberToken, ok := t.(StringToken)
+			if !ok {
+				return nil, &UnexpectedTokenError{t}
+			}
+
+			values = append(values, numberToken.Value)
+		}
+
+		if lexer.eof {
+			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+		}
+		lexer.advance()
+
+		return StringArrayToken{
+			Values: values,
+		}, nil
+
+	} else {
+		return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+	}
+}
+
 func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 	s := string(lexer.curChar)
 	lexer.advance()
@@ -308,6 +424,10 @@ func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 		return MatchToken{}, nil
 	case "nomatch":
 		return NmatchToken{}, nil
+	case "in":
+		return InToken{}, nil
+	case "ieq":
+		return InsensitiveEqToken{}, nil
 	default:
 		return FieldToken{Value: s}, nil
 	}
@@ -360,8 +480,17 @@ func (lexer *filteringLexer) NextToken() (Token, error) {
 				return LeToken{}, nil
 			}
 			return LtToken{}, nil
+		case lexer.curChar == ':':
+			lexer.advance()
+			if lexer.curChar == '=' {
+				lexer.advance()
+				return InsensitiveEqToken{}, nil
+			}
+			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
 		case lexer.curChar == '\'' || lexer.curChar == '"':
 			return lexer.string()
+		case lexer.curChar == '[':
+			return lexer.array()
 		case unicode.IsDigit(lexer.curChar):
 			return lexer.number()
 		case unicode.IsLetter(lexer.curChar):

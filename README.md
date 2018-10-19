@@ -994,7 +994,7 @@ A service may implement filtering. A collection of response resources can be fil
 | ----------------- |------------------------------------------|
 | _filter           | A string expression containing JSON tags, literal values, and logical operators. |
 
-Literal values include numbers (integer and floating-point), and quoted (both single- or double-quoted) literal strings, and “null”. The following operators are commonly used in filter expressions.
+Literal values include numbers (integer and floating-point), quoted (both single- or double-quoted) literal strings,  “null” , arrays with numbers (integer and floating-point) and arrays with quoted (both single- or double-quoted) literal strings. The following operators are commonly used in filter expressions.
 
 | Operator     | Description              | Example                                                  |
 | ------------ |--------------------------|----------------------------------------------------------|
@@ -1010,6 +1010,8 @@ Literal values include numbers (integer and floating-point), and quoted (both si
 | or           | Logical OR               | price <= 3.5 or price > 200                              |
 | not          | Logical NOT              | not price <= 3.5                                         |
 | ()           | Grouping                 | (priority == 1 or city == ‘Santa Clara’) and price > 100 |
+| := | ieq     | Insensitive equal        | city := 'SaNtA ClArA'                                    |
+| in           | Check existence in set   | city in [‘Santa Clara’, ‘New York’] or  price in [1,2,3] |
 
 Usage of filtering features from the toolkit is similar to [sorting](#sorting).
 

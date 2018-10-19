@@ -163,6 +163,82 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
+			text: "field := 'AbC'",
+			exp: &Filtering{
+				&Filtering_StringCondition{
+					&StringCondition{
+						FieldPath:  []string{"field"},
+						Value:      "AbC",
+						Type:       StringCondition_IE,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not field := 'AbC'",
+			exp: &Filtering{
+				&Filtering_StringCondition{
+					&StringCondition{
+						FieldPath:  []string{"field"},
+						Value:      "AbC",
+						Type:       StringCondition_IE,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "(field := 'AbC') and (field1 := 'BcD')",
+			exp: &Filtering{
+				&Filtering_Operator{
+					Operator: &LogicalOperator{
+						Left: &LogicalOperator_LeftStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "AbC",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field1"},
+								Value:      "BcD",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			text: "(field := 'AbC') and not(field1 := 'BcD')",
+			exp: &Filtering{
+				&Filtering_Operator{
+					Operator: &LogicalOperator{
+						Left: &LogicalOperator_LeftStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "AbC",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field1"},
+								Value:      "BcD",
+								Type:       StringCondition_IE,
+								IsNegative: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			text: "field != \"abc cde\"",
 			exp: &Filtering{
 				&Filtering_StringCondition{
@@ -313,6 +389,98 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
+			text: "field in [1 , 9 ,21]",
+			exp: &Filtering{
+				&Filtering_NumberArrayCondition{
+					&NumberArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []float64{1, 9, 21},
+						Type:       NumberArrayCondition_IN,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (field in [1 , 9 ,21])",
+			exp: &Filtering{
+				&Filtering_NumberArrayCondition{
+					&NumberArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []float64{1, 9, 21},
+						Type:       NumberArrayCondition_IN,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "field in ['Hello' , 'World']",
+			exp: &Filtering{
+				&Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_IN,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (field in ['Hello' , 'World'])",
+			exp: &Filtering{
+				&Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"field"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_IN,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "(not (field in ['Hello' , 'World']) and (field := 'Mike'))",
+			exp: &Filtering{
+				&Filtering_Operator{
+					&LogicalOperator{
+						Left: &LogicalOperator_LeftStringArrayCondition{
+							&StringArrayCondition{
+								FieldPath:  []string{"field"},
+								Values:     []string{"Hello", "World"},
+								Type:       StringArrayCondition_IN,
+								IsNegative: true,
+							},
+						},
+						Right: &LogicalOperator_RightStringCondition{
+							&StringCondition{
+								FieldPath:  []string{"field"},
+								Value:      "Mike",
+								Type:       StringCondition_IE,
+								IsNegative: false,
+							},
+						},
+						Type:       LogicalOperator_AND,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "field ieq 'HeLLo'",
+			exp: &Filtering{
+				&Filtering_StringCondition{
+					&StringCondition{
+						FieldPath:  []string{"field"},
+						Value:      "HeLLo",
+						Type:       StringCondition_IE,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
 			text: "",
 			exp:  nil,
 		},
@@ -353,6 +521,8 @@ func TestFilteringParserNegative(t *testing.T) {
 		"field1 == 234.23.23",
 		"field1 == 'abc",
 		"field1 =! 'cdf'",
+		"field1 =: 'AbC'",
+		"field1 : = 'AbC'",
 	}
 
 	for _, test := range tests {

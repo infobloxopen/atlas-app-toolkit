@@ -7,8 +7,7 @@ import (
 )
 
 func TestFilteringLexer(t *testing.T) {
-
-	lexer := NewFilteringLexer(`()14 13.23 'abc'"bcd" field1 and or  not == eq ne != match ~ nomatch !~ gt > ge >= lt < le <= null`)
+	lexer := NewFilteringLexer(`()14 13.23 'abc'"bcd" field1 and or  not == eq ne != match ~ nomatch !~ gt > ge >= lt < le <= null := ieq [1,5, 6] ['Hello','World'] in `)
 	tests := []Token{
 		LparenToken{},
 		RparenToken{},
@@ -37,6 +36,11 @@ func TestFilteringLexer(t *testing.T) {
 		LeToken{},
 		LeToken{},
 		NullToken{},
+		InsensitiveEqToken{},
+		InsensitiveEqToken{},
+		NumberArrayToken{Values: []float64{1, 5, 6}},
+		StringArrayToken{Values: []string{"Hello", "World"}},
+		InToken{},
 		EOFToken{},
 	}
 
@@ -53,6 +57,10 @@ func TestFilteringLexerNegative(t *testing.T) {
 		"!!",
 		"%",
 		"'string",
+		"[]",
+		"['Hello', 1, 2]",
+		"[1, 2",
+		"['Hello'",
 	}
 
 	for _, test := range tests {
