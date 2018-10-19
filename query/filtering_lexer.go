@@ -418,6 +418,8 @@ func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 		return NmatchToken{}, nil
 	case "in":
 		return InToken{}, nil
+	case "ie":
+		return InsensitiveEqToken{}, nil
 	default:
 		return FieldToken{Value: s}, nil
 	}
