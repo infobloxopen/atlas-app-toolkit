@@ -469,12 +469,12 @@ func TestFilteringParser(t *testing.T) {
 		},
 		{
 			text: "field ie 'HeLLo'",
-			exp:  &Filtering{
+			exp: &Filtering{
 				&Filtering_StringCondition{
 					&StringCondition{
-						FieldPath: []string{"field"},
-						Value:     "HeLLo",
-						Type:      StringCondition_IE,
+						FieldPath:  []string{"field"},
+						Value:      "HeLLo",
+						Type:       StringCondition_IE,
 						IsNegative: false,
 					},
 				},
