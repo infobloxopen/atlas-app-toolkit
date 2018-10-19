@@ -314,24 +314,28 @@ func (lexer *filteringLexer) array() (Token, error) {
 
 	if unicode.IsDigit(lexer.curChar) {
 		values := make([]float64, 0)
-		for lexer.curChar != term || lexer.eof {
-			switch lexer.curChar {
-			case ' ', ',':
+		for lexer.curChar != term {
+			if unicode.IsSpace(lexer.curChar) || lexer.curChar == ',' {
 				lexer.advance()
 				continue
-			default:
-				t, err := lexer.number()
-				if err != nil {
-					return nil, err
-				}
-				numberToken, ok := t.(NumberToken)
-				if !ok {
-					return nil, &UnexpectedTokenError{t}
-				}
-
-				values = append(values, numberToken.Value)
 			}
+
+			if lexer.eof {
+				return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+			}
+
+			t, err := lexer.number()
+			if err != nil {
+				return nil, err
+			}
+			numberToken, ok := t.(NumberToken)
+			if !ok {
+				return nil, &UnexpectedTokenError{t}
+			}
+
+			values = append(values, numberToken.Value)
 		}
+
 		if lexer.eof {
 			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
 		}
@@ -343,25 +347,29 @@ func (lexer *filteringLexer) array() (Token, error) {
 
 	} else if lexer.curChar == '\'' || lexer.curChar == '"' {
 		values := make([]string, 0)
-		for lexer.curChar != term || lexer.eof {
-			switch lexer.curChar {
-			case ' ', ',':
+		for lexer.curChar != term {
+			if unicode.IsSpace(lexer.curChar) || lexer.curChar == ',' {
 				lexer.advance()
 				continue
-			default:
-				t, err := lexer.string()
-				if err != nil {
-					return nil, err
-				}
-
-				numberToken, ok := t.(StringToken)
-				if !ok {
-					return nil, &UnexpectedTokenError{t}
-				}
-
-				values = append(values, numberToken.Value)
 			}
+
+			if lexer.eof {
+				return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+			}
+
+			t, err := lexer.string()
+			if err != nil {
+				return nil, err
+			}
+
+			numberToken, ok := t.(StringToken)
+			if !ok {
+				return nil, &UnexpectedTokenError{t}
+			}
+
+			values = append(values, numberToken.Value)
 		}
+
 		if lexer.eof {
 			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
 		}
@@ -418,7 +426,7 @@ func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 		return NmatchToken{}, nil
 	case "in":
 		return InToken{}, nil
-	case "ie":
+	case "ieq":
 		return InsensitiveEqToken{}, nil
 	default:
 		return FieldToken{Value: s}, nil

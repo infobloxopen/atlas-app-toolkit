@@ -468,7 +468,7 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
-			text: "field ie 'HeLLo'",
+			text: "field ieq 'HeLLo'",
 			exp: &Filtering{
 				&Filtering_StringCondition{
 					&StringCondition{

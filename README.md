@@ -1004,7 +1004,7 @@ Literal values include numbers (integer and floating-point), quoted (both single
 | or           | Logical OR               | price <= 3.5 or price > 200                              |
 | not          | Logical NOT              | not price <= 3.5                                         |
 | ()           | Grouping                 | (priority == 1 or city == ‘Santa Clara’) and price > 100 |
-| := | ie      | Insensitive equal        | city := 'SaNtA ClArA'                                    |
+| := | ieq     | Insensitive equal        | city := 'SaNtA ClArA'                                    |
 | in           | Check existence in set   | city in [‘Santa Clara’, ‘New York’] or  price in [1,2,3] |
 
 Usage of filtering features from the toolkit is similar to [sorting](#sorting).
