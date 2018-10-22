@@ -109,6 +109,8 @@ func (c *StringCondition) Filter(obj interface{}) (bool, error) {
 	switch c.Type {
 	case StringCondition_EQ:
 		return negateIfNeeded(s == c.Value, c.IsNegative), nil
+	case StringCondition_IE:
+		return negateIfNeeded(strings.ToLower(s) == strings.ToLower(c.Value), c.IsNegative), nil
 	case StringCondition_MATCH:
 		// add regex caching
 		matched, err := regexp.MatchString(c.Value, s)
@@ -171,6 +173,63 @@ func (c *NullCondition) Filter(obj interface{}) (bool, error) {
 		return false, &TypeMismatchError{"nullable", c.FieldPath}
 	}
 	return negateIfNeeded(fv.IsNil(), c.IsNegative), nil
+}
+
+func (c *StringArrayCondition) Filter(obj interface{}) (bool, error) {
+	fv := fieldByFieldPath(obj, c.FieldPath)
+	fv = dereferenceValue(fv)
+	if fv.Kind() != reflect.String {
+		return false, &TypeMismatchError{"string", c.FieldPath}
+	}
+	s := fv.String()
+	switch c.Type {
+	case StringArrayCondition_IN:
+		return negateIfNeeded(stringInSlice(s, c.Values), c.IsNegative), nil
+	default:
+		return false, &UnsupportedOperatorError{"[]string", c.Type.String()}
+	}
+}
+
+func stringInSlice(s string, slice []string) bool {
+	for _, val := range slice {
+		if val == s {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *NumberArrayCondition) Filter(obj interface{}) (bool, error) {
+	fv := fieldByFieldPath(obj, c.FieldPath)
+	fv = dereferenceValue(fv)
+	var f float64
+	switch fv.Kind() {
+	case reflect.Float32, reflect.Float64:
+		f = fv.Float()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		f = float64(fv.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		f = float64(fv.Uint())
+	default:
+		return false, &TypeMismatchError{"number", c.FieldPath}
+	}
+	switch c.Type {
+	case NumberArrayCondition_IN:
+		return negateIfNeeded(floatInSlice(f, c.Values), c.IsNegative), nil
+	default:
+		return false, &UnsupportedOperatorError{"number", c.Type.String()}
+	}
+}
+
+func floatInSlice(digit float64, slice []float64) bool {
+	for _, val := range slice {
+		if digit == val {
+			return true
+		}
+	}
+
+	return false
 }
 
 func fieldByFieldPath(obj interface{}, fieldPath []string) reflect.Value {
@@ -247,6 +306,14 @@ func (m *Filtering_NullCondition) Filter(obj interface{}) (bool, error) {
 	return m.NullCondition.Filter(obj)
 }
 
+func (m *Filtering_StringArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.StringArrayCondition.Filter(obj)
+}
+
+func (m *Filtering_NumberArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.NumberArrayCondition.Filter(obj)
+}
+
 func (m *LogicalOperator_LeftOperator) Filter(obj interface{}) (bool, error) {
 	return m.LeftOperator.Filter(obj)
 }
@@ -261,6 +328,14 @@ func (m *LogicalOperator_LeftNumberCondition) Filter(obj interface{}) (bool, err
 
 func (m *LogicalOperator_LeftNullCondition) Filter(obj interface{}) (bool, error) {
 	return m.LeftNullCondition.Filter(obj)
+}
+
+func (m *LogicalOperator_LeftStringArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.LeftStringArrayCondition.Filter(obj)
+}
+
+func (m *LogicalOperator_LeftNumberArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.LeftNumberArrayCondition.Filter(obj)
 }
 
 func (m *LogicalOperator_RightOperator) Filter(obj interface{}) (bool, error) {
@@ -279,6 +354,14 @@ func (m *LogicalOperator_RightNullCondition) Filter(obj interface{}) (bool, erro
 	return m.RightNullCondition.Filter(obj)
 }
 
+func (m *LogicalOperator_RightStringArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.RightStringArrayCondition.Filter(obj)
+}
+
+func (m *LogicalOperator_RightNumberArrayCondition) Filter(obj interface{}) (bool, error) {
+	return m.RightNumberArrayCondition.Filter(obj)
+}
+
 // SetRoot automatically wraps r into appropriate oneof structure and sets it to Root.
 func (m *Filtering) SetRoot(r interface{}) error {
 	switch x := r.(type) {
@@ -290,6 +373,10 @@ func (m *Filtering) SetRoot(r interface{}) error {
 		m.Root = &Filtering_NumberCondition{x}
 	case *NullCondition:
 		m.Root = &Filtering_NullCondition{x}
+	case *StringArrayCondition:
+		m.Root = &Filtering_StringArrayCondition{x}
+	case *NumberArrayCondition:
+		m.Root = &Filtering_NumberArrayCondition{x}
 	case nil:
 		m.Root = nil
 	default:
@@ -309,6 +396,10 @@ func (m *LogicalOperator) SetLeft(l interface{}) error {
 		m.Left = &LogicalOperator_LeftNumberCondition{x}
 	case *NullCondition:
 		m.Left = &LogicalOperator_LeftNullCondition{x}
+	case *StringArrayCondition:
+		m.Left = &LogicalOperator_LeftStringArrayCondition{x}
+	case *NumberArrayCondition:
+		m.Left = &LogicalOperator_LeftNumberArrayCondition{x}
 	case nil:
 		m.Left = nil
 	default:
@@ -328,6 +419,10 @@ func (m *LogicalOperator) SetRight(r interface{}) error {
 		m.Right = &LogicalOperator_RightNumberCondition{x}
 	case *NullCondition:
 		m.Right = &LogicalOperator_RightNullCondition{x}
+	case *StringArrayCondition:
+		m.Right = &LogicalOperator_RightStringArrayCondition{x}
+	case *NumberArrayCondition:
+		m.Right = &LogicalOperator_RightNumberArrayCondition{x}
 	case nil:
 		m.Right = nil
 	default:

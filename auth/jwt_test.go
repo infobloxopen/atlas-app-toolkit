@@ -26,10 +26,7 @@ func TestGetJWTFieldWithTokenType(t *testing.T) {
 		{
 			contextFactory: func(t *testing.T) context.Context {
 				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
-				ctx, err := contextWithToken(token, "Bearer")
-				if err != nil {
-					t.Fatalf("Error when building request context: %v", err)
-				}
+				ctx := contextWithToken(token, "Bearer")
 				return ctx
 			},
 			tokenType: "Bearer",
@@ -40,10 +37,7 @@ func TestGetJWTFieldWithTokenType(t *testing.T) {
 		{
 			contextFactory: func(t *testing.T) context.Context {
 				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
-				ctx, err := contextWithToken(token, "Bearer")
-				if err != nil {
-					t.Fatalf("Error when building request context: %v", err)
-				}
+				ctx := contextWithToken(token, "Bearer")
 				return ctx
 			},
 			tokenType: "Bearer",
@@ -54,10 +48,7 @@ func TestGetJWTFieldWithTokenType(t *testing.T) {
 		{
 			contextFactory: func(t *testing.T) context.Context {
 				token := makeToken(jwt.MapClaims{"some-field": "id-abc-123"}, t)
-				ctx, err := contextWithToken(token, "Bearer")
-				if err != nil {
-					t.Fatalf("Error when building request context: %v", err)
-				}
+				ctx := contextWithToken(token, "Bearer")
 				return ctx
 			},
 			tokenType: "token",
@@ -110,12 +101,9 @@ func TestGetJWTField(t *testing.T) {
 		},
 	}
 	for _, test := range jwtFieldTests {
-		ctx, err := contextWithToken(
+		ctx := contextWithToken(
 			makeToken(test.claims, t), DefaultTokenType,
 		)
-		if err != nil {
-			t.Fatalf("Error when building request context: %v", err)
-		}
 		actual, err := GetJWTField(ctx, test.field, nil)
 		if err != test.err {
 			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
@@ -154,10 +142,7 @@ func TestGetAccountID(t *testing.T) {
 	}
 	for _, test := range accountIDTests {
 		token := makeToken(test.claims, t)
-		ctx, err := contextWithToken(token, DefaultTokenType)
-		if err != nil {
-			t.Fatalf("Error when building request context: %v", err)
-		}
+		ctx := contextWithToken(token, DefaultTokenType)
 		actual, err := GetAccountID(ctx, nil)
 		if err != test.err {
 			t.Errorf("Invalid error value: %v - expected %v", err, test.err)
@@ -169,11 +154,11 @@ func TestGetAccountID(t *testing.T) {
 }
 
 // creates a context with a jwt
-func contextWithToken(token, tokenType string) (context.Context, error) {
+func contextWithToken(token, tokenType string) context.Context {
 	md := metadata.Pairs(
 		"authorization", fmt.Sprintf("%s %s", tokenType, token),
 	)
-	return metadata.NewIncomingContext(context.Background(), md), nil
+	return metadata.NewIncomingContext(context.Background(), md)
 }
 
 // generates a token string based on the given jwt claims

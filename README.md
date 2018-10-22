@@ -88,6 +88,9 @@ As an alternative you may use [this plugin](https://github.com/mwitkow/go-proto-
 
 Validation can be invoked "automatically" if you add [this](https://github.com/grpc-ecosystem/go-grpc-middleware/tree/master/validator) middleware as a gRPC server interceptor.
 
+#### Database Migrations
+The toolkit does not require any specific method for database provisioning and setup. However, if [golang-migrate](https://github.com/golang-migrate/migrate) or the [infobloxopen fork](https://github.com/infobloxopen/migrate) of it is used, a couple helper functions are provided [here](gorm/version.go) for verifying that the database version matches a required version without having to import the entire migration package.
+
 #### Documentation
 
 We recommend to use [this plugin](https://github.com/pseudomuto/protoc-gen-doc) to generate documentation.

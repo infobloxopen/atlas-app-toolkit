@@ -69,6 +69,8 @@ message Filtering {
         StringCondition string_condition = 2;
         NumberCondition number_condition = 3;
         NullCondition null_condition = 4;
+        StringArrayCondition string_array_condition = 5;
+        NumberArrayCondition number_array_condition = 6;
     }
 }
 
@@ -82,12 +84,16 @@ message LogicalOperator {
         StringCondition left_string_condition = 2;
         NumberCondition left_number_condition = 3;
         NullCondition left_null_condition = 4;
+        StringArrayCondition left_string_array_condition = 11;
+        NumberArrayCondition left_number_array_condition = 12;
     }
     oneof right {
         LogicalOperator right_operator = 5;
         StringCondition right_string_condition = 6;
         NumberCondition right_number_condition = 7;
         NullCondition right_null_condition = 8;
+        StringArrayCondition right_string_array_condition = 13;
+        NumberArrayCondition right_number_array_condition = 14;
     }
     enum Type {
         AND = 0;
@@ -112,6 +118,7 @@ message StringCondition {
         GE = 3;
         LT = 4;
         LE = 5;
+        IE = 6;
     }
     Type type = 3;
     bool is_negative = 4;
@@ -142,6 +149,33 @@ message NumberCondition {
 message NullCondition {
     repeated string field_path = 1;
     bool is_negative = 2;
+}
+
+// StringArrayCondition represents a condition with string arrays, e.g. field in ['hello','world']
+// field_path is a reference to a value of a resource.
+// is_negative is set to true if the condition is negated
+message StringArrayCondition {
+    repeated string field_path = 1;
+    repeated string values = 2;
+    enum Type {
+        IN = 0;
+    }
+    Type type = 3;
+    bool is_negative = 4;
+}
+
+
+// NumberArrayCondition represents a condition with string arrays, e.g. field in [1, 5, 7]
+// field_path is a reference to a value of a resource.
+// is_negative is set to true if the condition is negated
+message NumberArrayCondition {
+    repeated string field_path = 1;
+    repeated double values = 2;
+    enum Type {
+        IN = 0;
+    }
+    Type type = 3;
+    bool is_negative = 4;
 }
 
 // Pagination represents both server-driven and client-driven pagination request.
