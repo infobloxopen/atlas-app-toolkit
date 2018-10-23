@@ -7,34 +7,33 @@
 You can map your gRPC service methods to one or more REST API endpoints.
 See [this reference](https://cloud.google.com/service-management/reference/rpc/google.api#http) how to do it.
 
+It is possible to define multiple HTTP methods for one RPC by using the `additional_bindings` option. Example:
+
 ```proto
-// It is possible to define multiple HTTP methods for one RPC by using
-// the `additional_bindings` option. Example:
-//
-//     service Messaging {
-//       rpc GetMessage(GetMessageRequest) returns (Message) {
-//         option (google.api.http) = {
-//           get: "/v1/messages/{message_id}"
-//           additional_bindings {
-//             get: "/v1/users/{user_id}/messages/{message_id}"
-//           }
-//         };
-//       }
-//     }
-//     message GetMessageRequest {
-//       string message_id = 1;
-//       string user_id = 2;
-//     }
-//
-//
-// This enables the following two alternative HTTP JSON to RPC
-// mappings:
-//
-// HTTP | RPC
-// -----|-----
-// `GET /v1/messages/123456` | `GetMessage(message_id: "123456")`
-// `GET /v1/users/me/messages/123456` | `GetMessage(user_id: "me" message_id: "123456")`
+service Messaging {
+  rpc GetMessage(GetMessageRequest) returns (Message) {
+    option (google.api.http) = {
+      get: "/v1/messages/{message_id}"
+        additional_bindings {
+          get: "/v1/users/{user_id}/messages/{message_id}"
+        }
+      };
+    }
+  }
+}
+
+message GetMessageRequest {
+  string message_id = 1;
+  string user_id = 2;
+}
 ```
+This enables the following two alternative HTTP JSON to RPC mappings: 
+
+| HTTP | RPC
+| -----|-----
+| `GET /v1/messages/123456` | `GetMessage(message_id: "123456")`
+| `GET /v1/users/me/messages/123456` | `GetMessage(user_id: "me" message_id: "123456")`
+
 
 ### HTTP Headers
 
@@ -337,7 +336,7 @@ How to use [gateway.DefaultProtoErrorHandler](gateway/errors.go#L25) see example
 ```golang
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/infobloxopen/atlas-app-toolkit/gw"
+    "github.com/infobloxopen/atlas-app-toolkit/gateway"
 
     "github.com/yourrepo/yourapp"
 )
