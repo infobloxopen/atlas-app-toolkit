@@ -27,7 +27,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5a8d32b3e55e592f903fead865fe933164388ef3748f23430f9ca54a0dbd87cc"
+  digest = "1:b0add830aeeb55d56127cb60199eca80cbff045ee0cd1ed4b82153fd17288b5b"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -44,7 +44,7 @@
     "ptypes/wrappers",
   ]
   pruneopts = "UT"
-  revision = "31e0d063dd98c052257e5b69eeb006818133f45c"
+  revision = "7be3631955993a734965532f776bad7093f6fc9d"
 
 [[projects]]
   digest = "1:3a26588bc48b96825977c1b3df964f8fd842cd6860cc26370588d3563433cf11"
@@ -56,13 +56,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a35934b7fbebbc8c1c3f06661907202f7ce6bf36375730642d049f77c86db341"
+  digest = "1:06d49856905977d3136c52f2f6e9545688c9a818907c4c8c836f7f2b6a09d9cc"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
   packages = [
     ".",
     "auth",
+    "logging",
+    "logging/logrus",
     "logging/logrus/ctxlogrus",
     "tags",
+    "tags/logrus",
     "util/metautils",
   ]
   pruneopts = "UT"
@@ -101,16 +104,16 @@
   revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f44d34fda864bed6d6c71514cd40b2ee097e6e67f745d5d014113e1faa5af8b7"
+  digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b729f2633dfe35f4d1d8a32385f6685610ce1cb5"
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
-  digest = "1:b18ffc558326ebaed3b4a175617f1e12ed4e3f53d6ebfe5ba372a3de16d22278"
+  digest = "1:eccb7932085ab3d943b3272216bbe1cbbdc5a06a6056d6c2b0ea0cf7f0519e6d"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -118,7 +121,7 @@
     "oid",
   ]
   pruneopts = "UT"
-  revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
+  revision = "9eb73efc1fcc404148b56765b0d3f61d9a5ef8ee"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -129,12 +132,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:dc2d85c13ac22c22a1f3170a41a8e1b897fa05134aaf533f16df44f66a25b4a1"
+  digest = "1:3f53e9e4dfbb664cd62940c9c4b65a2171c66acd0b7621a1a6b8e78513525a52"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
-  version = "v1.1.0"
+  revision = "ad15b42461921f1fb3529b058c6786c6a45d5162"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -150,7 +153,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "UT"
-  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
+  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
 
 [[projects]]
   branch = "master"
@@ -166,18 +169,18 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "68fc911561ed0cb104e22deafa05515909b706ab"
+  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
 
 [[projects]]
   branch = "master"
-  digest = "1:8a35cf7e4a316cee63d627d7de15b81901a19f8a3f9aff0d1a80c746a57234d6"
+  digest = "1:db09bef7e2c1a744c896d1f812eb7f08c1b13828edff7d7b6dd8a7f2e504e87f"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "8469e314837c2e2471561de5c47bbf8bfd0d9099"
+  revision = "8b8824e799c8fc8e6d900615cc6c761ce6c26c67"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -213,7 +216,7 @@
     "protobuf/field_mask",
   ]
   pruneopts = "UT"
-  revision = "af9cb2a35e7f169ec875002c1829c9b315cddc04"
+  revision = "94acd270e44e65579b9ee3cdab25034d33fed608"
 
 [[projects]]
   digest = "1:2dab32a43451e320e49608ff4542fdfc653c95dcc35d0065ec9c6c3dd540ed74"
@@ -260,7 +263,9 @@
     "github.com/golang/protobuf/protoc-gen-go/generator",
     "github.com/golang/protobuf/ptypes/wrappers",
     "github.com/google/uuid",
+    "github.com/grpc-ecosystem/go-grpc-middleware",
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
+    "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
     "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options",
     "github.com/grpc-ecosystem/grpc-gateway/runtime",
