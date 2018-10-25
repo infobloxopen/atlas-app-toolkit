@@ -21,9 +21,10 @@ Awesome. Example time!
 
 ```go
 import (
-  "log"
-  "testing"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 // TestMain does pre-test set up
@@ -58,39 +59,41 @@ To start out, here's how you can use the Postgres options to configure your data
 
 ```go
 import (
-  "log"
-  "testing"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
-  _ "github.com/lib/pq"
+	"database/sql"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	_ "github.com/lib/pq"
 )
 
 var (
-  myTestDatabase integration.PostgresDBConfig
+	myTestDatabase integration.TestPostgresDB
 )
 
 func TestMain(m *testing.M) {
-  // myMigrateFunc describes how to build the database schema from scratch
-  myMigrateFunc := func(db *sql.DB) error {
-    // migration.Run(db) isn't a real function, but let's pretend it 
-    // creates some tables in a database
-    migration.Run(db)
-  }
-  config, err := db,integration.NewTestPostgresDB(
-    integration.WithName("my_database_name"),
-    // passing a migrate up function will allow the database schema to be
-    // destroyed and re-built, effectively causing the database to reset
-    integration.WithMigrateUpFunction(myMigrateFunc)
-  )
-  if err != nil {
-    log.Fatal("unable to build postgres config")
-  }
-  config = myTestDatabase
-  stop, err := myTestDatabase.RunAsDockerContainer()
-  if err != nil {
-    log.Fatal("unable to start test database")
-  }
-  defer stop()
-  m.Run()
+	// myMigrateFunc describes how to build the database schema from scratch
+	myMigrateFunc := func(db *sql.DB) error {
+		// migration.Run(db) isn't a real function, but let's pretend it
+		// creates some tables in a database
+		return migration.Run(db)
+	}
+	config, err := integration.NewTestPostgresDB(
+		integration.WithName("my_database_name"),
+		// passing a migrate up function will allow the database schema to be
+		// destroyed and re-built, effectively causing the database to reset
+		integration.WithMigrateUpFunction(myMigrateFunc),
+	)
+	if err != nil {
+		log.Fatal("unable to build postgres config")
+	}
+	myTestDatabase = config
+	stop, err := myTestDatabase.RunAsDockerContainer()
+	if err != nil {
+		log.Fatal("unable to start test database")
+	}
+	defer stop()
+	m.Run()
 }
 ```
 
@@ -98,8 +101,7 @@ The example above will configure and launch the database. The code below shows h
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+  "testing"
 )
 
 func TestMyEndpoint(t *testing.T) {
@@ -122,11 +124,13 @@ Alternatively, you can build your application or service's Docker image, then ru
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
-func TestMain(m *testing.T) {
+func TestMain(m *testing.M) {
   remove, err := integration.BuildGoSource("./path/to/my/go/package", "binaryName")
   if err != nil {
     log.Fatalf("unable to build go binary: %v", err)
@@ -140,23 +144,26 @@ func TestMain(m *testing.T) {
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
-func TestMain(m *testing.T) {
-  stop, err := integration.RunBinary(
-    "./path/to/my/go/package/binaryName", 
-    // provide as many command-line arguments as you like
-    "-debug=true",
-  )
-  if err != nil {
-    log.Fatalf("unable to run go binary: %v", err)
-  }
-  // this will stop the running process
-  defer stop()
-  m.Run()
+func TestMain(m *testing.M) {
+	stop, err := integration.RunBinary(
+		"./path/to/my/go/package/binaryName",
+		// provide as many command-line arguments as you like
+		"-debug=true",
+	)
+	if err != nil {
+		log.Fatalf("unable to run go binary: %v", err)
+	}
+	// this will stop the running process
+	defer stop()
+	m.Run()
 }
+
 ```
 ### Finding Open Ports
 
@@ -165,31 +172,36 @@ To help avoid port conflicts, the `integration` package provides a simple helper
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 func TestMain(m *testing.M) {
-  port, err := integration.GetOpenPort()
-  if err != nil {
-    log.Fatalf("unable to find open port: %v", err)
-  }
+	port, err := integration.GetOpenPort()
+	if err != nil {
+		log.Fatalf("unable to find open port: %v", err)
+	}
 }
+
 ```
 
 You can also specify a port range.
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"log"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 func TestMain(m *testing.M) {
-  port, err := integration.GetOpenPortInRange(6000, 8000)
-  if err != nil {
-    log.Fatalf("unable to find open port: %v", err)
-  }
+	port, err := integration.GetOpenPortInRange(6000, 8000)
+	if err != nil {
+		log.Fatalf("unable to find open port: %v", err)
+	}
 }
 ```
 
@@ -203,22 +215,23 @@ If you just need a token, but don't particularly care what it contains, then you
 
 ```go
 import (
-  "http"
-  "testing"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"net/http"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 func TestMyEndpoint(t *testing.T) {
-  token, err := integration.StandardTestJWT()
-  if err != nil {
-    t.Fatalf("unable to generate test token: %v", err)
-  }
-  req, err := http.NewRequest(method, url)
-  if err != nil {
-    t.Fatalf("unable to generate test request: %v", err)
-  }
-  req.Header.Set("Authorization: Bearer %s", token)
-  ...
+	token, err := integration.StandardTestJWT()
+	if err != nil {
+		t.Fatalf("unable to generate test token: %v", err)
+	}
+	req, err := http.NewRequest(http.MethodGet, "/endpoint", nil)
+	if err != nil {
+		t.Fatalf("unable to generate test request: %v", err)
+	}
+	req.Header.Set("Authorization: Bearer %s", token)
+	...
 }
 ```
 
@@ -230,22 +243,24 @@ Here's how you would be a test HTTP request.
 
 ```go
 import (
-  "http"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"net/http"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 func TestMyEndpoint(t *testing.T) {
-  client := http.Client{}
-  req, err := integration.MakeStandardRequest(
-    test.method, testServer.URL, map[string]string{
-      "message", "hello world",
-    },
-  )
-  if err != nil {
-    t.Fatalf("unable to build test http request: %v", err)
-  }
-  res, err := client.Do(req)
-  ...
+	client := http.Client{}
+	req, err := integration.MakeStandardRequest(
+		http.MethodGet, "/endpoint", map[string]string{
+			"message": "hello world",
+		},
+	)
+	if err != nil {
+		t.Fatalf("unable to build test http request: %v", err)
+	}
+	res, err := client.Do(req)
+	...
 }
 ```
 
@@ -253,20 +268,21 @@ And the same for gRPC requests.
 
 ```go
 import (
-  "log"
-  "github.com/infobloxopen/atlas-app-toolkit/integration"
+	"testing"
+
+	"github.com/infobloxopen/atlas-app-toolkit/integration"
 )
 
 func TestMyGRPCEndpoint(t *testing.T) {
-  ctx, err := integration.StandardTestingContext()
-  if err != nil {
-    t.Fatalf("unable to build test grpc context: %v", err)
-  }
-  gRPCResponseMessage, err := gRPCClient.MyGRPCEndpoint(ctx, gRPCRequestMessage)
-  if err != nil {
-    t.Fatalf("unable to send grpc request: %v", err)
-  }
-  ...
+	ctx, err := integration.StandardTestingContext()
+	if err != nil {
+		t.Fatalf("unable to build test grpc context: %v", err)
+	}
+	gRPCResponseMessage, err := gRPCClient.MyGRPCEndpoint(ctx, gRPCRequestMessage)
+	if err != nil {
+		t.Fatalf("unable to send grpc request: %v", err)
+	}
+	...
 }
 ```
 
