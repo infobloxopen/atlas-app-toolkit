@@ -7,7 +7,7 @@ import (
 )
 
 // HTTPGetCheck returns a Check that performs an HTTP GET request to the
-// specified URL. It fails whether timeout is reached or non-200-OK status code returned.
+// specified URL. It fails if timeout was exceeded or non-200-OK status code returned.
 func HTTPGetCheck(url string, timeout time.Duration) Check {
 	client := http.Client{
 		Timeout: timeout,

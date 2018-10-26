@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// DNSProbeCheck returns a Check that determines wheteher service
+// DNSProbeCheck returns a Check that determines whether a service
 // with specified dns name is reachable or not using net.Resolver's LookupHost method.
 func DNSProbeCheck(host string, timeout time.Duration) Check {
 	resolver := net.Resolver{}
