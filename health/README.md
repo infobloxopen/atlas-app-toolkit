@@ -5,7 +5,7 @@ Package also provides implementation for most typical checks that may be done to
 
 ## REST Handler
 
-In order to add a handler for the service
+A handler to serve checks using `/health` and `/ready` endpoints can be added to your service in a following way: 
 
 ```go
 	healthChecker := health.NewChecksHandler("/health", "/ready"),
