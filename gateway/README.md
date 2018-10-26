@@ -1,13 +1,15 @@
-# Gateway Package
+# Gateway
 
-### Resources and Collections
+This package contains helper functions that support creating, configuring, and running a gRPC REST gateway that is REST syntax compliant. Google already provides a lot of documentation related to the gRPC gateway, so this README will mostly serve to link to existing docs.
 
-#### How to define REST API Endpoints in my proto scheme?
+> gRPC is great — it generates API clients and server stubs in many programming languages, it is fast, easy-to-use, bandwidth-efficient and its design is combat-proven by Google. However, you might still want to provide a traditional RESTful API as well. Reasons can range from maintaining backwards-compatibility, supporting languages or clients not well supported by gRPC to simply maintaining the aesthetics and tooling involved with a RESTful architecture.
 
-You can map your gRPC service methods to one or more REST API endpoints.
-See [this reference](https://cloud.google.com/service-management/reference/rpc/google.api#http) how to do it.
 
-It is possible to define multiple HTTP methods for one RPC by using the `additional_bindings` option. Example:
+## Define REST Endpoints in Proto Schema
+
+You can map your gRPC service methods to one or more REST API endpoints. Google's official gRPC documentation has several great examples [here](https://cloud.google.com/service-management/reference/rpc/google.api#http).
+
+Note that it is possible to define multiple HTTP methods for one RPC by using the `additional_bindings` option.
 
 ```proto
 service Messaging {
@@ -29,24 +31,21 @@ message GetMessageRequest {
 ```
 This enables the following two alternative HTTP JSON to RPC mappings: 
 
-| HTTP | RPC
-| -----|-----
-| `GET /v1/messages/123456` | `GetMessage(message_id: "123456")`
-| `GET /v1/users/me/messages/123456` | `GetMessage(user_id: "me" message_id: "123456")`
+| HTTP Verb | REST Endpoint                     | RPC                                                 |
+| ----------|-----------------------------------|---------------------------------------------------- |
+| `GET`     | `/v1/messages/123456`             | `GetMessage("123456")`                  |
+| `GET`     | `/v1/users/me/messages/123456`    | `GetMessage("me", "123456")`    |
 
 
-### HTTP Headers
+## HTTP Headers
 
-#### How are HTTP request headers mapped to gRPC client metadata?
+Your application or service might depend on HTTP headers from incoming REST requests. The official gRPC gateway documentation describes how to handle HTTP headers in detail, so check out the documentation [here](https://grpc-ecosystem.github.io/grpc-gateway/docs/customizingyourgateway.html).
 
-[Answer](https://github.com/grpc-ecosystem/grpc-gateway/wiki/How-to-customize-your-gateway#mapping-from-http-request-headers-to-grpc-client-metadata)
+### Using Headers in gRPC Service
 
-#### How can I get HTTP request header on my gRPC service?
+To extract headers from metadata, you can use the [`FromIncomingContext`](https://godoc.org/google.golang.org/grpc/metadata#FromIncomingContext) function.
 
-To extract headers from metadata all you need is to use
-[FromIncomingContext](https://godoc.org/google.golang.org/grpc/metadata#FromIncomingContext) function
-
-```golang
+```go
 import (
     "context"
 
@@ -66,9 +65,9 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 }
 ```
 
-Also you can use our helper function `gateway.Header()`
+You can also use the helper function provided in this package.
 
-```golang
+```go
 import (
     "context"
 
@@ -84,11 +83,11 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 }
 ```
 
-#### How can I send gRPC metadata?
+### Adding Headers to REST Response
 
-To send metadata to gRPC-Gateway from your gRPC service you need to use [SetHeader](https://godoc.org/google.golang.org/grpc#SetHeader) function.
+To send metadata from the gRPC server to the REST client, you need to use the [`SetHeader`](https://godoc.org/google.golang.org/grpc#SetHeader) function.
 
-```golang
+```go
 import (
     "context"
 
@@ -105,9 +104,10 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 }
 ```
 
-If you do not use any custom outgoing header matcher you would see something like that:
+If you do not use any custom outgoing header matcher, you will see something like this.
+
 ```sh
-> curl -i http://localhost:8080/contacts/v1/contacts
+$ curl -i http://localhost:8080/contacts/v1/contacts
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -118,23 +118,19 @@ Content-Length: 2
 {}
 ```
 
-### Responses
+## Responses
 
-By default gRPC-Gateway translates non-error gRPC response into HTTP response
-with status code set to `200 - OK`.
+You may need to modify the HTTP response body returned by the gRPC gateway. For instance, the gRPC Gateway translates non-error gRPC responses into `200 - OK` HTTP responses, which might not suit your particular use case.
 
-A HTTP response returned from gRPC-Gateway does not comform REST API Syntax
-and has no `success` section.
+### Overwrite Default Response Forwarder
 
-In order to override this behavior gRPC-Gateway wiki recommends to overwrite
-`ForwardResponseMessage` and `ForwardResponseStream` functions correspondingly.
-See [this article](https://github.com/grpc-ecosystem/grpc-gateway/wiki/How-to-customize-your-gateway#replace-a-response-forwarder-per-method)
+By default, an HTTP response returned by the gRPC Gateway doesn't conform to the Infoblox REST API Syntax (e.g. it has no `success` section).
 
-#### How can I overwrite default Forwarders?
+To override this behavior, the gRPC Gateway documentation recommends overwriting `ForwardResponseMessage` and `ForwardResponseStream` functions correspondingly. See [this documentation](https://github.com/grpc-ecosystem/grpc-gateway/wiki/How-to-customize-your-gateway#replace-a-response-forwarder-per-method) for further information.
 
-```
+```go
 import (
-	"github.com/infobloxopen/atlas-app-toolkit/gw"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 func init() {
@@ -142,31 +138,26 @@ func init() {
 }
 ```
 
-You can also refer [example app](https://github.com/github.com/infobloxopen/atlas-contacts-app/pb/contacts/contacts.overwrite.pb.gw.go)
+You can also refer [example app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.overwrite.pb.gw.go).
 
-#### Which forwarders I need to use to comply our REST API?
+#### Conforming to REST API Syntax
 
-We made default [ForwardResponseMessage](gateway/response.go#L36) and [ForwardResponseMessage](gateway/response.go#L38)
+We made default [`ForwardResponseMessageFunc`](response.go#L21) and [`ForwardResponseStreamFunc`](response.go#L21)
 implementations that conform REST API Syntax.
 
-**NOTE** the forwarders still set `200 - OK` as HTTP status code if no errors encountered.
+_Note: the forwarders still set `200 - OK` as HTTP status code if no errors are encountered._
 
-### How can I set 201/202/204/206 HTTP status codes?
+### Setting HTTP Status Codes
 
-In order to set HTTP status codes propely you need to send metadata from your
-gRPC service so that default forwarders will be able to read them and set codes.
-That is a common approach in gRPC to send extra information for response as
-metadata.
+In order to set HTTP status codes properly, you need to send metadata from your gRPC service so that default forwarders will be able to read them and set codes. This is a common approach in gRPC to send extra information for response as metadata.
 
-We recommend use [gRPC status package](https://godoc.org/google.golang.org/grpc/status)
-and our custom function [SetStatus](gateway/status.go#L44) to add extra metadata
-to the gRPC response.
+We recommend using the [gRPC status package](https://godoc.org/google.golang.org/grpc/status) and our custom function [`SetStatus`](status.go#L49) to add extra metadata to the gRPC response.
 
-See documentation in package [status](gateway/status.go).
+More documentation is available in the [`status`](status.go) package.
 
-Also you may use shortcuts like: `SetCreated`, `SetUpdated` and `SetDeleted`.
+Also you may use shortcuts like `SetCreated`, `SetUpdated`, and `SetDeleted`.
 
-```golang
+```go
 import (
     "github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
@@ -177,15 +168,15 @@ func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
 }
 ```
 
-### Response format
-Services render resources in responses in JSON format by default unless another format is specified in the request Accept header that the service supports.
+### Response Format
+Unless another format is specified in the request `Accept` header that the service supports, services render resources in responses in JSON format by default.
 
 Services must embed their response in a Success JSON structure.
 
 The Success JSON structure provides a uniform structure for expressing normal responses using a structure similar to the Error JSON structure used to render errors. The structure provides an enumerated set of codes and associated HTTP statuses (see Errors below) along with a message.
 
 The Success JSON structure has the following format. The results tag is optional and appears when the response contains one or more resources.
-```
+```json
 {
   "success": {
     "status": <http-status-code>,
@@ -196,14 +187,14 @@ The Success JSON structure has the following format. The results tag is optional
 }
 ```
 
-`results` content follows the [Google model](https://cloud.google.com/apis/design/standard_methods): an object is returned for Get, Create and Update operations and list of objects for List operation.
+The `results` content follows the [Google model](https://cloud.google.com/apis/design/standard_methods): an object is returned for Get, Create and Update operations and list of objects for List operation.
 
 To allow compatibility with existing systems, the results tag name can be changed to a service-defined tag. In this way the success data becomes just a tag added to an existing structure.
 
-#### Examples:
+#### Example Success Responses
 
-Response with no results:
-```
+Response with no results
+```json
 {
   "success": {
     "status": 201,
@@ -213,8 +204,8 @@ Response with no results:
 }
 ```
 
-Response with results:
-```
+Response with results
+```json
 {
   "success": {
     "status": 200,
@@ -242,8 +233,8 @@ Response with results:
 }
 ```
 
-Response for get by id operation:
-```
+Response for get by id operation
+```json
 {
   "success": {
     "status": 200,
@@ -259,8 +250,8 @@ Response for get by id operation:
 }
 ```
 
-Response with results and service-defined results tag “rpz_hits”:
-```
+Response with results and service-defined results tag `rpz_hits`
+```json
 {
   "success": {
     "status": 200,
@@ -298,13 +289,13 @@ Response with results and service-defined results tag “rpz_hits”:
 }
 ```
 
-### Errors
+## Errors
 
-#### Format
-Method error responses are rendered in the Error JSON format. The Error JSON format is similar to the Success JSON format for error responses using a structure similar to the Success JSON structure for consistency.
+### Format
+Method error responses are rendered in the Error JSON format. The Error JSON format is similar to the Success JSON format.
 
 The Error JSON structure has the following format. The details tag is optional and appears when the service provides more details about the error.
-```
+```json
 {
   "error": {
     "status": <http-status-code>,
@@ -322,18 +313,19 @@ The Error JSON structure has the following format. The details tag is optional a
   "fields": {
       "field1": [<message-1>, <message-2>, ...],
       "field2": ...,
+  }
 }
 ```
 
-#### How can I convert a gRPC error to a HTTP error response in accordance with REST API Syntax Specification?
+### Translating gRPC Errors to HTTP
 
-You can write your own `ProtoErrorHandler` or use `gateway.DefaultProtoErrorHandler` one.
+To respond with an error message that is REST API syntax-compliant, you can write your own `ProtoErrorHandler` or use `DefaultProtoErrorHandler` provided in this package.
 
-How to handle error on gRPC-Gateway see [article](https://mycodesmells.com/post/grpc-gateway-error-handler)
+Passing errors from the gRPC service to the REST client is supported by the gRPC gateway, so see the gRPC gateway documentation [here](https://mycodesmells.com/post/grpc-gateway-error-handler).
 
-How to use [gateway.DefaultProtoErrorHandler](gateway/errors.go#L25) see example below:
+Here's an example that shows how to use [`DefaultProtoErrorHandler`](gateway/errors.go#L25).
 
-```golang
+```go
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
     "github.com/infobloxopen/atlas-app-toolkit/gateway"
@@ -359,12 +351,12 @@ func main() {
 
 You can find sample in example folder. See [code](example/cmd/gateway/main.go)
 
-#### How can I send error with details from my gRPC service?
+### Sending Error Details
 
-The  idiomatic way to send an error from you gRPC service is to simple return
+The idiomatic way to send an error from you gRPC service is to simple return
 it from you gRPC handler either as `status.Errorf()` or `errors.New()`.
 
-```golang
+```go
 import (
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
