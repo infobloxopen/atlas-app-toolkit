@@ -16,6 +16,10 @@ func LogLevelInterceptor(defaultLevel logrus.Level) grpc.UnaryServerInterceptor 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 		entry := ctxlogrus.Extract(ctx)
 		lvl := defaultLevel
+		logFlag, hasFlag := gateway.Header(ctx, logFlagMetaKey)
+		if hasFlag {
+			entry.Data[logFlagFieldName] = logFlag
+		}
 		if logLvl, ok := gateway.Header(ctx, logLevelMetaKey); ok {
 			entry.Debugf("Using custom log-level of %q", logLvl)
 			lvl, err = logrus.ParseLevel(logLvl)
@@ -23,13 +27,8 @@ func LogLevelInterceptor(defaultLevel logrus.Level) grpc.UnaryServerInterceptor 
 				lvl = defaultLevel
 			}
 		}
-		logFlag, hasFlag := gateway.Header(ctx, logFlagMetaKey)
 		newLogger := CopyLoggerWithLevel(entry.Logger, lvl)
-		fields := entry.Data
-		if hasFlag {
-			fields[logFlagFieldName] = logFlag
-		}
-		newCtx := ctxlogrus.ToContext(ctx, newLogger.WithFields(fields))
+		newCtx := ctxlogrus.ToContext(ctx, newLogger.WithFields(entry.Data))
 		res, err = handler(newCtx, req)
 
 		// propagate any new or changed fields from later interceptors back up
