@@ -118,7 +118,7 @@ message StringCondition {
         GE = 3;
         LT = 4;
         LE = 5;
-        IE = 6;
+        IEQ = 6;
     }
     Type type = 3;
     bool is_negative = 4;

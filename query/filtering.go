@@ -109,7 +109,7 @@ func (c *StringCondition) Filter(obj interface{}) (bool, error) {
 	switch c.Type {
 	case StringCondition_EQ:
 		return negateIfNeeded(s == c.Value, c.IsNegative), nil
-	case StringCondition_IE:
+	case StringCondition_IEQ:
 		return negateIfNeeded(strings.ToLower(s) == strings.ToLower(c.Value), c.IsNegative), nil
 	case StringCondition_MATCH:
 		// add regex caching

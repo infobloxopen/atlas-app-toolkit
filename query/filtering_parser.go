@@ -324,7 +324,7 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 			return &StringCondition{
 				FieldPath:  strings.Split(field.Value, "."),
 				Value:      token.Value,
-				Type:       StringCondition_IE,
+				Type:       StringCondition_IEQ,
 				IsNegative: false,
 			}, nil
 		default:

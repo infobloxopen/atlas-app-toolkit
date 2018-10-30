@@ -169,7 +169,7 @@ func TestFilteringParser(t *testing.T) {
 					&StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "AbC",
-						Type:       StringCondition_IE,
+						Type:       StringCondition_IEQ,
 						IsNegative: false,
 					},
 				},
@@ -182,7 +182,7 @@ func TestFilteringParser(t *testing.T) {
 					&StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "AbC",
-						Type:       StringCondition_IE,
+						Type:       StringCondition_IEQ,
 						IsNegative: true,
 					},
 				},
@@ -197,7 +197,7 @@ func TestFilteringParser(t *testing.T) {
 							&StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "AbC",
-								Type:       StringCondition_IE,
+								Type:       StringCondition_IEQ,
 								IsNegative: false,
 							},
 						},
@@ -205,7 +205,7 @@ func TestFilteringParser(t *testing.T) {
 							&StringCondition{
 								FieldPath:  []string{"field1"},
 								Value:      "BcD",
-								Type:       StringCondition_IE,
+								Type:       StringCondition_IEQ,
 								IsNegative: false,
 							},
 						},
@@ -222,7 +222,7 @@ func TestFilteringParser(t *testing.T) {
 							&StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "AbC",
-								Type:       StringCondition_IE,
+								Type:       StringCondition_IEQ,
 								IsNegative: false,
 							},
 						},
@@ -230,7 +230,7 @@ func TestFilteringParser(t *testing.T) {
 							&StringCondition{
 								FieldPath:  []string{"field1"},
 								Value:      "BcD",
-								Type:       StringCondition_IE,
+								Type:       StringCondition_IEQ,
 								IsNegative: true,
 							},
 						},
@@ -457,7 +457,7 @@ func TestFilteringParser(t *testing.T) {
 							&StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "Mike",
-								Type:       StringCondition_IE,
+								Type:       StringCondition_IEQ,
 								IsNegative: false,
 							},
 						},
@@ -474,7 +474,7 @@ func TestFilteringParser(t *testing.T) {
 					&StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "HeLLo",
-						Type:       StringCondition_IE,
+						Type:       StringCondition_IEQ,
 						IsNegative: false,
 					},
 				},
