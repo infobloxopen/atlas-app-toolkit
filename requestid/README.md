@@ -24,7 +24,7 @@ func main() {
       grpc.UnaryInterceptor(
         grpc_middleware.ChainUnaryServer(  // middleware chain
           ...
-          [grpc_logrus.UnaryServerInterceptor(),]
+          [grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),]
           requestid.UnaryServerInterceptor(),  // Request-Id middleware
           ...
           ),
