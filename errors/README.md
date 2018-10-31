@@ -1,5 +1,18 @@
+
+# Errors
+To avoid burden of mapping errors returned from 3rd party libraries
+you can gather all error mappings in one place and put an interceptor
+provided by atlas-app-toolkit package in a middleware chain as following:
+```go
+interceptor := errors.UnaryServerInterceptor(
+	// List of mappings
+
+	// Base case: simply map error to an error container.
+	errors.NewMapping(fmt.Errorf("Some Error"), errors.NewContainer(/* ... */).WithDetail(/* ... */)),
+)
+```
+
 ## Contents
-1. <a href="#intro">Error Handling</a>
 1. <a href="#background">Background</a>
 1. <a href="#mappers">Error Mappers</a>
 1. <a href="#usage">Usage</a>
@@ -9,21 +22,6 @@
 <a name="intro"></a>
 
 # Error Handling
-
-To avoid burden of mapping errors returned from 3-rd party libraries
-you can gather all error mappings in one place and put an interceptor
-provided by atlas-app-toolkit package in a middleware chain as following:
-
-```
-interceptor := errros.UnaryServerInterceptor(
-	// List of mappings
-
-	// Base case: simply map error to an error container.
-	errors.NewMapping(fmt.Errorf("Some Error"), errors.NewContainer(/* ... */).WithDetail(/* ... */)),
-)
-```
-
-
 <a name="background"></a>
 ## Background
 
@@ -63,7 +61,7 @@ There are several approaches exist to work with it:
 This code snippet demonstrates the usage of error container as conventional
 error:
 
-```
+```go
 func validateNameLength(name string) error {
 	if len(name) > 255 {
 		return errors.NewContainer(
@@ -80,7 +78,7 @@ func validateNameLength(name string) error {
 
 ### Gather Multiple Errors
 
-```
+```go
 func (svc *Service) validateName(name string) error {
 	err := errors.InitContainer()
 	if len(name) > 255 {
@@ -99,7 +97,7 @@ func (svc *Service) validateName(name string) error {
 
 To gather multiple errors across several procedures use context functions:
 
-```
+```go
 func (svc *Service) globalValidate(ctx context.Context, input *pb.Input) error {
 	svc.validateName(ctx, input.Name)
 	svc.validateIP(ctx, input.IP)
@@ -135,7 +133,7 @@ error returned from handler.
 
 Below we demonstrate a cases and customization techniques for mapping functions:
 
-```
+```go
 interceptor := errors.UnaryServerInterceptor(
 	// List of mappings
 	
@@ -173,8 +171,7 @@ example below:
 
 
 
-```
-
+```go
 // service validation code.
 
 type RequiredFieldErr string
@@ -196,7 +193,7 @@ func validateReqArgs(in *pb.Input) error {
 }
 ```
 
-```
+```go
 // interceptor init code
 interceptor := errors.UnaryServerInterceptor(
 	errors.NewMapping(
@@ -337,13 +334,13 @@ RESTRICT (NewRestrictMapping), NOT NULL (NewNotNullMapping), PK/UNIQUE (NewUniqu
 
 Example Usage: 
 
-```
+```go
 import (
 	...
 	"github.com/atlas-app-toolkit/errors/mappers/pqerrors"
 )
 
-interceptor := errros.UnaryServerInterceptor(
+interceptor := errors.UnaryServerInterceptor(
 	...
 	pqerrors.NewUniqueMapping("emails_address_key", "Contacts", "Primary Email Address"),
 	...
@@ -353,7 +350,7 @@ interceptor := errros.UnaryServerInterceptor(
 Any violation of UNIQUE constraint "email_address_key" will result in following error:
 
 
-```
+```json
 {
   "error": {
     "status": 409,
