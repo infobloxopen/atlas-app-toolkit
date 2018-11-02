@@ -2,6 +2,14 @@
 
 This package contains helper functions that support creating, configuring, and running a gRPC REST gateway that is REST syntax compliant. Google already provides a lot of documentation related to the gRPC gateway, so this README will mostly serve to link to existing docs.
 
+
+- Starting and stopping Docker containers inside Go tests
+- Creating JSON Web Tokens for testing gRPC and REST requests
+- Launching a Postgres database to tests against
+- Building and executing Go binaries
+ 
+The gRPC gateway `protoc` plugin allows a gRPC service to. The official gRPC gateway repository offers a nice, succinct explanation.
+
 > gRPC is great — it generates API clients and server stubs in many programming languages, it is fast, easy-to-use, bandwidth-efficient and its design is combat-proven by Google. However, you might still want to provide a traditional RESTful API as well. Reasons can range from maintaining backwards-compatibility, supporting languages or clients not well supported by gRPC to simply maintaining the aesthetics and tooling involved with a RESTful architecture.
 
 
@@ -33,8 +41,8 @@ This enables the following two alternative HTTP JSON to RPC mappings:
 
 | HTTP Verb | REST Endpoint                     | RPC                                                 |
 | ----------|-----------------------------------|---------------------------------------------------- |
-| `GET`     | `/v1/messages/123456`             | `GetMessage(message_id: "123456")`                  |
-| `GET`     | `/v1/users/me/messages/123456`    | `GetMessage(user_id: "me", message_id: "123456")`    |
+| `GET`     | `/v1/messages/123456`             | `GetMessage("123456")`                  |
+| `GET`     | `/v1/users/me/messages/123456`    | `GetMessage("me", "123456")`    |
 
 
 ## HTTP Headers
@@ -107,7 +115,7 @@ func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyRespon
 If you do not use any custom outgoing header matcher, you will see something like this.
 
 ```sh
-$ curl -i http://localhost:8080/resource
+$ curl -i http://localhost:8080/contacts/v1/contacts
 
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -138,10 +146,12 @@ func init() {
 }
 ```
 
-#### Complying with Infoblox's REST API Syntax
+You can also refer [example app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.overwrite.pb.gw.go).
+
+#### Conforming to REST API Syntax
 
 We made default [`ForwardResponseMessageFunc`](response.go#L21) and [`ForwardResponseStreamFunc`](response.go#L21)
-implementations that conform to Infoblox's REST API Syntax guidelines. These helper functions ensure that Infoblox teams who use toolkit follow the same REST API conventions. For non-Infoblox toolkit users, these are completely optional utilities.
+implementations that conform REST API Syntax.
 
 _Note: the forwarders still set `200 - OK` as HTTP status code if no errors are encountered._
 
