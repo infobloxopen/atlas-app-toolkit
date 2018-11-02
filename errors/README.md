@@ -29,9 +29,9 @@ This document is a brief overview of facilities provided by error handling
 package. The rationale for implementing it are four noble reasons:
 
 1. Provide ability to add specific details and field information to an error.
-2. Provide ability to handle multiple errors without returning control to a callee.
-3. Ability to map errors from 3-rd party libraries (gorm, to name one).
-4. Mapping from error to container should be performed automatically in gRPC interceptor.
+1. Provide ability to handle multiple errors without returning control to a callee.
+1. Ability to map errors from 3-rd party libraries (gorm, to name one).
+1. Mapping from error to container should be performed automatically in gRPC interceptor.
 
 <a name="mappers"></a>
 ## Error Mappers
@@ -51,7 +51,7 @@ side and as a protobuf Status to gRPC gateway from the other side.
 There are several approaches exist to work with it:
 
 1. Single error mode
-2. Multiple errors mode
+1. Multiple errors mode
 
 
 ## Usage
@@ -256,8 +256,8 @@ Example Usage:
     validationerrors.UnaryServerInterceptor(),
     ```
 
-2. Create an ErrorMapping variable with all your mappings. 
-3. Add DefaultMapping as part of your ErrorMapping variable
+1. Create an ErrorMapping variable with all your mappings. 
+1. Add DefaultMapping as part of your ErrorMapping variable
 
      ```go
     var ErrorMappings = []errors.MapFunc{
@@ -285,7 +285,7 @@ Example Usage:
     }
     ```
 
-4. You can also add custom validation mappings:
+1. You can also add custom validation mappings:
 
     ```go
     var ErrorMappings = []errors.MapFunc{
@@ -304,10 +304,6 @@ Example Usage:
     }
 
     ```
-
-
-For actual example usage look at:
-https://github.com/infobloxopen/atlas-contacts-app
 
 <a name="pqerrors"></a>
 
