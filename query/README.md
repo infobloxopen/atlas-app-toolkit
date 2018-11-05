@@ -1,6 +1,6 @@
 # Query
 
-This package offers a set of predefined [protobuf]() message types to be used as collection query parameters, which are also called *collection operators*.
+This package offers a set of predefined [protobuf](https://developers.google.com/protocol-buffers/) message types to be used as collection query parameters, which are also called *collection operators*.
 These types are:
 - `infoblox.api.Filtering`
 - `infoblox.api.Sorting`
@@ -10,7 +10,7 @@ These types are:
 
 ## Enabling *collection operators* in your application
 
-In order to get *collection operators* in you app you need the following
+In order to get *collection operators* in you app you need the following:
 
 - Add *collection operator* types to a request message. You're free to use any subset of them.
 
@@ -26,7 +26,7 @@ message MyListRequest {
 ```
 
 - Enable `gateway.ClientUnaryInterceptor` and `gateway.MetadataAnnotator` in your gRPC gateway. This will make *collection operators* to be automatically parsed on gRPC gateway side.
-If you're using our `server` wrapper, you need to explicitly set only `gateway.ClientUnaryInterceptor` since `gateway.MetadataAnnotator` is enabled by default.
+If you're using our [server](../server) wrapper, you need to explicitly set only `gateway.ClientUnaryInterceptor` since `gateway.MetadataAnnotator` is enabled by default.
 
 ```golang
 server.WithGateway(
@@ -67,7 +67,8 @@ Literal values include numbers (integer and floating-point), quoted (both single
 | in           | Check existence in set   | city in [‘Santa Clara’, ‘New York’] or  price in [1,2,3] |
 
 Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use [vanilla](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-swagger) swagger schema generation, since this plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
-In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/atlas-patch/protoc-gen-swagger) which has a fix for this issue.
+In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/atlas-patch/protoc-gen-swagger) which has a fix for this issue. 
+You can also use [atlas-gentool](https://github.com/infobloxopen/atlas-gentool) which contains both versions of the plugin.
 
 ## Sorting
 
@@ -89,12 +90,6 @@ The syntax of REST representation of `infoblox.api.Pagination` and `infoblox.api
 |                        |                    | _size               | The service may optionally include the total number of resources being paged. |
 | Server-driven paging   | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page. |
 |                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages. |
-|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
-| Composite paging       | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page. |
-|                        | _offset            |                     | The integer index (zero-origin) of the offset into a collection of resources in the page defined by the page token. If omitted or null the value is assumed to be “0”. |
-|                        | _limit             |                     | The integer number of resources to be returned in the response. The service may impose maximum value. If omitted the service may impose a default value. |
-|                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages. |
-|                        |                    | _offset             | The service should include the offset of the next page of resources in the page defined by the page token. A null value indicates no more pages, at which point the client should request the page token in the response to get the next page. |
 |                        |                    | _size               | The service may optionally include the total number of resources being paged. |
 
 ## Field Selection
