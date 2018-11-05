@@ -10,12 +10,12 @@ These types are:
 
 ## Enabling *collection operators* in your application
 
-In order to get *collection operators* in you app you need the following:
+In order to get *collection operators* in your app you need the following:
 
 - Add *collection operator* types to a request message. You're free to use any subset of them.
 
 ```proto
-import github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto;
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
 
 message MyListRequest {
     infoblox.api.Filtering filtering = 1;
