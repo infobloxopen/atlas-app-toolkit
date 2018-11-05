@@ -15,7 +15,7 @@ you could find in [resource.proto](resource.proto) file.
 The `message Identifier` implements `jsonpb.JSONPBMarshaler` and `jsonpb.JSONPBUnmarshaler`
 interfaces so that it renders itself in JSON as a string in a single string delimited by `/`.
 
-You could use it to define identifiers in your proto messages, e.g
+You could use it to define identifiers in your proto messages, e.g.
 
 ```proto
 syntax = "proto3";
