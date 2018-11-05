@@ -1,4 +1,4 @@
-# GORM Package
+# GORM
 
 This package contains a set of utilities for famous [GORM](http://gorm.io/) library. If used together they can significantly help you to enable persistency in your application.
 
