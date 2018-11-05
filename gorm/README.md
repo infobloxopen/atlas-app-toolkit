@@ -4,12 +4,13 @@ This package contains a set of utilities for famous [GORM](http://gorm.io/) libr
 
 ## Collection Operators
 
-The package provides some helpers which are able to apply collection operators defined in [query](https://github.com/infobloxopen/atlas-app-toolkit/tree/master/query) package to a GORM [query](http://gorm.io/docs/query.html#Query).
+The package provides some helpers which are able to apply collection operators defined in [query](../query) package to a GORM [query](http://gorm.io/docs/query.html#Query).
 
 ### Applying query.Filtering
 
 ```golang
 ...
+// given that Person is a protobuf message and PersonORM is a corresponding GORM model
 db, assoc, err = gorm.ApplyFiltering(ctx, db, f, &PersonORM{}, &Person{})
 if err != nil {
     ...
