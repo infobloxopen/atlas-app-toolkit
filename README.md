@@ -41,7 +41,7 @@ The following libraries have how-to guides included at the package level.
 
 #### Database Utilities
 
-[`gorm`](gorm) - offers transaction management tools specifically for GORM
+[`gorm`](gorm) - offers a set of utilities for [GORM](http://gorm.io/) library
 
 #### Testing
 
