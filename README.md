@@ -27,7 +27,7 @@ The following libraries have how-to guides included at the package level.
 
 [`auth`](auth) - includes authorization and authentication-related helpers
 
-[`rpc`](rpc) - modifies gRPC responses before they are returned to users
+[`rpc`](rpc) - provides additional messages that can be utilized in your `proto` definitions
 
 [`errors`](errors) - helps developers create detailed error messages or return multiple error messages
 

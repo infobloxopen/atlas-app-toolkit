@@ -1,4 +1,4 @@
-# Health Package
+# Health
 
 Package contains tools that allow to add REST endpoint for handling `health` and `readiness` requests.
 Package also provides implementation for most typical checks that may be done to figure our if service is healthy/ready.
