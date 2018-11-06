@@ -11,7 +11,7 @@ The package provides some helpers which are able to apply collection operators d
 ```golang
 ...
 // given that Person is a protobuf message and PersonORM is a corresponding GORM model
-db, assoc, err = gorm.ApplyFiltering(ctx, db, f, &PersonORM{}, &Person{})
+db, assoc, err = gorm.ApplyFiltering(ctx, db, filtering, &PersonORM{}, &Person{})
 if err != nil {
     ...
 }
@@ -28,7 +28,7 @@ db.Find(&people)
 
 ```golang
 ...
-db, assoc, err = gorm.ApplySorting(ctx, db, s, &PersonORM{}, &Person{})
+db, assoc, err = gorm.ApplySorting(ctx, db, sorting, &PersonORM{}, &Person{})
 if err != nil {
     ...
 }
@@ -45,7 +45,7 @@ db.Find(&people)
 
 ```golang
 ...
-db = gorm.ApplyPagination(ctx, db, p, &PersonORM{}, &Person{})
+db = gorm.ApplyPagination(ctx, db, pagination, &PersonORM{}, &Person{})
 if err != nil {
     ...
 }
@@ -57,7 +57,7 @@ db.Find(&people)
 
 ```golang
 ...
-db, err = gorm.ApplyFieldSelection(ctx, db, fs, &PersonORM{}, &Person{})
+db, err = gorm.ApplyFieldSelection(ctx, db, fields, &PersonORM{}, &Person{})
 if err != nil {
     ...
 }
@@ -70,7 +70,7 @@ db.Find(&people)
 
 ```golang
 ...
-db, err = gorm.ApplyCollectionOperators(ctx, db, &PersonORM{}, &Person{}, f, s, p ,fs)
+db, err = gorm.ApplyCollectionOperators(ctx, db, &PersonORM{}, &Person{}, filtering, sorting, pagination, fields)
 if err != nil {
     ...
 }
