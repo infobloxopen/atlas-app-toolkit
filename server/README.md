@@ -1,6 +1,6 @@
-# Server Package
+# Server
 
-### Server Wrapper
+## Server Wrapper
 
 You can package your gRPC server along with your REST gateway, health checks and any other http endpoints using [`server.NewServer`](server/server.go):
 ```go

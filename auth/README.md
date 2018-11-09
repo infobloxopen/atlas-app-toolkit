@@ -1,6 +1,6 @@
-# Authorization/Authentication Package
+# Auth
 
-##### GetAccountID
+## GetAccountID
 
 We offer a convenient way to extract the AccountID field from an incoming authorization token.
 For this purpose `auth.GetAccountID(ctx, nil)` function can be used:
