@@ -1,4 +1,5 @@
-# Description
+# Resource
+
 A number of application services require a mechanism to encode the identity of a particular resource across applications.
 The resource identifiers consist of the application ID, an application-defined resource type, and an application-defined ID for that resource.
 The reference format captures the same information as the three-tuple format, in a single string delimited by `/`:
@@ -7,14 +8,14 @@ The reference format captures the same information as the three-tuple format, in
 <app_id>/<resource_type>/<resource_id>
 ```
 
-# How to define in Proto?
+## Defining your proto
 
 The common representation of resource identifiers defined in Protocol Buffer format
-you could find in [resource.proto](../../rpc/resource/resource.proto) file.
+you could find in [resource.proto](resource.proto) file.
 The `message Identifier` implements `jsonpb.JSONPBMarshaler` and `jsonpb.JSONPBUnmarshaler`
 interfaces so that it renders itself in JSON as a string in a single string delimited by `/`.
 
-You could use it to define identifiers in your proto messages, e.g
+You could use it to define identifiers in your proto messages, e.g.
 
 ```proto
 syntax = "proto3";
@@ -32,7 +33,11 @@ message MyMessage {
 Please give a read to [README](../../gorm/resource/README.md) of `gorm/resource`
 package to see how it could be used with gorm and `protoc-gen-gorm` generated code. 
 
-# How to check that an Identifier is nil?
+## Utility functions
+
+Package provides several utility functions to operate with resource identifier.
+
+### Check that an Identifier is nil
 
 In order to check that an identifier is nil use `resource.Nil` function.
 
@@ -54,4 +59,4 @@ func main() {
 }
 ```
 
-See [Unit test](nil_test.go).
+See [unit test](nil_test.go) for more details.
