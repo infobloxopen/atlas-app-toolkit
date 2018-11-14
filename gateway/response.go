@@ -4,17 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 )
+
+// DefaultQueryFilter can be set to override the filter_{service}_{rpc}_{num}
+// field in generated .pb.gw.go files to prevent parse errors in the gateway
+// and potentially reduce log noise due to unrecognized fields
+var DefaultQueryFilter = utilities.NewDoubleArray([][]string{
+	// collection ops and the expected names used for the collection ops objects in requests
+	{"paging"}, {limitQueryKey}, {offsetQueryKey}, {pageTokenQueryKey},
+	{"order_by"}, {sortQueryKey},
+	{"fields"}, {fieldsQueryKey},
+	{"filter"}, {filterQueryKey},
+})
 
 type (
 	// ForwardResponseMessageFunc forwards gRPC response to HTTP client inaccordance with REST API Syntax
