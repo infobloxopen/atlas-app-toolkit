@@ -26,7 +26,7 @@ func retainFields(ctx context.Context, req *http.Request, dynmap map[string]inte
 	fields := query.ParseFieldSelection(fieldsStr)
 	if fields != nil {
 		for k, result := range dynmap {
-			if k == "result" || k == "results" {
+			if k != "page" {
 				if results, ok := result.([]interface{}); ok {
 					for _, r := range results {
 						if m, ok := r.(map[string]interface{}); ok {
