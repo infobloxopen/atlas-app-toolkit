@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"encoding/json"
-	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -57,15 +56,6 @@ type response struct {
 	Status *RestStatus `json:"success"`
 	Result []*user     `json:"users"`
 }
-
-type responseAsParam struct {
-	Result  []*user         `json:"users"`
-	PageInf *query.PageInfo `json:"page_inf"`
-}
-
-func (m *responseAsParam) Reset()         {}
-func (m *responseAsParam) ProtoMessage()  {}
-func (m *responseAsParam) String() string { return "" }
 
 func TestForwardResponseMessage(t *testing.T) {
 	md := runtime.ServerMetadata{
@@ -163,77 +153,6 @@ func TestForwardResponseMessageWithSuccessField(t *testing.T) {
 	}
 	if u := l[1]; u.Name != "Hemingway" || u.Age != 119 {
 		t.Errorf("invalid response item: %+v - expected: %+v", u, &user{"Hemingway", 119})
-	}
-}
-
-func TestForwardResponseMessageWithPagingInMetadata(t *testing.T) {
-	md := runtime.ServerMetadata{
-		HeaderMD: metadata.Pairs(
-			runtime.MetadataPrefix+"status-code", "OK",
-			runtime.MetadataPrefix+pageInfoPageTokenMetaKey, "pgToken",
-			runtime.MetadataPrefix+pageInfoOffsetMetaKey, "50",
-			runtime.MetadataPrefix+pageInfoSizeMetaKey, "100",
-		),
-	}
-	ctx := runtime.NewServerMetadataContext(context.Background(), md)
-	rw := httptest.NewRecorder()
-	ForwardResponseMessage(
-		ctx, nil, &runtime.JSONBuiltin{}, rw, nil,
-		&result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}},
-	)
-
-	var v response
-	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
-		t.Fatalf("failed to unmarshal JSON response: %s", err)
-	}
-	sucs := v.Status
-
-	if sucs.HTTPStatus != 200 || sucs.Code != "OK" || sucs.PageToken != "pgToken" || sucs.Offset != "50" || sucs.Size != "100" {
-		t.Errorf("invalid response item: %+v - expected: %+v", sucs, &RestStatus{HTTPStatus: 200, Code: "OK", PageToken: "pgToken", Offset: "50", Size: "100"})
-	}
-
-	usr := v.Result
-
-	if len(usr) != 2 {
-		t.Fatalf("invalid number of items in response: %d - expected: %d", len(usr), 2)
-	}
-	if usr[0].Name != "Poe" || usr[0].Age != 209 {
-		t.Errorf("invalid response item: %+v - expected: %+v", usr, &user{"Poe", 209})
-	}
-	if usr[1].Name != "Hemingway" || usr[1].Age != 119 {
-		t.Errorf("invalid response item: %+v - expected: %+v", usr, &user{"Hemingway", 119})
-	}
-}
-
-func TestForwardResponseMessageWithPagingInResponse(t *testing.T) {
-	ctx := runtime.NewServerMetadataContext(context.Background(), runtime.ServerMetadata{})
-	rw := httptest.NewRecorder()
-
-	ForwardResponseMessage(
-		ctx, nil, &runtime.JSONBuiltin{}, rw, nil,
-		&responseAsParam{Result: []*user{{"Poe", 209}, {"Hemingway", 119}}, PageInf: &query.PageInfo{PageToken: "someToken", Size: 5, Offset: 2}},
-	)
-
-	var v response
-	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
-		t.Fatalf("failed to unmarshal JSON response: %s", err)
-	}
-	sucs := v.Status
-
-	if sucs.HTTPStatus != 200 || sucs.Code != "OK" || sucs.PageToken != "someToken" || sucs.Offset != "2" || sucs.Size != "5" {
-		t.Errorf("invalid response item: %+v - expected: %+v", sucs, &RestStatus{HTTPStatus: 200, Code: "OK", PageToken: "someToken", Offset: "2", Size: "5"})
-	}
-
-	usr := v.Result
-
-	if len(usr) != 2 {
-		t.Fatalf("invalid number of items in response: %d - expected: %d", len(usr), 2)
-	}
-	if usr[0].Name != "Poe" || usr[0].Age != 209 {
-		t.Errorf("invalid response item: %+v - expected: %+v", usr, &user{"Poe", 209})
-	}
-	if usr[1].Name != "Hemingway" || usr[1].Age != 119 {
-		t.Errorf("invalid response item: %+v - expected: %+v", usr, &user{"Hemingway", 119})
 	}
 }
 
