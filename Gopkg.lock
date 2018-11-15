@@ -55,8 +55,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:06d49856905977d3136c52f2f6e9545688c9a818907c4c8c836f7f2b6a09d9cc"
+  digest = "1:c99635434bee2cce9e75a864ca17f8085fcdd43cd564057b431ee01aef2bdd12"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
   packages = [
     ".",
@@ -69,7 +68,8 @@
     "util/metautils",
   ]
   pruneopts = "UT"
-  revision = "498ae206fc3cfe81cd82e48c1d4354026fa5f9ec"
+  revision = "c250d6563d4d4c20252cd865923440e829844f4e"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:36d8bdf4367306ad70e7fb62c6cd6735a3c448a5ef3ac912b384fd143a36ff3a"
