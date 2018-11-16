@@ -91,23 +91,3 @@ func TestHTTPStatusFromCode(t *testing.T) {
 		t.Errorf("invalid http status: %d - expected: %d", sc, http.StatusNotFound)
 	}
 }
-
-func TestPageInfo(t *testing.T) {
-	md := metadata.Pairs(
-		runtime.MetadataPrefix+pageInfoSizeMetaKey, "10",
-		runtime.MetadataPrefix+pageInfoOffsetMetaKey, "100",
-		runtime.MetadataPrefix+pageInfoPageTokenMetaKey, "ptoken",
-	)
-	ctx := metadata.NewIncomingContext(context.Background(), md)
-	rst := Status(ctx, nil)
-
-	if rst.Size != "10" {
-		t.Errorf("invalid status size: %s - expected: %s", rst.Size, "10")
-	}
-	if rst.Offset != "100" {
-		t.Errorf("invalid status offset: %s - expected: %s", rst.Offset, "100")
-	}
-	if rst.PageToken != "ptoken" {
-		t.Errorf("invalid status page token: %s - expected: %s", rst.PageToken, "ptoken")
-	}
-}

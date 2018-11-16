@@ -34,11 +34,6 @@ type RestStatus struct {
 	// Code is a string representation of an error code
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
-
-	// Pagination response parameters
-	PageToken string `json:"_page_token,omitempty"`
-	Offset    string `json:"_offset,omitempty"`
-	Size      string `json:"_size,omitempty"`
 }
 
 // SetStatus sets gRPC status as gRPC metadata
@@ -105,17 +100,6 @@ func Status(ctx context.Context, st *status.Status) *RestStatus {
 		rst.Message = sm
 	}
 	rst.HTTPStatus = HTTPStatusFromCode(Code(rst.Code))
-
-	// PageInfo
-	if pt, ok := Header(ctx, pageInfoPageTokenMetaKey); ok {
-		rst.PageToken = pt
-	}
-	if o, ok := Header(ctx, pageInfoOffsetMetaKey); ok {
-		rst.Offset = o
-	}
-	if s, ok := Header(ctx, pageInfoSizeMetaKey); ok {
-		rst.Size = s
-	}
 
 	return &rst
 }

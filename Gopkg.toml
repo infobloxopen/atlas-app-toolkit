@@ -7,8 +7,8 @@
   name = "github.com/golang/protobuf"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
+  version = "1.0.0"
 
 [[constraint]]
   branch = "master"
