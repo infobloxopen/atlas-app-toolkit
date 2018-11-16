@@ -29,7 +29,7 @@ message GetMessageRequest {
   string user_id = 2;
 }
 ```
-This enables the following two alternative HTTP JSON to RPC mappings: 
+This enables the following two alternative HTTP JSON to RPC mappings:
 
 | HTTP Verb | REST Endpoint                     | RPC                                                 |
 | ----------|-----------------------------------|---------------------------------------------------- |
@@ -285,6 +285,23 @@ Response with results and service-defined results tag `rpz_hits`
     ...
   ]
 }
+```
+
+## Query String Filtering
+When using the collection operators with the grpc-gateway, extraneous errors may
+be logged during rpcs as the query string is parsed that look like this:
+```
+field not found in *foo.ListFoobarRequest: _order_by
+```
+and the usage of any of the collection operator field names without the leading
+underscore (`order_by`, `filter`,... instead of `_order_by`, `filter`,...) in
+query strings may result in the error `unsupported field type reflect.Value`,
+being returned.
+
+This can be resolved by overwriting the default filter for each rpc with these
+operators using the one defined in [filter.go](filter.go).
+```golang
+filter_Foobar_List_0 = gateway.DefaultQueryFilter
 ```
 
 ## Errors
