@@ -299,7 +299,7 @@ query strings may result in the error `unsupported field type reflect.Value`,
 being returned.
 
 This can be resolved by overwriting the default filter for each rpc with these
-operators using the one defined in response.go.
+operators using the one defined in [filter.go](filter.go).
 ```golang
 filter_Foobar_List_0 = gateway.DefaultQueryFilter
 ```
