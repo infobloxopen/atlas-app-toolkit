@@ -18,18 +18,19 @@ func FromContext(ctx context.Context) (RequestInfo, error) {
 	}
 
 	if info.Identifier.ResourceId, found = gateway.Header(ctx, resourceIdMetaKey); !found {
-		// Note: if resource Id is not available it should be stored as empty string in the context:
-		return RequestInfo{}, ErrResourceIdIsMissing
+		//In some cases ResourceId can be empty(ListOperation, CreateOperation)
 	}
 
+	//If we don't have operation Name in metadata or don't have such operation will set UnknownOperation type
 	var op string
 	if op, found = gateway.Header(ctx, operationTypeMetaKey); !found {
-		return RequestInfo{}, ErrOperationNameIsMissing
+		info.OperationType = UnknownOperation
 	}
 
 	if info.OperationType, found = operationNameToType[op]; !found {
-		return RequestInfo{}, ErrInvalidOperation
+		info.OperationType = UnknownOperation
 	}
 
 	return info, nil
 }
+
