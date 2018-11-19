@@ -108,7 +108,22 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	// this is the edge case, if user sends response that has field 'success'
 	// let him see his response object instead of our status
 	if _, ok := dynmap["success"]; !ok {
-		dynmap["success"] = rst
+		dynmap["success"] = []interface{}{rst}
+	} else {
+		if successes, ok := dynmap["success"].([]map[string]interface{}); ok {
+			smap := make(map[string]interface{})
+			if rst.HTTPStatus != 0 {
+				smap["status"] = rst.HTTPStatus
+			}
+			if len(rst.Code) > 0 {
+				smap["code"] = rst.Code
+			}
+			if len(rst.Message) > 0 {
+				smap["message"] = rst.Message
+			}
+			successes = append(successes, smap)
+			dynmap["success"] = successes
+		}
 	}
 
 	data, err = json.Marshal(dynmap)
@@ -160,7 +175,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	if rst.HTTPStatus == http.StatusOK {
 		rst.HTTPStatus = HTTPStatusFromCode(PartialContent)
 	}
-	v := map[string]interface{}{"success": rst}
+	v := map[string]interface{}{"success": []interface{}{rst}}
 
 	rw.WriteHeader(rst.HTTPStatus)
 

@@ -22,6 +22,13 @@ func retainFields(ctx context.Context, req *http.Request, dynmap map[string]inte
 	if fieldsStr == "" {
 		return
 	}
+	errs, sucs := errorsAndSuccessesFromContext(ctx)
+	if len(errs) > 0 {
+		dynmap["error"] = errs
+	}
+	if len(sucs) > 0 {
+		dynmap["success"] = sucs
+	}
 
 	fields := query.ParseFieldSelection(fieldsStr)
 	if fields != nil {

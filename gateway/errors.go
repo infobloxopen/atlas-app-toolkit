@@ -4,10 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
+	"strings"
+	"sync/atomic"
+	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -20,12 +26,9 @@ import (
 // Addition bool argument indicates whether method (http.ResponseWriter.WriteHeader) was called or not.
 type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, error)
 
-// RestError represents an error in accordance with REST API Syntax Specification.
-// See: https://github.com/infobloxopen/atlas-app-toolkit#errors
-type RestError struct {
-	Status  *RestStatus   `json:"error,omitempty"`
-	Details []interface{} `json:"details,omitempty"`
-	Fields  interface{}   `json:"fields,omitempty"`
+type RestResp struct {
+	Error   []map[string]interface{} `json:"error,omitempty"`
+	Success []map[string]interface{} `json:"success,omitempty"`
 }
 
 var (
@@ -106,19 +109,37 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		}
 	}
 
-	restErr := &RestError{
-		Status:  Status(ctx, st),
-		Details: details,
-		Fields:  fields,
+	restErr := make(map[string]interface{})
+	stat := Status(ctx, st)
+	if stat.HTTPStatus != 0 {
+		restErr["status"] = stat.HTTPStatus
+	}
+	if len(stat.Code) > 0 {
+		restErr["code"] = stat.Code
+	}
+	if len(stat.Message) > 0 {
+		restErr["message"] = stat.Message
+	}
+	if len(details) > 0 {
+		restErr["details"] = details
+	}
+	if fields != nil {
+		restErr["fields"] = fields
 	}
 
+	errs, sucs := errorsAndSuccessesFromContext(ctx)
+	restResp := &RestResp{
+		Error:   errs,
+		Success: sucs,
+	}
+	restResp.Error = append(restResp.Error, restErr)
 	if !headerWritten {
 		rw.Header().Del("Trailer")
 		rw.Header().Set("Content-Type", marshaler.ContentType())
-		rw.WriteHeader(restErr.Status.HTTPStatus)
+		rw.WriteHeader(Status(ctx, st).HTTPStatus)
 	}
 
-	buf, merr := marshaler.Marshal(restErr)
+	buf, merr := marshaler.Marshal(restResp)
 	if merr != nil {
 		grpclog.Infof("error handler: failed to marshal error message %q: %v", restErr, merr)
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -132,4 +153,91 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if _, err := rw.Write(buf); err != nil {
 		grpclog.Infof("error handler: failed to write response: %v", err)
 	}
+}
+
+// For small performance bump, switch map[string]string to a tuple-type (string, string)
+
+type MessageWithFields interface {
+	error
+	GetFields() map[string]string
+	GetMessage() string
+}
+type messageWithFields struct {
+	message string
+	fields  map[string]string
+}
+
+func (m *messageWithFields) Error() string {
+	return m.message
+}
+func (m *messageWithFields) GetFields() map[string]string {
+	return m.fields
+}
+func (m *messageWithFields) GetMessage() string {
+	return m.message
+}
+
+// NewWithFields stub comment TODO
+func NewWithFields(message string, kvpairs ...string) MessageWithFields {
+	mwf := &messageWithFields{message: message, fields: make(map[string]string)}
+	for i := 0; i+1 < len(kvpairs); i += 2 {
+		mwf.fields[kvpairs[i]] = kvpairs[i+1]
+	}
+	return mwf
+}
+
+// For giving each error a unique metadata key, but not leaking the exact count
+// of errors or something like that
+var counter *uint32
+
+func init() {
+	counter = new(uint32)
+	*counter = uint32(time.Now().Nanosecond() % math.MaxUint32)
+}
+
+func WithError(ctx context.Context, err error) {
+	i := atomic.AddUint32(counter, uint32(time.Now().Nanosecond()%100+1))
+	md := metadata.Pairs(fmt.Sprintf("error-%d", i), fmt.Sprintf("message:%s", err.Error()))
+	if mwf, ok := err.(MessageWithFields); ok {
+		for k, v := range mwf.GetFields() {
+			md.Append(fmt.Sprintf("error-%d", i), fmt.Sprintf("%s:%s", k, v))
+		}
+	}
+	grpc.SetTrailer(ctx, md)
+}
+
+func WithSuccess(ctx context.Context, msg MessageWithFields) {
+	i := atomic.AddUint32(counter, uint32(time.Now().Nanosecond()%100+1))
+	md := metadata.Pairs(fmt.Sprintf("success-%d", i), fmt.Sprintf("message:%s", msg.Error()))
+	for k, v := range msg.GetFields() {
+		md.Append(fmt.Sprintf("success-%d", i), fmt.Sprintf("%s:%s", k, v))
+
+	}
+	grpc.SetTrailer(ctx, md)
+
+}
+
+func errorsAndSuccessesFromContext(ctx context.Context) (errors []map[string]interface{}, successes []map[string]interface{}) {
+	md, _ := runtime.ServerMetadataFromContext(ctx)
+	errors = make([]map[string]interface{}, 0)
+	successes = make([]map[string]interface{}, 0)
+	for k, vs := range md.TrailerMD {
+		if strings.HasPrefix(k, "error-") {
+			err := make(map[string]interface{})
+			for _, v := range vs {
+				parts := strings.SplitN(v, ":", 2)
+				err[parts[0]] = parts[1]
+			}
+			errors = append(errors, err)
+		}
+		if strings.HasPrefix(k, "success-") {
+			success := make(map[string]interface{})
+			for _, v := range vs {
+				parts := strings.SplitN(v, ":", 2)
+				success[parts[0]] = parts[1]
+			}
+			successes = append(successes, success)
+		}
+	}
+	return
 }

@@ -53,8 +53,8 @@ func (m *badresult) ProtoMessage()  {}
 func (m *badresult) String() string { return "" }
 
 type response struct {
-	Status *RestStatus `json:"success"`
-	Result []*user     `json:"users"`
+	RestResp
+	Result []*user `json:"users"`
 }
 
 func TestForwardResponseMessage(t *testing.T) {
@@ -82,16 +82,16 @@ func TestForwardResponseMessage(t *testing.T) {
 		t.Fatalf("failed to unmarshal JSON response: %s", err)
 	}
 
-	if v.Status.Code != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Status.Code, CodeName(Created))
+	if v.Success[0]["code"] != CodeName(Created) {
+		t.Errorf("invalid status code: %s - expected: %s", v.Success[0]["code"], CodeName(Created))
 	}
 
-	if v.Status.HTTPStatus != http.StatusCreated {
-		t.Errorf("invalid http status code: %d - expected: %d", v.Status.HTTPStatus, http.StatusCreated)
+	if v.Success[0]["status"].(float64) != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success[0]["status"], http.StatusCreated)
 	}
 
-	if v.Status.Message != "created 1 item" {
-		t.Errorf("invalid status message: %s - expected: %s", v.Status.Message, "created 1 item")
+	if v.Success[0]["message"] != "created 1 item" {
+		t.Errorf("invalid status message: %s - expected: %s", v.Success[0]["message"], "created 1 item")
 	}
 
 	if l := len(v.Result); l != 2 {
@@ -194,14 +194,14 @@ func TestForwardResponseStream(t *testing.T) {
 
 	dec := json.NewDecoder(rw.Body)
 
-	var sv map[string]*RestStatus
+	var sv map[string]*RestResp
 	if err := dec.Decode(&sv); err != nil {
 		t.Fatalf("failed to unmarshal response status: %s", err)
 	}
 	if s, ok := sv["success"]; !ok {
 		t.Fatalf("invalid status response: %v (%v)", s, sv)
 	}
-	rst := sv["success"]
+	rst := sv["success"].Success
 	if rst.Code != CodeName(PartialContent) {
 		t.Errorf("invalid status code: %s - expected: %s", rst.Code, CodeName(PartialContent))
 	}
