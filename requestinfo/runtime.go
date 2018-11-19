@@ -33,4 +33,3 @@ func FromContext(ctx context.Context) (RequestInfo, error) {
 
 	return info, nil
 }
-

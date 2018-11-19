@@ -50,7 +50,7 @@ func TestRequestInfoFromContext(t *testing.T) {
 	for num, test := range testCases {
 		res, err := FromContext(test.ctx)
 		if err != nil {
-			t.Errorf("Error must be nil in test %d but got %s", num + 1, err.Error())
+			t.Errorf("Error must be nil in test %d but got %s", num+1, err.Error())
 			t.Fail()
 		}
 
@@ -63,27 +63,27 @@ func TestRequestInfoFromContext(t *testing.T) {
 
 func TestRequestInfoFromContextNegative(t *testing.T) {
 	requestInfoMap := generateRequestInfoMap(operationTypeToName[DeleteOperation], "resource-id")
-	delete(requestInfoMap, runtime.MetadataPrefix + appNameMetaKey)
+	delete(requestInfoMap, runtime.MetadataPrefix+appNameMetaKey)
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(requestInfoMap))
 
 	_, err := FromContext(ctx)
-	if err ==  nil {
+	if err == nil {
 		t.Errorf("Errors not equal expected %s get nil", ErrAppNameIsMissing)
 		t.Fail()
-	}else if err != ErrAppNameIsMissing {
+	} else if err != ErrAppNameIsMissing {
 		t.Errorf("Errors not equal expected %s get nil", ErrAppNameIsMissing)
 		t.Fail()
 	}
 
 	requestInfoMap = generateRequestInfoMap(operationTypeToName[DeleteOperation], "resource-id")
-	delete(requestInfoMap, runtime.MetadataPrefix + resourceTypeMetaKey)
+	delete(requestInfoMap, runtime.MetadataPrefix+resourceTypeMetaKey)
 	ctx = metadata.NewOutgoingContext(context.Background(), metadata.New(requestInfoMap))
 
 	_, err = FromContext(ctx)
-	if err ==  nil {
+	if err == nil {
 		t.Errorf("Errors not equal expected %s get nil", ErrResourceTypeIsMissing)
 		t.Fail()
-	}else if err != ErrResourceTypeIsMissing {
+	} else if err != ErrResourceTypeIsMissing {
 		t.Errorf("Errors not equal expected %s get nil", ErrResourceTypeIsMissing)
 		t.Fail()
 	}
