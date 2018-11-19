@@ -21,7 +21,7 @@ type user struct {
 }
 
 type result struct {
-	Users []*user `json"users"`
+	Users []*user `json:"users"`
 }
 
 type userWithPtr struct {
@@ -194,14 +194,18 @@ func TestForwardResponseStream(t *testing.T) {
 
 	dec := json.NewDecoder(rw.Body)
 
-	var sv map[string]*RestResp
+	var sv *RestResp
 	if err := dec.Decode(&sv); err != nil {
 		t.Fatalf("failed to unmarshal response status: %s", err)
 	}
-	if s, ok := sv["success"]; !ok {
-		t.Fatalf("invalid status response: %v (%v)", s, sv)
+	if len(sv.Success) < 1 {
+		t.Fatalf("invalid status response has no 'success' field: %v", sv)
 	}
-	rst := sv["success"].Success
+	// expecting only one success message, so the first should be the status
+	rst, ok := FromMap(sv.Success[0])
+	if ok != true {
+		t.Errorf("success response was not the rest status")
+	}
 	if rst.Code != CodeName(PartialContent) {
 		t.Errorf("invalid status code: %s - expected: %s", rst.Code, CodeName(PartialContent))
 	}

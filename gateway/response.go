@@ -111,17 +111,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		dynmap["success"] = []interface{}{rst}
 	} else {
 		if successes, ok := dynmap["success"].([]map[string]interface{}); ok {
-			smap := make(map[string]interface{})
-			if rst.HTTPStatus != 0 {
-				smap["status"] = rst.HTTPStatus
-			}
-			if len(rst.Code) > 0 {
-				smap["code"] = rst.Code
-			}
-			if len(rst.Message) > 0 {
-				smap["message"] = rst.Message
-			}
-			successes = append(successes, smap)
+			successes = append(successes, rst.ToMap())
 			dynmap["success"] = successes
 		}
 	}

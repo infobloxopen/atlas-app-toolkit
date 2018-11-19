@@ -36,6 +36,48 @@ type RestStatus struct {
 	Message string `json:"message,omitempty"`
 }
 
+func (rs *RestStatus) ToMap() map[string]interface{} {
+	if rs == nil {
+		return nil
+	}
+	m := make(map[string]interface{})
+	if rs.HTTPStatus != 0 {
+		m["status"] = rs.HTTPStatus
+	}
+	if rs.Code != "" {
+		m["code"] = rs.Code
+	}
+	if rs.Message != "" {
+		m["message"] = rs.Message
+	}
+	return m
+}
+func FromMap(m map[string]interface{}) (*RestStatus, bool) {
+	rs := &RestStatus{}
+	for k, v := range m {
+		var ok bool
+		switch k {
+		case "status":
+			var s float64
+			if s, ok = v.(float64); !ok {
+				return nil, false
+			}
+			rs.HTTPStatus = int(s)
+		case "code":
+			if rs.Code, ok = v.(string); !ok {
+				return nil, false
+			}
+		case "message":
+			if rs.Message, ok = v.(string); !ok {
+				return nil, false
+			}
+		default:
+			return nil, false
+		}
+	}
+	return rs, true
+}
+
 // SetStatus sets gRPC status as gRPC metadata
 // Status.Code will be set with metadata key `grpcgateway-status-code` and
 // with value as string name of the code.

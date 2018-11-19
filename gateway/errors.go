@@ -109,17 +109,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		}
 	}
 
-	restErr := make(map[string]interface{})
-	stat := Status(ctx, st)
-	if stat.HTTPStatus != 0 {
-		restErr["status"] = stat.HTTPStatus
-	}
-	if len(stat.Code) > 0 {
-		restErr["code"] = stat.Code
-	}
-	if len(stat.Message) > 0 {
-		restErr["message"] = stat.Message
-	}
+	restErr := Status(ctx, st).ToMap()
 	if len(details) > 0 {
 		restErr["details"] = details
 	}
