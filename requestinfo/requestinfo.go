@@ -46,6 +46,14 @@ var operationTypeToName = map[OperationType]string{
 
 type OperationType int
 
+func (o OperationType) String() string {
+	if result, ok := operationTypeToName[o]; ok {
+		return result
+	}
+
+	return operationTypeToName[UnknownOperation]
+}
+
 type RequestInfo struct {
 	Identifier    resource.Identifier
 	OperationType OperationType
