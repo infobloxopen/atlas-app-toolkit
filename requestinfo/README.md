@@ -1,7 +1,6 @@
 # Request Info
 
-Request info contains information about request 
-
+Request Info contains following information about the request:
 ```
    ApplicationName string
    ResourceType    string
@@ -9,7 +8,8 @@ Request info contains information about request
    OperationType   int //Constant 
 ```
 
-This package provide annotator witch extract information from request and return it as metadata  
+This package provide annotator witch extracts information from request and return it as metadata.
+
 ## Adding support for Request Info
 
 You can enable support for Request Info in your gRPC-Server by adding the annotator to the middleware chain.
@@ -31,9 +31,8 @@ func main() {
 
 ## Extracting the Request Info
 
-Once the middleware is included, the following function
+Once the middleware is included, the function below can be used to extract the Request Info anywhere it is needed.
 ```golang
 requestInfo, err := requestinfo.FromContext(ctx)
 ```
-can extract the request info anywhere it is needed.
-The `err` field represent error if something went wrong.
+The `err` represent error if something went wrong.
