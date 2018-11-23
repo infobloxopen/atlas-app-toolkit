@@ -36,7 +36,6 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 
 	db = ApplyPagination(ctx, db, p)
 
-
 	db, err = ApplyFieldSelection(ctx, db, fs, obj)
 	if err != nil {
 		return nil, err
