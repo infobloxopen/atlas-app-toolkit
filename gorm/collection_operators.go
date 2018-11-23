@@ -104,8 +104,15 @@ func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{
 // ApplyPagination applies pagination operator p to gorm instance db.
 func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
 	if p != nil {
-		return db.Offset(p.GetOffset()).Limit(p.DefaultLimit())
+		if p.GetOffset() > 0 {
+			db = db.Offset(p.GetOffset())
+		}
+
+		if p.GetLimit() > 0 {
+			db = db.Limit(p.GetLimit())
+		}
 	}
+
 	return db
 }
 
