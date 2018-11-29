@@ -1,8 +1,10 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -53,19 +55,27 @@ func (m *badresult) ProtoMessage()  {}
 func (m *badresult) String() string { return "" }
 
 type response struct {
-	RestResp
-	Result []*user `json:"users"`
+	Error   []map[string]interface{} `json:"error,omitempty"`
+	Result  []*user                  `json:"users"`
+	Success map[string]interface{}   `json:"success"`
 }
 
 func TestForwardResponseMessage(t *testing.T) {
+	b := &bytes.Buffer{}
+	enc := json.NewEncoder(b)
+	enc.Encode(map[string]interface{}{"code": CodeName(Created), "status": 201})
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.Pairs(
-			runtime.MetadataPrefix+"status-code", CodeName(Created),
-			runtime.MetadataPrefix+"status-message", "created 1 item",
+			"status-code", CodeName(Created),
+		),
+		TrailerMD: metadata.Pairs(
+			"success-1", "message:deleted 1 item",
+			"success-1", fmt.Sprintf("fields:%q", string(b.Bytes())),
+			"success-5", "message:created 1 item",
+			"success-5", fmt.Sprintf("fields:%q", string(b.Bytes())),
 		),
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
-
 	rw := httptest.NewRecorder()
 	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
 
@@ -82,16 +92,16 @@ func TestForwardResponseMessage(t *testing.T) {
 		t.Fatalf("failed to unmarshal JSON response: %s", err)
 	}
 
-	if v.Success[0]["code"] != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Success[0]["code"], CodeName(Created))
+	if v.Success["code"] != CodeName(Created) {
+		t.Errorf("invalid status code: %s - expected: %s", v.Success["code"], CodeName(Created))
 	}
 
-	if v.Success[0]["status"].(float64) != http.StatusCreated {
-		t.Errorf("invalid http status code: %d - expected: %d", v.Success[0]["status"], http.StatusCreated)
+	if v.Success["status"].(float64) != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["status"], http.StatusCreated)
 	}
 
-	if v.Success[0]["message"] != "created 1 item" {
-		t.Errorf("invalid status message: %s - expected: %s", v.Success[0]["message"], "created 1 item")
+	if v.Success["message"] != "created 1 item" {
+		t.Errorf("invalid status message: %s - expected: %s", v.Success["message"], "created 1 item")
 	}
 
 	if l := len(v.Result); l != 2 {
@@ -194,15 +204,15 @@ func TestForwardResponseStream(t *testing.T) {
 
 	dec := json.NewDecoder(rw.Body)
 
-	var sv *RestResp
+	var sv *response
 	if err := dec.Decode(&sv); err != nil {
 		t.Fatalf("failed to unmarshal response status: %s", err)
 	}
 	if len(sv.Success) < 1 {
 		t.Fatalf("invalid status response has no 'success' field: %v", sv)
 	}
-	// expecting only one success message, so the first should be the status
-	rst, ok := FromMap(sv.Success[0])
+	// expecting a success message
+	rst, ok := FromMap(sv.Success)
 	if ok != true {
 		t.Errorf("success response was not the rest status")
 	}

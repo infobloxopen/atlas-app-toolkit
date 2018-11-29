@@ -2,10 +2,12 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -26,9 +28,8 @@ import (
 // Addition bool argument indicates whether method (http.ResponseWriter.WriteHeader) was called or not.
 type ProtoStreamErrorHandlerFunc func(context.Context, bool, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, error)
 
-type RestResp struct {
-	Error   []map[string]interface{} `json:"error,omitempty"`
-	Success []map[string]interface{} `json:"success,omitempty"`
+type RestErrs struct {
+	Error []map[string]interface{} `json:"error,omitempty"`
 }
 
 var (
@@ -117,10 +118,9 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		restErr["fields"] = fields
 	}
 
-	errs, sucs := errorsAndSuccessesFromContext(ctx)
-	restResp := &RestResp{
-		Error:   errs,
-		Success: sucs,
+	errs, _ := errorsAndSuccessFromContext(ctx)
+	restResp := &RestErrs{
+		Error: errs,
 	}
 	restResp.Error = append(restResp.Error, restErr)
 	if !headerWritten {
@@ -149,29 +149,36 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 
 type MessageWithFields interface {
 	error
-	GetFields() map[string]string
+	GetFields() map[string]interface{}
 	GetMessage() string
 }
 type messageWithFields struct {
 	message string
-	fields  map[string]string
+	fields  map[string]interface{}
 }
 
 func (m *messageWithFields) Error() string {
 	return m.message
 }
-func (m *messageWithFields) GetFields() map[string]string {
+func (m *messageWithFields) GetFields() map[string]interface{} {
 	return m.fields
 }
 func (m *messageWithFields) GetMessage() string {
 	return m.message
 }
 
-// NewWithFields stub comment TODO
-func NewWithFields(message string, kvpairs ...string) MessageWithFields {
-	mwf := &messageWithFields{message: message, fields: make(map[string]string)}
+// NewWithFields returns a new MessageWithFields that requires a message string,
+// and then treats the following arguments as alternating keys and values
+// a non-string key will immediately return the result so far, ignoring later
+// values. The values can be any type
+func NewWithFields(message string, kvpairs ...interface{}) MessageWithFields {
+	mwf := &messageWithFields{message: message, fields: make(map[string]interface{})}
 	for i := 0; i+1 < len(kvpairs); i += 2 {
-		mwf.fields[kvpairs[i]] = kvpairs[i+1]
+		k, ok := kvpairs[i].(string)
+		if !ok {
+			return mwf
+		}
+		mwf.fields[k] = kvpairs[i+1]
 	}
 	return mwf
 }
@@ -185,48 +192,76 @@ func init() {
 	*counter = uint32(time.Now().Nanosecond() % math.MaxUint32)
 }
 
+// WithError will save an error message into the grpc trailer metadata, if it
+// is an error that implements MessageWithFields, it also saves the fields.
+// This error will then be inserted into the return JSON if the ResponseForwarder
+// is used
 func WithError(ctx context.Context, err error) {
 	i := atomic.AddUint32(counter, uint32(time.Now().Nanosecond()%100+1))
 	md := metadata.Pairs(fmt.Sprintf("error-%d", i), fmt.Sprintf("message:%s", err.Error()))
 	if mwf, ok := err.(MessageWithFields); ok {
-		for k, v := range mwf.GetFields() {
-			md.Append(fmt.Sprintf("error-%d", i), fmt.Sprintf("%s:%s", k, v))
+		if f := mwf.GetFields(); f != nil {
+			b, _ := json.Marshal(mwf.GetFields())
+			md.Append(fmt.Sprintf("error-%d", i), fmt.Sprintf("fields:%q", b))
 		}
 	}
 	grpc.SetTrailer(ctx, md)
 }
 
+// WithSuccess will save a MessageWithFields into the grpc trailer metadata.
+// This success message will then be inserted into the return JSON if the
+// ResponseForwarder is used
 func WithSuccess(ctx context.Context, msg MessageWithFields) {
 	i := atomic.AddUint32(counter, uint32(time.Now().Nanosecond()%100+1))
 	md := metadata.Pairs(fmt.Sprintf("success-%d", i), fmt.Sprintf("message:%s", msg.Error()))
-	for k, v := range msg.GetFields() {
-		md.Append(fmt.Sprintf("success-%d", i), fmt.Sprintf("%s:%s", k, v))
-
+	if f := msg.GetFields(); f != nil {
+		b, _ := json.Marshal(msg.GetFields())
+		md.Append(fmt.Sprintf("success-%d", i), fmt.Sprintf("fields:%q", b))
 	}
 	grpc.SetTrailer(ctx, md)
-
 }
 
-func errorsAndSuccessesFromContext(ctx context.Context) (errors []map[string]interface{}, successes []map[string]interface{}) {
-	md, _ := runtime.ServerMetadataFromContext(ctx)
+func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}) {
+	md, ok := runtime.ServerMetadataFromContext(ctx)
+	if !ok {
+		return nil, nil
+	}
 	errors = make([]map[string]interface{}, 0)
-	successes = make([]map[string]interface{}, 0)
+	latestSuccess := int64(-1)
 	for k, vs := range md.TrailerMD {
 		if strings.HasPrefix(k, "error-") {
 			err := make(map[string]interface{})
 			for _, v := range vs {
 				parts := strings.SplitN(v, ":", 2)
-				err[parts[0]] = parts[1]
+				if parts[0] == "fields" {
+					uq, _ := strconv.Unquote(parts[1])
+					json.Unmarshal([]byte(uq), &err)
+				} else if parts[0] == "message" {
+					err["message"] = parts[1]
+				}
 			}
 			errors = append(errors, err)
 		}
-		if strings.HasPrefix(k, "success-") {
-			success := make(map[string]interface{})
+		if num := strings.TrimPrefix(k, "success-"); num != k {
+			// Let the later success messages override previous ones,
+			// also account for the possiblity of wraparound with a generous check
+			if i, err := strconv.ParseInt(num, 10, 32); err == nil {
+				if i > latestSuccess || (i < 1<<12 && latestSuccess > 1<<28) {
+					latestSuccess = i
+				} else {
+					continue
+				}
+			}
+			success = make(map[string]interface{})
 			for _, v := range vs {
 				parts := strings.SplitN(v, ":", 2)
-				success[parts[0]] = parts[1]
+				if parts[0] == "fields" {
+					uq, _ := strconv.Unquote(parts[1])
+					json.Unmarshal([]byte(uq), &success)
+				} else if parts[0] == "message" {
+					success["message"] = parts[1]
+				}
 			}
-			successes = append(successes, success)
 		}
 	}
 	return

@@ -91,6 +91,15 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	}
 
 	retainFields(ctx, req, dynmap)
+	errs, suc := errorsAndSuccessFromContext(ctx)
+	if _, ok := dynmap["error"]; len(errs) > 0 && !ok {
+		dynmap["error"] = errs
+	}
+	// this is the edge case, if user sends response that has field 'success'
+	// let him see his response object instead of our status
+	if _, ok := dynmap["success"]; !ok && suc != nil {
+		dynmap["success"] = suc
+	}
 
 	// Here we set "Location" header which contains a url to a long running task
 	// Using it we can retrieve its status
@@ -104,16 +113,6 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 			fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 		}
 		rw.Header().Add("Location", location)
-	}
-	// this is the edge case, if user sends response that has field 'success'
-	// let him see his response object instead of our status
-	if _, ok := dynmap["success"]; !ok {
-		dynmap["success"] = []interface{}{rst}
-	} else {
-		if successes, ok := dynmap["success"].([]map[string]interface{}); ok {
-			successes = append(successes, rst.ToMap())
-			dynmap["success"] = successes
-		}
 	}
 
 	data, err = json.Marshal(dynmap)
@@ -165,7 +164,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	if rst.HTTPStatus == http.StatusOK {
 		rst.HTTPStatus = HTTPStatusFromCode(PartialContent)
 	}
-	v := map[string]interface{}{"success": []interface{}{rst}}
+	v := map[string]interface{}{"success": rst}
 
 	rw.WriteHeader(rst.HTTPStatus)
 

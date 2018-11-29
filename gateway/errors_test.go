@@ -19,7 +19,7 @@ import (
 
 func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 	err := fmt.Errorf("simple text error")
-	v := &RestResp{}
+	v := &RestErrs{}
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
@@ -50,7 +50,7 @@ func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 
 func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 	err := status.Error(codes.Unimplemented, "service not implemented")
-	v := new(RestResp)
+	v := new(RestErrs)
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
@@ -86,7 +86,7 @@ func TestWriteErrorContainer(t *testing.T) {
 		WithDetail(codes.AlreadyExists, "resource", "x btw already exists.").
 		WithField("x", "Check correct value of 'x'.")
 
-	v := new(RestResp)
+	v := new(RestErrs)
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
