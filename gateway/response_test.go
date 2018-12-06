@@ -204,28 +204,6 @@ func TestForwardResponseStream(t *testing.T) {
 
 	dec := json.NewDecoder(rw.Body)
 
-	var sv *response
-	if err := dec.Decode(&sv); err != nil {
-		t.Fatalf("failed to unmarshal response status: %s", err)
-	}
-	if len(sv.Success) < 1 {
-		t.Fatalf("invalid status response has no 'success' field: %v", sv)
-	}
-	// expecting a success message
-	rst, ok := FromMap(sv.Success)
-	if ok != true {
-		t.Errorf("success response was not the rest status")
-	}
-	if rst.Code != CodeName(PartialContent) {
-		t.Errorf("invalid status code: %s - expected: %s", rst.Code, CodeName(PartialContent))
-	}
-	if rst.HTTPStatus != http.StatusPartialContent {
-		t.Errorf("invalid http status code: %d - expected: %d", rst.HTTPStatus, http.StatusPartialContent)
-	}
-	if rst.Message != "returned 1 item" {
-		t.Errorf("invalid status message: %s - expected: %s", rst.Message, "returned 1 item")
-	}
-
 	var rv *result
 	// test Poe
 	if err := dec.Decode(&rv); err != nil {

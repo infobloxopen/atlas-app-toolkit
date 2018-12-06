@@ -110,7 +110,9 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		}
 	}
 
-	restErr := Status(ctx, st).ToMap()
+	restErr := map[string]interface{}{
+		"message": st.Message(),
+	}
 	if len(details) > 0 {
 		restErr["details"] = details
 	}
@@ -126,7 +128,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if !headerWritten {
 		rw.Header().Del("Trailer")
 		rw.Header().Set("Content-Type", marshaler.ContentType())
-		rw.WriteHeader(Status(ctx, st).HTTPStatus)
+		rw.WriteHeader(HTTPStatus(ctx, st))
 	}
 
 	buf, merr := marshaler.Marshal(restResp)

@@ -12,7 +12,6 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -33,14 +32,6 @@ func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 
 	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
 		t.Fatalf("failed to unmarshal response: %s", err)
-	}
-
-	if v.Error[0]["status"].(float64) != http.StatusInternalServerError {
-		t.Errorf("invalid http status: %d", v.Error[0]["status"])
-	}
-
-	if v.Error[0]["code"] != code.Code_UNKNOWN.String() {
-		t.Errorf("invalid code: %s", v.Error[0]["code"])
 	}
 
 	if v.Error[0]["message"] != "simple text error" {
@@ -66,14 +57,6 @@ func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 		t.Fatalf("failed to unmarshal response: %s", err)
 	}
 
-	if v.Error[0]["status"].(float64) != http.StatusNotImplemented {
-		t.Errorf("invalid http status: %d", v.Error[0]["status"])
-	}
-
-	if v.Error[0]["code"] != "NOT_IMPLEMENTED" {
-		t.Errorf("invalid code: %s", v.Error[0]["code"])
-	}
-
 	if v.Error[0]["message"] != "service not implemented" {
 		t.Errorf("invalid message: %s", v.Error[0]["message"])
 	}
@@ -93,14 +76,6 @@ func TestWriteErrorContainer(t *testing.T) {
 
 	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
 		t.Fatalf("failed to unmarshal response: %s", err)
-	}
-
-	if v.Error[0]["status"].(float64) != http.StatusBadRequest {
-		t.Errorf("invalid http status: %d", v.Error[0]["status"])
-	}
-
-	if v.Error[0]["code"] != "INVALID_ARGUMENT" {
-		t.Errorf("invalid code: %s", v.Error[0]["code"])
 	}
 
 	if v.Error[0]["message"] != "Invalid 'x' value." {

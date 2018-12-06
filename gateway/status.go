@@ -27,57 +27,6 @@ const (
 	PartialContent
 )
 
-// RestStatus represents a response status in accordance with REST API Syntax.
-// See: https://github.com/infobloxopen/atlas-app-toolkit#responses
-type RestStatus struct {
-	HTTPStatus int `json:"status,omitempty"`
-	// Code is a string representation of an error code
-	Code    string `json:"code,omitempty"`
-	Message string `json:"message,omitempty"`
-}
-
-func (rs *RestStatus) ToMap() map[string]interface{} {
-	if rs == nil {
-		return nil
-	}
-	m := make(map[string]interface{})
-	if rs.HTTPStatus != 0 {
-		m["status"] = rs.HTTPStatus
-	}
-	if rs.Code != "" {
-		m["code"] = rs.Code
-	}
-	if rs.Message != "" {
-		m["message"] = rs.Message
-	}
-	return m
-}
-func FromMap(m map[string]interface{}) (*RestStatus, bool) {
-	rs := &RestStatus{}
-	for k, v := range m {
-		var ok bool
-		switch k {
-		case "status":
-			var s float64
-			if s, ok = v.(float64); !ok {
-				return nil, false
-			}
-			rs.HTTPStatus = int(s)
-		case "code":
-			if rs.Code, ok = v.(string); !ok {
-				return nil, false
-			}
-		case "message":
-			if rs.Message, ok = v.(string); !ok {
-				return nil, false
-			}
-		default:
-			return nil, false
-		}
-	}
-	return rs, true
-}
-
 // SetStatus sets gRPC status as gRPC metadata
 // Status.Code will be set with metadata key `grpcgateway-status-code` and
 // with value as string name of the code.
@@ -90,13 +39,13 @@ func SetStatus(ctx context.Context, st *status.Status) error {
 
 	md := metadata.Pairs(
 		runtime.MetadataPrefix+"status-code", CodeName(st.Code()),
-		runtime.MetadataPrefix+"status-message", st.Message(),
 	)
 	return grpc.SetHeader(ctx, md)
 }
 
 // SetCreated is a shortcut for SetStatus(ctx, status.New(Created, msg))
 func SetCreated(ctx context.Context, msg string) error {
+	WithSuccess(ctx, NewWithFields(msg))
 	return SetStatus(ctx, status.New(Created, msg))
 }
 
@@ -122,28 +71,20 @@ func SetRunning(ctx context.Context, message, resource string) error {
 // `grpcgatewau-status-code` and `grpcgateway-status-message` from
 // gRPC metadata.
 // If `grpcgatewau-status-code` is not set it is assumed that it is OK.
-func Status(ctx context.Context, st *status.Status) *RestStatus {
-	var rst RestStatus
+func HTTPStatus(ctx context.Context, st *status.Status) int {
 
 	if st != nil {
-		rst.Code = CodeName(st.Code())
-		rst.HTTPStatus = HTTPStatusFromCode(st.Code())
-		rst.Message = st.Message()
+		httpStatus := HTTPStatusFromCode(st.Code())
 
-		return &rst
+		return httpStatus
 	}
-
+	code := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {
-		rst.Code = sc
-	} else {
-		rst.Code = CodeName(codes.OK)
+		code = sc
 	}
-	if sm, ok := Header(ctx, "status-message"); ok {
-		rst.Message = sm
-	}
-	rst.HTTPStatus = HTTPStatusFromCode(Code(rst.Code))
+	httpStatus := HTTPStatusFromCode(Code(code))
 
-	return &rst
+	return httpStatus
 }
 
 // CodeName returns stringname of gRPC code, function handles as standard
