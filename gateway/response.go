@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -91,25 +90,17 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	}
 
 	retainFields(ctx, req, dynmap)
-
-	// Here we set "Location" header which contains a url to a long running task
-	// Using it we can retrieve its status
-	rst := Status(ctx, nil)
-	if rst.Code == CodeName(LongRunning) {
-		location, exists := Header(ctx, "Location")
-
-		if !exists || location == "" {
-			err := fmt.Errorf("Header Location should be set for long running operation")
-			grpclog.Infof("forward response: %v", err)
-			fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
-		}
-		rw.Header().Add("Location", location)
+	errs, suc := errorsAndSuccessFromContext(ctx)
+	if _, ok := dynmap["error"]; len(errs) > 0 && !ok {
+		dynmap["error"] = errs
 	}
 	// this is the edge case, if user sends response that has field 'success'
 	// let him see his response object instead of our status
-	if _, ok := dynmap["success"]; !ok {
-		dynmap["success"] = rst
+	if _, ok := dynmap["success"]; !ok && suc != nil {
+		dynmap["success"] = suc
 	}
+
+	httpStatus := HTTPStatus(ctx, nil)
 
 	data, err = json.Marshal(dynmap)
 	if err != nil {
@@ -117,7 +108,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
 
-	rw.WriteHeader(rst.HTTPStatus)
+	rw.WriteHeader(httpStatus)
 
 	if _, err = rw.Write(data); err != nil {
 		grpclog.Infof("forward response: failed to write response: %v", err)
@@ -152,28 +143,13 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 		return
 	}
 
-	rst := Status(ctx, nil)
+	httpStatus := HTTPStatus(ctx, nil)
 	// if user did not set status explicitly
-	if rst.Code == "" || rst.Code == CodeName(codes.OK) {
-		rst.Code = CodeName(PartialContent)
-	}
-	if rst.HTTPStatus == http.StatusOK {
-		rst.HTTPStatus = HTTPStatusFromCode(PartialContent)
-	}
-	v := map[string]interface{}{"success": rst}
-
-	rw.WriteHeader(rst.HTTPStatus)
-
-	data, err := marshaler.Marshal(v)
-	if err != nil {
-		fw.StreamErrHandler(ctx, true, mux, marshaler, rw, req, err)
-		return
+	if httpStatus == http.StatusOK {
+		httpStatus = HTTPStatusFromCode(PartialContent)
 	}
 
-	if _, err := rw.Write(data); err != nil {
-		grpclog.Infof("forward response stream: failed to write status object: %s", err)
-		return
-	}
+	rw.WriteHeader(httpStatus)
 
 	var delimiter []byte
 	if d, ok := marshaler.(runtime.Delimited); ok {

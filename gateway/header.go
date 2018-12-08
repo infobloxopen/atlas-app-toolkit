@@ -100,6 +100,9 @@ func handleForwardResponseServerMetadata(matcher runtime.HeaderMatcherFunc, w ht
 
 func handleForwardResponseTrailerHeader(w http.ResponseWriter, md runtime.ServerMetadata) {
 	for k := range md.TrailerMD {
+		if strings.HasPrefix(k, "error-") || strings.HasPrefix(k, "success-") {
+			continue
+		}
 		tKey := textproto.CanonicalMIMEHeaderKey(fmt.Sprintf("%s%s", runtime.MetadataTrailerPrefix, k))
 		w.Header().Add("Trailer", tKey)
 	}

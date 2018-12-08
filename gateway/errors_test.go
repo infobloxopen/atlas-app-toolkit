@@ -12,14 +12,13 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 	err := fmt.Errorf("simple text error")
-	v := new(RestError)
+	v := &RestErrs{}
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
@@ -35,22 +34,14 @@ func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 		t.Fatalf("failed to unmarshal response: %s", err)
 	}
 
-	if v.Status.HTTPStatus != http.StatusInternalServerError {
-		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
-	}
-
-	if v.Status.Code != code.Code_UNKNOWN.String() {
-		t.Errorf("invalid code: %s", v.Status.Code)
-	}
-
-	if v.Status.Message != "simple text error" {
-		t.Errorf("invalid message: %s", v.Status.Message)
+	if v.Error[0]["message"] != "simple text error" {
+		t.Errorf("invalid message: %s", v.Error[0]["message"])
 	}
 }
 
 func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 	err := status.Error(codes.Unimplemented, "service not implemented")
-	v := new(RestError)
+	v := new(RestErrs)
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
@@ -66,16 +57,8 @@ func TestProtoMessageErrorHandlerUnimplementedCode(t *testing.T) {
 		t.Fatalf("failed to unmarshal response: %s", err)
 	}
 
-	if v.Status.HTTPStatus != http.StatusNotImplemented {
-		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
-	}
-
-	if v.Status.Code != "NOT_IMPLEMENTED" {
-		t.Errorf("invalid code: %s", v.Status.Code)
-	}
-
-	if v.Status.Message != "service not implemented" {
-		t.Errorf("invalid message: %s", v.Status.Message)
+	if v.Error[0]["message"] != "service not implemented" {
+		t.Errorf("invalid message: %s", v.Error[0]["message"])
 	}
 }
 
@@ -86,7 +69,7 @@ func TestWriteErrorContainer(t *testing.T) {
 		WithDetail(codes.AlreadyExists, "resource", "x btw already exists.").
 		WithField("x", "Check correct value of 'x'.")
 
-	v := new(RestError)
+	v := new(RestErrs)
 
 	rw := httptest.NewRecorder()
 	ProtoMessageErrorHandler(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, err)
@@ -95,20 +78,12 @@ func TestWriteErrorContainer(t *testing.T) {
 		t.Fatalf("failed to unmarshal response: %s", err)
 	}
 
-	if v.Status.HTTPStatus != http.StatusBadRequest {
-		t.Errorf("invalid http status: %d", v.Status.HTTPStatus)
+	if v.Error[0]["message"] != "Invalid 'x' value." {
+		t.Errorf("invalid message: %s", v.Error[0]["message"])
 	}
 
-	if v.Status.Code != "INVALID_ARGUMENT" {
-		t.Errorf("invalid code: %s", v.Status.Code)
-	}
-
-	if v.Status.Message != "Invalid 'x' value." {
-		t.Errorf("invalid message: %s", v.Status.Message)
-	}
-
-	if len(v.Details) != 2 {
-		t.Errorf("invalid details length: %d", len(v.Details))
+	if len(v.Error[0]["details"].([]interface{})) != 2 {
+		t.Errorf("invalid details length: %d", len(v.Error[0]["details"].([]interface{})))
 	}
 
 	details := []interface{}{
@@ -125,19 +100,19 @@ func TestWriteErrorContainer(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(
-		v.Details,
+		v.Error[0]["details"],
 		details,
 	) {
-		t.Errorf("invalid details value: %v", v.Details)
+		t.Errorf("invalid details value: %v", v.Error[0]["details"])
 	}
 
 	fields := map[string][]string{
 		"x": []string{"Check correct value of 'x'."}}
 
-	vMap := v.Fields.(map[string]interface{})
+	vMap := v.Error[0]["fields"].(map[string]interface{})
 
 	if vMap["x"].([]interface{})[0] != fields["x"][0] {
-		t.Errorf("invalid fields value: %v", v.Fields)
+		t.Errorf("invalid fields value: %v", v.Error[0]["fields"])
 	}
 
 }

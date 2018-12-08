@@ -15,33 +15,21 @@ import (
 
 func TestStatus(t *testing.T) {
 	// test REST status from gRPC one
-	rst := Status(context.Background(), status.New(codes.OK, "success message"))
-	if rst.Code != CodeName(codes.OK) {
-		t.Errorf("invalid status code: %s - expected: %s", rst.Code, CodeName(codes.OK))
-	}
-	if rst.HTTPStatus != http.StatusOK {
-		t.Errorf("invalid http status code %d - expected: %d", rst.HTTPStatus, http.StatusOK)
-	}
-	if rst.Message != "success message" {
-		t.Errorf("invalid status message: %s - expected: %s", rst.Message, "success message")
+	stat := HTTPStatus(context.Background(), status.New(codes.OK, "success message"))
+
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
 	}
 
 	// test REST status from incoming context
 	md := metadata.Pairs(
 		runtime.MetadataPrefix+"status-code", CodeName(Created),
-		runtime.MetadataPrefix+"status-message", "created message",
 	)
 	ctx := metadata.NewIncomingContext(context.Background(), md)
-	rst = Status(ctx, nil)
+	stat = HTTPStatus(ctx, nil)
 
-	if rst.Code != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", rst.Code, CodeName(Created))
-	}
-	if rst.HTTPStatus != http.StatusCreated {
-		t.Errorf("invalid http status code %d - expected: %d", rst.HTTPStatus, http.StatusCreated)
-	}
-	if rst.Message != "created message" {
-		t.Errorf("invalid status message: %s - expected: %s", rst.Message, "created message")
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
 	}
 }
 
