@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
@@ -89,6 +90,9 @@ func (t *Transaction) Rollback() error {
 	if t.current == nil {
 		return nil
 	}
+	if reflect.ValueOf(t.current.CommonDB()).IsNil() {
+		return status.Error(codes.Unavailable, "Database connection not available")
+	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -101,7 +105,7 @@ func (t *Transaction) Rollback() error {
 // Commit finishes transaction by calling `*gorm.DB.Commit()`
 // Reset current transaction and returns an error if any.
 func (t *Transaction) Commit(ctx context.Context) error {
-	if t.current == nil {
+	if t.current == nil || reflect.ValueOf(t.current.CommonDB()).IsNil() {
 		return nil
 	}
 	t.mu.Lock()
@@ -148,6 +152,11 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 			}
 
 			if terr == nil {
+				return
+			}
+			// Catch the status: UNAVAILABLE error that Rollback might return
+			if _, ok := status.FromError(terr); ok {
+				err = terr
 				return
 			}
 
