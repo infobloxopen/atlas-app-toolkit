@@ -46,8 +46,24 @@ func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) 
 		return
 	}
 
+	_, nnf := fields["_nnf"]
+	_, nf := fields["_nf"]
 	for key := range obj {
+		// 如果一定排除，就直接delete
+		if _, ok := fields["!"+key]; ok {
+			delete(obj, key)
+		}
+
 		if _, ok := fields[key]; !ok {
+			if _, isModel := obj[key].(map[string]interface{}); isModel {
+				if nf { // 如果nf必须显示，此值又是model的情况下，就不删除
+					continue
+				}
+			} else {
+				if nnf { // 如果nnf必须显示，此值又不是model的情况下，就不删除
+					continue
+				}
+			}
 			delete(obj, key)
 		} else {
 			switch x := obj[key].(type) {

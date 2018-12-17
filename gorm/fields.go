@@ -72,7 +72,8 @@ fields:
 }
 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
-	sf, ok := objType.FieldByName(generator.CamelCase(f.GetName()))
+	ccName := generator.CamelCase(f.GetName())
+	sf, ok := objType.FieldByName(ccName)
 	if !ok {
 		return nil, nil
 	}
@@ -96,11 +97,11 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 			return nil, err
 		}
 		for i, e := range subPreload {
-			subPreload[i] = generator.CamelCase(f.GetName()) + "." + e
+			subPreload[i] = ccName + "." + e
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	return append(toPreload, generator.CamelCase(f.GetName())), nil
+	return append(toPreload, ccName), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {

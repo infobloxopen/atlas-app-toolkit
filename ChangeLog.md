@@ -14,7 +14,7 @@ atlas改造
 - 对于Read和List请求体生成时候检测对应实体或者其N层嵌套实体是否存在InvisibleFields，如果存在，则整理进一个NecessaryFields方法，且要求请求提必须存在_fileds字段，返回例子 !f1,!f2,n1.!f3,n2.f5
 - 类似第二点，在gateway的ClientUnaryInterceptor方法里将NecessaryFields的结果追加进_fields参数里，且doRetainFields也要对应处理
 
-4. FieldSelection 支持[col~order~offset~limit]特性，寓意为以col的order序的offset的limit行：
+4. FieldSelection 支持[col\~order\~offset~limit]特性，寓意为以col的order序的offset的limit行：
 - Field里加个标识这玩意的参数，在Parse方法里处理下
 - 在has_many的Preload的回调里根据这些数据来执行相应行为
 
