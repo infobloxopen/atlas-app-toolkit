@@ -35,6 +35,8 @@ func FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj int
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
+
+	toPreload = tidySubPreload(fs.GetFields(), objType, toPreload)
 	return toPreload, nil
 }
 
@@ -71,8 +73,61 @@ fields:
 	return toPreload, nil
 }
 
-func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
+func tidySubPreload(subs map[string]*query.Field, objType reflect.Type, subPreload []string) []string {
+	edited := false
+
+	exists := make(map[string]string, len(subPreload))
+	for _, e := range subPreload {
+		sp := strings.Split(e, ".")
+		exists[sp[0]] = e
+	}
+
+	_, nf := subs["_nf"]
+	if nf {
+		numField := objType.NumField()
+		for i := 0; i < numField; i++ {
+			sf := objType.Field(i)
+
+			if _, ok := exists[sf.Name]; ok {
+				continue
+			}
+
+			fType := indirectType(sf.Type)
+			if isModel(fType) {
+				exists[sf.Name] = sf.Name
+				edited = true
+			}
+		}
+	}
+
+	for k := range subs {
+		if strings.HasPrefix(k, "!") {
+			cn := generator.CamelCase(k[1:])
+			if _, ok := exists[cn]; ok {
+				delete(exists, cn)
+				edited = true
+			}
+		}
+	}
+
+	if !edited {
+		return subPreload
+	}
+
+	var vals []string
+	for _, v := range exists {
+		vals = append(vals, v)
+	}
+	return vals
+}
+
+func handlePreloads(f *query.Field, objType reflect.Type) (sps []string, rer error) {
 	ccName := generator.CamelCase(f.GetName())
+	if strings.HasPrefix(ccName, "_") ||
+		strings.HasPrefix(ccName, "!") {
+		return nil, nil
+	}
+
 	sf, ok := objType.FieldByName(ccName)
 	if !ok {
 		return nil, nil
@@ -96,10 +151,13 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i, e := range subPreload {
-			subPreload[i] = ccName + "." + e
-		}
 		toPreload = append(toPreload, subPreload...)
+	}
+
+	toPreload = tidySubPreload(f.GetSubs(), fType, toPreload)
+
+	for i, e := range toPreload {
+		toPreload[i] = ccName + "." + e
 	}
 	return append(toPreload, ccName), nil
 }
