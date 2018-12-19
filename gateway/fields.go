@@ -46,8 +46,8 @@ func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) 
 		return
 	}
 
-	_, nnf := fields["_unassoc"]
-	_, nf := fields["_assoc"]
+	_, unassoc := fields["_unassoc"]
+	_, assoc := fields["_assoc"]
 	for key := range obj {
 		if _, ok := fields["!"+key]; ok {
 			delete(obj, key)
@@ -55,11 +55,11 @@ func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) 
 
 		if _, ok := fields[key]; !ok {
 			if _, isModel := obj[key].(map[string]interface{}); isModel {
-				if nf {
+				if assoc {
 					continue
 				}
 			} else {
-				if nnf {
+				if unassoc {
 					continue
 				}
 			}
