@@ -122,12 +122,12 @@ func tidySubPreload(subs map[string]*query.Field, objType reflect.Type, subPrelo
 }
 
 func handlePreloads(f *query.Field, objType reflect.Type) (sps []string, rer error) {
-	ccName := generator.CamelCase(f.GetName())
-	if strings.HasPrefix(ccName, "_") ||
-		strings.HasPrefix(ccName, "!") {
+	if strings.HasPrefix(f.GetName(), "_") ||
+		strings.HasPrefix(f.GetName(), "!") {
 		return nil, nil
 	}
 
+	ccName := generator.CamelCase(f.GetName())
 	sf, ok := objType.FieldByName(ccName)
 	if !ok {
 		return nil, nil
