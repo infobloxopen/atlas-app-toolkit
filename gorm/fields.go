@@ -82,7 +82,7 @@ func tidySubPreload(subs map[string]*query.Field, objType reflect.Type, subPrelo
 		exists[sp[0]] = e
 	}
 
-	_, nf := subs["_nf"]
+	_, nf := subs["_assoc"]
 	if nf {
 		numField := objType.NumField()
 		for i := 0; i < numField; i++ {
