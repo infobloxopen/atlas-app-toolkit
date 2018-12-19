@@ -46,8 +46,8 @@ func doRetainFields(obj map[string]interface{}, fields query.FieldSelectionMap) 
 		return
 	}
 
-	_, nnf := fields["_nnf"]
-	_, nf := fields["_nf"]
+	_, nnf := fields["_unassoc"]
+	_, nf := fields["_assoc"]
 	for key := range obj {
 		if _, ok := fields["!"+key]; ok {
 			delete(obj, key)
