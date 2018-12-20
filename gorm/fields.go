@@ -56,6 +56,9 @@ fields:
 			}
 		}
 		if isModel(fType) {
+			if ok, _ := gormTag(&sf, "-"); ok {
+				continue
+			}
 			if ok, flag := gormTag(&sf, "preload"); ok && flag == "false" {
 				continue
 			}
