@@ -85,8 +85,8 @@ func tidySubPreload(subs map[string]*query.Field, objType reflect.Type, subPrelo
 		exists[sp[0]] = e
 	}
 
-	_, nf := subs["_assoc"]
-	if nf {
+	_, assoc := subs["_assoc"]
+	if assoc {
 		numField := objType.NumField()
 		for i := 0; i < numField; i++ {
 			sf := objType.Field(i)
@@ -97,6 +97,10 @@ func tidySubPreload(subs map[string]*query.Field, objType reflect.Type, subPrelo
 
 			fType := indirectType(sf.Type)
 			if isModel(fType) {
+				if ok, _ := gormTag(&sf, "-"); ok {
+					continue
+				}
+
 				exists[sf.Name] = sf.Name
 				edited = true
 			}
