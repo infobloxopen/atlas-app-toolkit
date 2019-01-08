@@ -87,7 +87,7 @@ func (h *ProtoErrorHandler) StreamHandler(ctx context.Context, headerWritten boo
 }
 
 func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, marshaler runtime.Marshaler, rw http.ResponseWriter, err error) {
-	const fallback = `{"code":"INTERNAL","status":500,"message":"%s"}`
+	const fallback = `{"error":[{"message":"%s"}]}`
 
 	st, ok := status.FromError(err)
 	if !ok {
