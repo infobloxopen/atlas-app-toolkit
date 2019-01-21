@@ -294,14 +294,20 @@ func (lexer *filteringLexer) string() (Token, error) {
 	term := lexer.curChar
 	s := ""
 	lexer.advance()
-	for lexer.curChar != term {
+	for {
 		if lexer.eof {
 			return nil, &UnexpectedSymbolError{lexer.curChar, lexer.pos}
+		}
+		if lexer.curChar == term {
+			lexer.advance()
+			if lexer.curChar != term {
+				break
+			}
+			// term is escaped
 		}
 		s += string(lexer.curChar)
 		lexer.advance()
 	}
-	lexer.advance()
 	return StringToken{Value: s}, nil
 }
 

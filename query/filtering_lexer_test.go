@@ -7,7 +7,7 @@ import (
 )
 
 func TestFilteringLexer(t *testing.T) {
-	lexer := NewFilteringLexer(`()14 13.23 'abc'"bcd" field1 and or  not == eq ne != match ~ nomatch !~ gt > ge >= lt < le <= null := ieq [1,5, 6] ['Hello','World'] in `)
+	lexer := NewFilteringLexer(`()14 13.23 'abc'"bcd" field1 and or  not == eq ne != match ~ nomatch !~ gt > ge >= lt < le <= null := ieq [1,5, 6] ['Hello','World'] in '''""' """''"`)
 	tests := []Token{
 		LparenToken{},
 		RparenToken{},
@@ -41,6 +41,9 @@ func TestFilteringLexer(t *testing.T) {
 		NumberArrayToken{Values: []float64{1, 5, 6}},
 		StringArrayToken{Values: []string{"Hello", "World"}},
 		InToken{},
+		// duplicate terminator to escape
+		StringToken{Value: `'""`},
+		StringToken{Value: `"''`},
 		EOFToken{},
 	}
 

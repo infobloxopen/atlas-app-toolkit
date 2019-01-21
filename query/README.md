@@ -66,6 +66,8 @@ Literal values include numbers (integer and floating-point), quoted (both single
 | := | ieq     | Insensitive equal        | city := 'SaNtA ClArA'                                    |
 | in           | Check existence in set   | city in [‘Santa Clara’, ‘New York’] or  price in [1,2,3] |
 
+In order to escape string literal delimiter duplicate it, e.g. for single-quoted string literals: `_filter=field == 'dup single quote '' '`, for double-quoted literals: `_filter=field == "dup double quote "" "`.
+
 Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use [vanilla](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-swagger) swagger schema generation, since this plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
 In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/atlas-patch/protoc-gen-swagger) which has a fix for this issue. 
 You can also use [atlas-gentool](https://github.com/infobloxopen/atlas-gentool) which contains both versions of the plugin.
