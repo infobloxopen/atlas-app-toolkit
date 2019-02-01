@@ -44,10 +44,12 @@ func LogLevelInterceptor(defaultLevel logrus.Level) grpc.UnaryServerInterceptor 
 // on the result (changes to these entries' fields will not affect each other).
 func CopyLoggerWithLevel(logger *logrus.Logger, lvl logrus.Level) *logrus.Logger {
 	newLogger := &logrus.Logger{
-		Out:       logger.Out,
-		Hooks:     make(logrus.LevelHooks),
-		Level:     lvl,
-		Formatter: logger.Formatter,
+		Out:          logger.Out,
+		Hooks:        make(logrus.LevelHooks),
+		Level:        lvl,
+		Formatter:    logger.Formatter,
+		ReportCaller: logger.ReportCaller,
+		ExitFunc:     logger.ExitFunc,
 	}
 	// Copy hooks, so that original Logger hooks are not altered
 	for l, hook := range logger.Hooks {
