@@ -77,11 +77,17 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 
 		service := path.Dir(method)[1:]
 		grpcMethod := path.Base(method)
-		fields := logrus.Fields{
-			"grpc.service": service,
-			"grpc.method":  grpcMethod,
-		}
 		startTime := time.Now()
+		fields := logrus.Fields{
+			grpc_logrus.SystemField: "grpc",
+			grpc_logrus.KindField:   "gateway",
+			"grpc.service":          service,
+			"grpc.method":           grpcMethod,
+			"grpc.start_time":       startTime.Format(time.RFC3339),
+		}
+		if d, ok := ctx.Deadline(); ok {
+			fields["grpc.request.deadline"] = d.Format(time.RFC3339)
+		}
 
 		// Request ID -- defaults to on
 		if !cfg.noRequestID {
