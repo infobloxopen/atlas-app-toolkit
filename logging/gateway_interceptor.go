@@ -136,18 +136,18 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 			return
 		}
 
-		// set error message field
-		fields = logrus.Fields{}
-		if err != nil {
-			fields[logrus.ErrorKey] = err
-		}
-
 		// catch any changes made down the middleware chain by re-extracting
 		resLogger := ctxlogrus.Extract(newCtx)
 
-		// duration field
 		durField, durVal := grpc_logrus.DurationToTimeMillisField(time.Now().Sub(startTime))
-		fields[durField] = durVal
+		fields = logrus.Fields{
+			durField:    durVal,
+			"grpc.code": grpc.Code(err).String(),
+		}
+		// set error message field
+		if err != nil {
+			fields[logrus.ErrorKey] = err
+		}
 
 		// print log message with all fields
 		resLogger = resLogger.WithFields(fields)
