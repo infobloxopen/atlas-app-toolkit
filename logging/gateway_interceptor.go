@@ -29,7 +29,7 @@ type gwLogCfg struct {
 type GWLogOption func(*gwLogCfg)
 
 // NoRequestID disables request-id inclusion (and generation if needed) in gw interceptor logs
-func NoRequestID(o *gwLogCfg) {
+func DisableRequestID(o *gwLogCfg) {
 	o.noRequestID = true
 }
 
@@ -131,7 +131,7 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 		err = invoker(context.WithValue(ctx, sentinelKey, &sentinelValue), method, req, reply, cc, opts...)
 
 		// if the sentinel is set, no middlewares had errors, and it is assumed the
-		// server will log the call in leiu of the gateway doing so
+		// server will log the call instead of the gateway doing so
 		if sentinelValue {
 			return
 		}
