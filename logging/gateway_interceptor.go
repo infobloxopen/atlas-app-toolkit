@@ -28,7 +28,7 @@ type gwLogCfg struct {
 // of a GatewayLoggingInterceptor
 type GWLogOption func(*gwLogCfg)
 
-// NoRequestID disables request-id inclusion (and generation if needed) in gw interceptor logs
+// DisableRequestID disables request-id inclusion (and generation if needed) in gw interceptor logs
 func DisableRequestID(o *gwLogCfg) {
 	o.noRequestID = true
 }
