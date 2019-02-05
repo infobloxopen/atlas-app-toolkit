@@ -74,6 +74,26 @@ ctx := metadata.AppendToOutgoingContext(ctx, "log-level", "debug", "log-trace-ke
 response, err := client.SomeRPC(ctx, someRequest)
 ```
 
+## Gateway logging
+
+Certain client interceptors may reject incoming queries (e.g. due to non-conformant json fields).
+This will cause a logging gap compared to queries that fail in the server. To alleviate this, an enhanced gateway logging interceptor is provided.
+The `GatewayLoggingInterceptor` should be in the middleware chain before any that could error out.
+The `GatewayLoggingSentinelInterceptor` should be the very last middleware in the chain.
+
+For example:
+```golang
+...
+	grpc_middleware.ChainUnaryClient(
+		[]grpc.UnaryClientInterceptor{
+			GatewayLoggingInterceptor(logger, EnableDynamicLogLevel, EnableAccountID),
+			...
+			GatewayLoggingSentinelInterceptor(),
+		},
+	)
+...
+```
+
 ## Other functions
 
 The helper function `CopyLoggerWithLevel` can be used to make a deep copy of a logger at a new level, or using `CopyLoggerWithLevel(entry.Logger, level).WithFields(entry.Data)` can copy a logrus.Entry.

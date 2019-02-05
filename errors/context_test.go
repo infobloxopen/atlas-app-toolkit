@@ -233,7 +233,7 @@ func TestContextError(t *testing.T) {
 
 	// Test that new resets isSet flag and turns error into nil.
 
-	New(ctx, codes.InvalidArgument, "target", "<error 1>")
+	New(ctx, codes.InvalidArgument, "target")
 
 	if v := Error(ctx); v != nil {
 		t.Errorf("Unexpected Error result: expected nil, got %v", v)
