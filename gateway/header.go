@@ -80,12 +80,9 @@ func HeaderN(ctx context.Context, key string, n int) (val []string, found bool) 
 	}
 }
 
-// PrefixOutgoingHeaderMatcher prefixes outgoing gRPC metadata with
-// runtime.MetadataHeaderPrefix ("Grpc-Metadata-").
-// It behaves like the default gRPC-Gateway outgoing header matcher
-// (if none is provided as an option).
+// PrefixOutgoingHeaderMatcher discards all grpc header metadata.
 func PrefixOutgoingHeaderMatcher(key string) (string, bool) {
-	return fmt.Sprintf("%s%s", runtime.MetadataHeaderPrefix, key), true
+	return "", false
 }
 
 func handleForwardResponseServerMetadata(matcher runtime.HeaderMatcherFunc, w http.ResponseWriter, md runtime.ServerMetadata) {
