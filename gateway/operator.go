@@ -36,6 +36,7 @@ func MetadataAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 }
 
 // SetPagination sets page info to outgoing gRPC context.
+// Deprecated: Please add `infoblox.api.PageInfo` as part of gRPC message and do not rely on outgoing gRPC context.
 func SetPageInfo(ctx context.Context, p *query.PageInfo) error {
 	m := make(map[string]string)
 
