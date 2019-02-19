@@ -66,7 +66,7 @@ func TestForwardResponseMessage(t *testing.T) {
 	enc.Encode(map[string]interface{}{"code": CodeName(Created), "status": 201})
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.Pairs(
-			"status-code", CodeName(Created),
+			"grpcgateway-status-code", CodeName(Created),
 		),
 		TrailerMD: metadata.Pairs(
 			"success-1", "message:deleted 1 item",
@@ -85,6 +85,11 @@ func TestForwardResponseMessage(t *testing.T) {
 
 	if ct := rw.Header().Get("Content-Type"); ct != "application/json" {
 		t.Errorf("invalid content-type: %s - expected: %s", ct, "application/json")
+	}
+
+	mdSt := "Grpc-Metadata-Grpcgateway-Status-Code"
+	if h := rw.Header().Get(mdSt); h != "" {
+		t.Errorf("got %s: %s", mdSt, h)
 	}
 
 	v := &response{}

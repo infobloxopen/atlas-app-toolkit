@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"google.golang.org/grpc/metadata"
-
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
 func TestHeader(t *testing.T) {
@@ -60,7 +58,7 @@ func TestHeaderN(t *testing.T) {
 func TestPrefixOutgoingHeaderMatcher(t *testing.T) {
 	key := "Content-Type"
 	v, ok := PrefixOutgoingHeaderMatcher(key)
-	if !ok || v != runtime.MetadataHeaderPrefix+key {
-		t.Errorf("header %s is not matched: %s, %v", key, v, ok)
+	if ok {
+		t.Errorf("header %s hasn't been discarded: %s", key, v)
 	}
 }
