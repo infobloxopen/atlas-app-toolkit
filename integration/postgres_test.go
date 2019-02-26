@@ -12,7 +12,7 @@ import (
 
 // buildDB creates a new test Postgres database and halts the test if anything
 // fails during this process
-func buildDB(t *testing.T, opts ...option) testPostgresDB {
+func buildDB(t *testing.T, opts ...option) PostgresDB {
 	db, err := NewTestPostgresDB(opts...)
 	if err != nil {
 		t.Fatalf("unable to create test postgres database")
@@ -71,7 +71,7 @@ func TestCheckConnection(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	db.host = "some-fake-hostname"
-	if err := db.checkConnection(); err == nil {
+	if err := db.CheckConnection(); err == nil {
 		t.Errorf("expected to get non-nil error")
 	}
 	db.host = "localhost"
