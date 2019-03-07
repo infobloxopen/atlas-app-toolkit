@@ -22,6 +22,7 @@ type gwLogCfg struct {
 	noRequestID   bool
 	acctIDKeyfunc jwt.Keyfunc
 	withAcctID    bool
+	codeToLevel   grpc_logrus.CodeToLevel
 }
 
 // GWLogOption is a type of function that alters a gwLogCfg in the instantiation
@@ -61,15 +62,32 @@ func EnableAccountID(o *gwLogCfg) {
 	o.acctIDKeyfunc = nil
 }
 
-type sentinelKeyType int
+func WithCodeFunc(codeFunc grpc_logrus.CodeToLevel) GWLogOption {
+	return func(o *gwLogCfg) {
+		o.codeToLevel = codeFunc
+	}
+}
 
-const sentinelKey = sentinelKeyType(0)
+type sentinelKeyType struct{}
+
+var sentinelKey = sentinelKeyType{}
+
+func SentinelValueFromCtx(ctx context.Context) (value, ok bool) {
+	if val := ctx.Value(sentinelKey); val != nil {
+		succeeded, ok := val.(*bool)
+		if ok {
+			return *succeeded, true
+		}
+	}
+	return false, false
+}
 
 // GatewayLoggingInterceptor handles the functions of the various toolkit interceptors
 // offered for the grpc server, as well as the standard grpc_logrus server interceptor
 // behavior (superset of grpc_logrus client interceptor behavior)
 func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.UnaryClientInterceptor {
 	cfg := &gwLogCfg{}
+	cfg.codeToLevel = grpc_logrus.DefaultCodeToLevel
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -128,7 +146,7 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 		newCtx := ctxlogrus.ToContext(ctx, newLogger.WithFields(fields))
 
 		var sentinelValue bool
-		err = invoker(context.WithValue(ctx, sentinelKey, &sentinelValue), method, req, reply, cc, opts...)
+		err = invoker(context.WithValue(newCtx, sentinelKey, &sentinelValue), method, req, reply, cc, opts...)
 
 		// if the sentinel is set, no middlewares had errors, and it is assumed the
 		// server will log the call instead of the gateway doing so
@@ -151,7 +169,7 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 
 		// print log message with all fields
 		resLogger = resLogger.WithFields(fields)
-		resLogger.Info("finished client unary call with code " + grpc.Code(err).String())
+		levelLogf(resLogger, cfg.codeToLevel(grpc.Code(err)), "finished client unary call with code "+grpc.Code(err).String())
 
 		return
 	}
@@ -163,10 +181,32 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 // server, and thus the server will log the call, and the gateway doesn't need to.
 func GatewayLoggingSentinelInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
-		succeeded, ok := ctx.Value(sentinelKey).(*bool)
+		val := ctx.Value(sentinelKey)
+		if val == nil {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		succeeded, ok := val.(*bool)
 		if ok {
 			*succeeded = true
 		}
 		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/cfaf5686ec79ff8344257723b6f5ba1ae0ffeb4d/logging/logrus/server_interceptors.go#L91
+func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {
+	switch level {
+	case logrus.DebugLevel:
+		entry.Debugf(format, args...)
+	case logrus.InfoLevel:
+		entry.Infof(format, args...)
+	case logrus.WarnLevel:
+		entry.Warningf(format, args...)
+	case logrus.ErrorLevel:
+		entry.Errorf(format, args...)
+	case logrus.FatalLevel:
+		entry.Fatalf(format, args...)
+	case logrus.PanicLevel:
+		entry.Panicf(format, args...)
 	}
 }
