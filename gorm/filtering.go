@@ -119,11 +119,21 @@ func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj 
 
 // StringConditionToGorm returns GORM Plain SQL representation of the string condition.
 func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	var assocToJoin map[string]struct{}
-	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
+	var (
+		assocToJoin   map[string]struct{}
+		dbName, assoc string
+		err           error
+	)
+
+	if IsJSONCondition(ctx, c.FieldPath, obj) {
+		dbName, assoc, err = HandleJSONFieldPath(ctx, c.FieldPath, obj, c.Value)
+	} else {
+		dbName, assoc, err = HandleFieldPath(ctx, c.FieldPath, obj)
+	}
 	if err != nil {
 		return "", nil, nil, err
 	}
+
 	if assoc != "" {
 		assocToJoin = make(map[string]struct{})
 		assocToJoin[assoc] = struct{}{}
@@ -295,8 +305,16 @@ func NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayConditi
 }
 
 func StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	var assocToJoin map[string]struct{}
-	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
+	var (
+		assocToJoin   map[string]struct{}
+		dbName, assoc string
+		err           error
+	)
+	if IsJSONCondition(ctx, c.FieldPath, obj) {
+		dbName, assoc, err = HandleJSONFieldPath(ctx, c.FieldPath, obj, c.Values...)
+	} else {
+		dbName, assoc, err = HandleFieldPath(ctx, c.FieldPath, obj)
+	}
 	if err != nil {
 		return "", nil, nil, err
 	}
