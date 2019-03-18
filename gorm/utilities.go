@@ -71,6 +71,9 @@ func isRawJSON(values ...string) bool {
 	}
 
 	for _, v := range values {
+		//TODO: this is a very poor check to prevent unexpected errors from Database engine consider to make full validation
+		//TODO: also we need return an error if json invalid to prevent database error for json parsing
+		v = strings.TrimSpace(v)
 		if !strings.HasPrefix(v, "{") || !strings.HasSuffix(v, "}") {
 			return false
 		}
