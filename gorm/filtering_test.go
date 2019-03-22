@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
@@ -18,6 +19,7 @@ type Entity struct {
 	NestedEntity NestedEntity
 	Id           string
 	Ref          *string
+	Tags         *postgres.Jsonb
 }
 
 type EntityProto struct {
@@ -255,6 +257,69 @@ func TestGormFiltering(t *testing.T) {
 			"not(id in [1, 2])",
 			"(entities.id NOT IN (?, ?))",
 			[]interface{}{1.0, 2.0},
+			nil,
+			nil,
+		},
+		{
+			`tags == '{"Location": "Tacoma"}'`,
+			`(entities.tags = ?)`,
+			[]interface{}{`{"Location": "Tacoma"}`},
+			nil,
+			nil,
+		},
+		{
+			`tags.Location == 'Tacoma'`,
+			`(entities.tags #>> '{Location}' = ?)`,
+			[]interface{}{"Tacoma"},
+			nil,
+			nil,
+		},
+		{
+			`tags.Location == '{"City": "Tacoma"}'`,
+			`(entities.tags #> '{Location}' = ?)`,
+			[]interface{}{`{"City": "Tacoma"}`},
+			nil,
+			nil,
+		},
+		{
+			`tags in ['{"Location": "Tacoma"}', '{"Location": "Minsk"}']`,
+			`(entities.tags  IN (?, ?))`,
+			[]interface{}{`{"Location": "Tacoma"}`, `{"Location": "Minsk"}`},
+			nil,
+			nil,
+		},
+		{
+			`tags.Location in ['Tacoma', 'Minsk']`,
+			`(entities.tags #>> '{Location}'  IN (?, ?))`,
+			[]interface{}{"Tacoma", "Minsk"},
+			nil,
+			nil,
+		},
+		{
+			`tags.Location in ['{"City": "Tacoma"}', '{"City": "Minsk"}']`,
+			`(entities.tags #> '{Location}'  IN (?, ?))`,
+			[]interface{}{`{"City": "Tacoma"}`, `{"City": "Minsk"}`},
+			nil,
+			nil,
+		},
+		{
+			`not(tags.Location == 'Tacoma')`,
+			`NOT(entities.tags #>> '{Location}' = ?)`,
+			[]interface{}{"Tacoma"},
+			nil,
+			nil,
+		},
+		{
+			`not(tags.Location in ['Tacoma', 'Minsk'])`,
+			`(entities.tags #>> '{Location}' NOT IN (?, ?))`,
+			[]interface{}{"Tacoma", "Minsk"},
+			nil,
+			nil,
+		},
+		{
+			`not(tags.Location in ['{"City": "Tacoma"}', '{"City": "Minsk"}'])`,
+			`(entities.tags #> '{Location}' NOT IN (?, ?))`,
+			[]interface{}{`{"City": "Tacoma"}`, `{"City": "Minsk"}`},
 			nil,
 			nil,
 		},

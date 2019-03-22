@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 	jgorm "github.com/jinzhu/gorm"
+	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jinzhu/inflection"
 
 	"time"
@@ -38,6 +39,65 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 		return dbPath, generator.CamelCase(fieldPath[0]), nil
 	}
 	return dbPath, "", nil
+}
+
+//HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
+func HandleJSONFieldPath(ctx context.Context, fieldPath []string, obj interface{}, values ...string) (string, string, error) {
+	operator := "#>>"
+	if isRawJSON(values...) {
+		operator = "#>"
+	}
+
+	dbPath, err := fieldPathToDBName(fieldPath[:1], obj)
+	if err != nil {
+		switch err.(type) {
+		case *EmptyFieldPathError:
+			return "", "", err
+		default:
+			dbPath = fieldPath[0]
+		}
+	}
+
+	if len(fieldPath) == 1 {
+		return dbPath, "", nil
+	}
+
+	return fmt.Sprintf("%s %s '{%s}'", dbPath, operator, strings.Join(fieldPath[1:], ",")), "", nil
+}
+
+func isRawJSON(values ...string) bool {
+	if len(values) == 0 {
+		return false
+	}
+
+	for _, v := range values {
+		//TODO: this is a very poor check to prevent unexpected errors from Database engine consider to make full validation
+		//TODO: also we need return an error if json invalid to prevent database error for json parsing
+		v = strings.TrimSpace(v)
+		if !strings.HasPrefix(v, "{") || !strings.HasSuffix(v, "}") {
+			return false
+		}
+	}
+
+	return true
+}
+
+//TODO: add supprt for embeded objects
+func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) bool {
+	fieldName := generator.CamelCase(fieldPath[0])
+	objType := indirectType(reflect.TypeOf(obj))
+	field, ok := objType.FieldByName(fieldName)
+	if !ok {
+		return false
+	}
+
+	fInterface := reflect.Zero(indirectType(field.Type)).Interface()
+	switch fInterface.(type) {
+	case postgres.Jsonb:
+		return true
+	}
+
+	return false
 }
 
 func fieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
