@@ -20,8 +20,8 @@ func ParsePagination(limit, offset, ptoken string) (*Pagination, error) {
 	if limit != "" {
 		if u, err := strconv.ParseInt(limit, 10, 32); err != nil {
 			return nil, fmt.Errorf("pagination: limit - %s", err.(*strconv.NumError).Err)
-		} else if u < 0 {
-			return nil, fmt.Errorf("pagination: limit - negative value")
+		} else if u <= 0 {
+			return nil, fmt.Errorf("pagination: limit must be a positive value")
 		} else {
 			p.Limit = int32(u)
 		}
