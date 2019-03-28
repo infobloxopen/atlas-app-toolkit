@@ -17,14 +17,23 @@ func TestParsePagination(t *testing.T) {
 	// negative limit
 	_, err = ParsePagination("-1", "0", "ptoken")
 	if err == nil {
-		t.Error("unexpected nil error - expected: pagination: limit - negative value")
+		t.Error("unexpected nil error - expected: pagination: limit must be a positive value")
 	}
-	if err.Error() != "pagination: limit - negative value" {
-		t.Errorf("invalid error: %s - expected: pagination: limit - negative value", err)
+	if err.Error() != "pagination: limit must be a positive value" {
+		t.Errorf("invalid error: %s - expected: pagination: limit must be a positive value", err)
+	}
+
+	// zero limit
+	_, err = ParsePagination("0", "0", "ptoken")
+	if err == nil {
+		t.Error("unexpected nil error - expected: pagination: limit must be a positive value")
+	}
+	if err.Error() != "pagination: limit must be a positive value" {
+		t.Errorf("invalid error: %s - expected: pagination: limit must be a positive value", err)
 	}
 
 	// invalid offset
-	_, err = ParsePagination("0", "0w", "ptoken")
+	_, err = ParsePagination("", "0w", "ptoken")
 	if err == nil {
 		t.Error("unexpected nil error - expected: pagination: offset - invalid syntax")
 	}
@@ -33,7 +42,7 @@ func TestParsePagination(t *testing.T) {
 	}
 
 	// negative offset
-	_, err = ParsePagination("0", "-1", "ptoken")
+	_, err = ParsePagination("", "-1", "ptoken")
 	if err == nil {
 		t.Error("unexpected nil error - expected: pagination: offset - negative value")
 	}
@@ -42,7 +51,7 @@ func TestParsePagination(t *testing.T) {
 	}
 
 	// null offset
-	p, err := ParsePagination("0", "null", "ptoken")
+	p, err := ParsePagination("", "null", "ptoken")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -51,14 +60,14 @@ func TestParsePagination(t *testing.T) {
 	}
 
 	// first page
-	p, err = ParsePagination("0", "0", "ptoken")
+	p, err = ParsePagination("", "0", "ptoken")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
 	if !p.FirstPage() {
 		t.Errorf("invalid value of first page: %v - expected: true", p.FirstPage())
 	}
-	p, err = ParsePagination("0", "100", "null")
+	p, err = ParsePagination("", "100", "null")
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
