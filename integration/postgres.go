@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os/exec"
 	"time"
 )
 
@@ -84,12 +85,34 @@ func (db PostgresDB) Reset() error {
 
 // RunAsDockerContainer spins-up a Postgres database server as a Docker
 // container. The test Postgres database will run inside this Docker container.
-func (db PostgresDB) RunAsDockerContainer() (func() error, error) {
+func (db PostgresDB) RunAsDockerContainer(containerName string) (func() error, error) {
+	timer := time.After(10 * 60 * time.Second)
+loop:
+	for {
+		select {
+		case <-timer:
+			return nil, fmt.Errorf("coudn't create database for service")
+
+		default:
+			out, err := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s", containerName), "-q").Output()
+			if err != nil {
+				panic(err)
+			}
+
+			if len(out) == 0 {
+				break loop
+			}
+
+			time.Sleep(10 * time.Second)
+		}
+	}
+
 	cleanup, err := RunContainer(
 		// define the postgres image version
 		fmt.Sprintf("postgres:%s", db.dbVersion),
 		// define the arguments to docker
 		[]string{
+			fmt.Sprintf("--name=%s", containerName),
 			fmt.Sprintf("--publish=%d:5432", db.port),
 			fmt.Sprintf("--env=POSTGRES_DB=%s", db.dbName),
 			fmt.Sprintf("--env=POSTGRES_PASSWORD=%s", db.dbPassword),
