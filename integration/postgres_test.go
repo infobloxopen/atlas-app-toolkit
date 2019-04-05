@@ -3,6 +3,7 @@ package integration
 import (
 	"database/sql"
 	"errors"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -64,6 +65,9 @@ func TestGetDSN(t *testing.T) {
 }
 
 func TestCheckConnection(t *testing.T) {
+	dbName := "test-db"
+	exec.Command("docker", "kill", dbName).Output()
+
 	db, err := NewTestPostgresDB(
 		WithTimeout(time.Second * 5),
 	)
@@ -75,7 +79,7 @@ func TestCheckConnection(t *testing.T) {
 		t.Errorf("expected to get non-nil error")
 	}
 	db.host = "localhost"
-	rm, err := db.RunAsDockerContainer("test-db")
+	rm, err := db.RunAsDockerContainer(dbName)
 	if err != nil {
 		t.Fatalf("unable to start the database container: %v", err)
 	}
@@ -88,6 +92,9 @@ type testTable struct {
 }
 
 func TestReset(t *testing.T) {
+	dbName := "test-db-2"
+	exec.Command("docker", "kill", dbName).Output()
+
 	db, err := NewTestPostgresDB()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -95,7 +102,7 @@ func TestReset(t *testing.T) {
 	if err := db.Reset(); err == nil {
 		t.Errorf("expected to receive an error when resetting database")
 	}
-	rm, err := db.RunAsDockerContainer("test-db")
+	rm, err := db.RunAsDockerContainer(dbName)
 	if err != nil {
 		t.Fatalf("unable to start the database container: %v", err)
 	}
