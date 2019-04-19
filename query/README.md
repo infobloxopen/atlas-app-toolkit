@@ -70,7 +70,7 @@ In order to escape string literal delimiter duplicate it, e.g. for single-quoted
 
 
 ### JSONB Filtering
-Also our filtering support custom `jsonb` conditions if you use `postgresql` as database. In order to use this feathure you have to use special type [Jsonb](https://github.com/jinzhu/gorm/blob/master/dialects/postgres/postgres.go). If you plan to use special jsonb filtering on a field it's type should be `*dialects.Jsonb`.
+Also our filtering support custom `jsonb` conditions if you use `postgresql` as a database. In order to use this feathure you have to use special type [Jsonb](https://github.com/jinzhu/gorm/blob/master/dialects/postgres/postgres.go). If you plan to use special jsonb filtering on a field it's type should be `*dialects.Jsonb`.
 Syntax for jsonb filtering is similar to the one you use for `StringCondition` and `StringArrayCondition`, as well as you can use operators from `StringCondition` and `StringArrayCondition`.
 
 #### Example:
