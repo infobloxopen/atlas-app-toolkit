@@ -68,14 +68,32 @@ Literal values include numbers (integer and floating-point), quoted (both single
 
 In order to escape string literal delimiter duplicate it, e.g. for single-quoted string literals: `_filter=field == 'dup single quote '' '`, for double-quoted literals: `_filter=field == "dup double quote "" "`.
 
-Also our filtering support custom `jsonb` conditions if you use `postgresql` as database, for using this feathure you must use special type `Jsonb` from https://github.com/jinzhu/gorm/blob/master/dialects/postgres/postgres.go, if you plan to use special jsonb filtering on filed it's type should be `*dialects.Jsonb`.
-Syntax for jsonb filtering similar as you use for `StringCondition` and `StringArrayCondition`, as well as you can use operators from `StringCondition` and `StringArrayCondition`.
 
-Examples:
-if field `info` which support filterting with `jsonb` query will be looks like:
-`_filter=info.Address.City=='Tacoma'` 
-if you want compare enclosed object with json you are able to write:
-`_filter=info.Address=='{"City": "Tacoma", "Country": "USA"}'`
+### JSONB Filtering
+Also our filtering support custom `jsonb` conditions if you use `postgresql` as database. In order to use this feathure you have to use special type [Jsonb](https://github.com/jinzhu/gorm/blob/master/dialects/postgres/postgres.go). If you plan to use special jsonb filtering on a field it's type should be `*dialects.Jsonb`.
+Syntax for jsonb filtering is similar to the one you use for `StringCondition` and `StringArrayCondition`, as well as you can use operators from `StringCondition` and `StringArrayCondition`.
+
+#### Example:
+Consider that you have a following object where `info` field is a `jsonb` field:
+```
+{
+ name: "my object",
+ info: {
+     Address: {
+         "City": "Tacoma",
+         "Country": "USA"
+     }
+ }
+}
+```
+Filterting request with `jsonb` query will look like:
+```
+...?_filter=info.Address.City=='Tacoma'
+``` 
+if you want to compare enclosed object with json you are able to write:
+```
+...?_filter=info.Address=='{"City": "Tacoma", "Country": "USA"}'
+```
 
 Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use [vanilla](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-swagger) swagger schema generation, since this plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
 In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/atlas-patch/protoc-gen-swagger) which has a fix for this issue. 
