@@ -42,7 +42,6 @@ type FilteringConditionConverter interface {
 	NumberArrayConditionConverter
 }
 
-
 // FilterStringToGorm is a shortcut to parse a filter string using default FilteringParser implementation
 // and call FilteringToGorm on the returned filtering expression.
 func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
@@ -56,7 +55,7 @@ func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb 
 //Deprecated: Use FilteringToGormEx instead
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
 func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	return FilteringToGormEx(ctx, m,  obj, NewDefaultPbToOrmConverter(pb))
+	return FilteringToGormEx(ctx, m, obj, NewDefaultPbToOrmConverter(pb))
 }
 
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
@@ -81,7 +80,6 @@ func FilteringToGormEx(ctx context.Context, m *query.Filtering, obj interface{},
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
 }
-
 
 /*
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.

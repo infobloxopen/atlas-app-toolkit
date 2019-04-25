@@ -13,6 +13,7 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
+
 type DefaultPbToOrmConverter struct {
 	pb proto.Message
 }
@@ -317,7 +318,6 @@ func (converter *DefaultPbToOrmConverter) StringArrayConditionToGorm(ctx context
 
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
-
 
 func (converter *DefaultPbToOrmConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {
 	dbCr, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
