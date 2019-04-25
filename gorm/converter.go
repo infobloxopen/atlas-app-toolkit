@@ -3,106 +3,43 @@ package gorm
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/generator"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
-
-type LogicaOperatorConverter interface {
-	LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error)
+type DefaultPbToOrmConverter struct {
+	pb proto.Message
 }
 
-type NullConditionConverter interface {
-	NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
+func NewDefaultPbToOrmConverter(pb proto.Message) CollectionOperatorsConverter {
+	return &DefaultPbToOrmConverter{pb}
 }
 
-type StringConditionConverter interface {
-	StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
-}
-
-type StringArrayConditionConverter interface {
-	StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
-}
-
-type NumberConditionConverter interface {
-	NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
-}
-
-type NumberArrayConditionConverter interface {
-	NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
-}
-
-type FilteringConditionConverter interface {
-	LogicaOperatorConverter
-	NullConditionConverter
-	StringConditionConverter
-	StringArrayConditionConverter
-	NumberConditionConverter
-	NumberArrayConditionConverter
-}
-
-
-// FilterStringToGorm is a shortcut to parse a filter string using default FilteringParser implementation
-// and call FilteringToGorm on the returned filtering expression.
-func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	f, err := query.ParseFiltering(filter)
-	if err != nil {
-		return "", nil, nil, err
-	}
-	return FilteringToGorm(ctx, f, obj, pb)
-}
-
-//Deprecated: Use FilteringToGormEx instead
-// FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
-func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	return FilteringToGormEx(ctx, m,  obj, NewDefaultPbToOrmConverter(pb))
-}
-
-// FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
-func FilteringToGormEx(ctx context.Context, m *query.Filtering, obj interface{}, c FilteringConditionConverter) (string, []interface{}, map[string]struct{}, error) {
-	if m == nil || m.Root == nil {
-		return "", nil, nil, nil
-	}
-	switch r := m.Root.(type) {
-	case *query.Filtering_Operator:
-		return c.LogicalOperatorToGorm(ctx, r.Operator, obj)
-	case *query.Filtering_StringCondition:
-		return c.StringConditionToGorm(ctx, r.StringCondition, obj)
-	case *query.Filtering_NumberCondition:
-		return c.NumberConditionToGorm(ctx, r.NumberCondition, obj)
-	case *query.Filtering_NullCondition:
-		return c.NullConditionToGorm(ctx, r.NullCondition, obj)
-	case *query.Filtering_NumberArrayCondition:
-		return c.NumberArrayConditionToGorm(ctx, r.NumberArrayCondition, obj)
-	case *query.Filtering_StringArrayCondition:
-		return c.StringArrayConditionToGorm(ctx, r.StringArrayCondition, obj)
-	default:
-		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
-	}
-}
-
-
-/*
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
-func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var lres string
 	var largs []interface{}
 	var lAssocToJoin map[string]struct{}
 	var err error
 	switch l := lop.Left.(type) {
 	case *query.LogicalOperator_LeftOperator:
-		lres, largs, lAssocToJoin, err = LogicalOperatorToGorm(ctx, l.LeftOperator, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, l.LeftOperator, obj)
 	case *query.LogicalOperator_LeftStringCondition:
-		lres, largs, lAssocToJoin, err = StringConditionToGorm(ctx, l.LeftStringCondition, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.StringConditionToGorm(ctx, l.LeftStringCondition, obj)
 	case *query.LogicalOperator_LeftNumberCondition:
-		lres, largs, lAssocToJoin, err = NumberConditionToGorm(ctx, l.LeftNumberCondition, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.NumberConditionToGorm(ctx, l.LeftNumberCondition, obj)
 	case *query.LogicalOperator_LeftNullCondition:
-		lres, largs, lAssocToJoin, err = NullConditionToGorm(ctx, l.LeftNullCondition, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.NullConditionToGorm(ctx, l.LeftNullCondition, obj)
 	case *query.LogicalOperator_LeftNumberArrayCondition:
-		lres, largs, lAssocToJoin, err = NumberArrayConditionToGorm(ctx, l.LeftNumberArrayCondition, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.NumberArrayConditionToGorm(ctx, l.LeftNumberArrayCondition, obj)
 	case *query.LogicalOperator_LeftStringArrayCondition:
-		lres, largs, lAssocToJoin, err = StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj, pb)
+		lres, largs, lAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
@@ -115,17 +52,17 @@ func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj 
 	var rAssocToJoin map[string]struct{}
 	switch r := lop.Right.(type) {
 	case *query.LogicalOperator_RightOperator:
-		rres, rargs, rAssocToJoin, err = LogicalOperatorToGorm(ctx, r.RightOperator, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, r.RightOperator, obj)
 	case *query.LogicalOperator_RightStringCondition:
-		rres, rargs, rAssocToJoin, err = StringConditionToGorm(ctx, r.RightStringCondition, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.StringConditionToGorm(ctx, r.RightStringCondition, obj)
 	case *query.LogicalOperator_RightNumberCondition:
-		rres, rargs, rAssocToJoin, err = NumberConditionToGorm(ctx, r.RightNumberCondition, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.NumberConditionToGorm(ctx, r.RightNumberCondition, obj)
 	case *query.LogicalOperator_RightNullCondition:
-		rres, rargs, rAssocToJoin, err = NullConditionToGorm(ctx, r.RightNullCondition, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.NullConditionToGorm(ctx, r.RightNullCondition, obj)
 	case *query.LogicalOperator_RightNumberArrayCondition:
-		rres, rargs, rAssocToJoin, err = NumberArrayConditionToGorm(ctx, r.RightNumberArrayCondition, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.NumberArrayConditionToGorm(ctx, r.RightNumberArrayCondition, obj)
 	case *query.LogicalOperator_RightStringArrayCondition:
-		rres, rargs, rAssocToJoin, err = StringArrayConditionToGorm(ctx, r.RightStringArrayCondition, obj, pb)
+		rres, rargs, rAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, r.RightStringArrayCondition, obj)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -155,7 +92,7 @@ func LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj 
 }
 
 // StringConditionToGorm returns GORM Plain SQL representation of the string condition.
-func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var (
 		assocToJoin   map[string]struct{}
 		dbName, assoc string
@@ -196,25 +133,25 @@ func StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj in
 	}
 
 	var value interface{}
-	if v, err := processStringCondition(ctx, c.FieldPath, c.Value, pb); err != nil {
+	if v, err := converter.processStringCondition(ctx, c.FieldPath, c.Value); err != nil {
 		value = c.Value
 	} else {
 		value = v
 	}
 
 	if c.Type == query.StringCondition_IEQ {
-		return insensitiveCaseStringConditionToGorm(neg, dbName, o), []interface{}{value}, assocToJoin, nil
+		return converter.insensitiveCaseStringConditionToGorm(neg, dbName, o), []interface{}{value}, assocToJoin, nil
 	}
 
 	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
 }
 
-func insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
+func (converter *DefaultPbToOrmConverter) insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
 	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
 }
 
-func processStringCondition(ctx context.Context, fieldPath []string, value string, pb proto.Message) (interface{}, error) {
-	objType := indirectType(reflect.TypeOf(pb))
+func (converter *DefaultPbToOrmConverter) processStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
+	objType := indirectType(reflect.TypeOf(converter.pb))
 	pathLength := len(fieldPath)
 	for i, part := range fieldPath {
 		sf, ok := objType.FieldByName(generator.CamelCase(part))
@@ -265,7 +202,7 @@ func processStringCondition(ctx context.Context, fieldPath []string, value strin
 }
 
 // NumberConditionToGorm returns GORM Plain SQL representation of the number condition.
-func NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -296,7 +233,7 @@ func NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj in
 }
 
 // NullConditionToGorm returns GORM Plain SQL representation of the null condition.
-func NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -314,7 +251,7 @@ func NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interf
 	return fmt.Sprintf("%s(%s %s)", neg, dbName, o), nil, assocToJoin, nil
 }
 
-func NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -341,7 +278,7 @@ func NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayConditi
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
 
-func StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultPbToOrmConverter) StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var (
 		assocToJoin   map[string]struct{}
 		dbName, assoc string
@@ -370,7 +307,7 @@ func StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayConditi
 	placeholder := ""
 	for _, str := range c.Values {
 		placeholder += "?, "
-		if val, err := processStringCondition(ctx, c.FieldPath, str, pb); err == nil {
+		if val, err := converter.processStringCondition(ctx, c.FieldPath, str); err == nil {
 			values = append(values, val)
 			continue
 		}
@@ -380,4 +317,12 @@ func StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayConditi
 
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
-*/
+
+
+func (converter *DefaultPbToOrmConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {
+	dbCr, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
+	if cr.IsDesc() {
+		dbCr += " desc"
+	}
+	return dbCr, assoc, err
+}

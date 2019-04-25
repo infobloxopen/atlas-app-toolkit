@@ -11,14 +11,22 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
-// ApplyCollectionOperators applies collection operators to gorm instance db.
-func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
-	db, fAssocToJoin, err := ApplyFiltering(ctx, db, f, obj, pb)
+type SortingCriteriaConverter interface {
+	SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error)
+}
+
+type CollectionOperatorsConverter interface {
+	FilteringConditionConverter
+	SortingCriteriaConverter
+}
+
+func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{}, c CollectionOperatorsConverter, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	db, fAssocToJoin, err := ApplyFilteringEx(ctx, db, f, obj, c)
 	if err != nil {
 		return nil, err
 	}
 
-	db, sAssocToJoin, err := ApplySorting(ctx, db, s, obj)
+	db, sAssocToJoin, err := ApplySortingEx(ctx, db, s, obj, c)
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +53,48 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
+func ApplyFilteringEx(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, c FilteringConditionConverter) (*gorm.DB, map[string]struct{}, error) {
+	str, args, assocToJoin, err := FilteringToGormEx(ctx, f, obj, c)
+	if err != nil {
+		return nil, nil, err
+	}
+	if str != "" {
+		return db.Where(str, args...), assocToJoin, nil
+	}
+	return db, nil, nil
+}
+
+// ApplySorting applies sorting operator s to gorm instance db.
+func ApplySortingEx(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}, c SortingCriteriaConverter) (*gorm.DB, map[string]struct{}, error) {
+	var crs []string
+	var assocToJoin map[string]struct{}
+	for _, cr := range s.GetCriterias() {
+		dbCr, assoc, err :=c.SortingCriteriaToGorm(ctx, cr, obj)
+		if err != nil {
+			return nil, nil, err
+		}
+		if assoc != "" {
+			if assocToJoin == nil {
+				assocToJoin = make(map[string]struct{})
+			}
+			assocToJoin[assoc] = struct{}{}
+		}
+		crs = append(crs, dbCr)
+	}
+	if len(crs) == 0 {
+		return db, nil, nil
+	}
+	return db.Order(strings.Join(crs, ",")), assocToJoin, nil
+}
+
+// Deprecated: use ApplyCollectionOperatorsEx instead
+// ApplyCollectionOperators applies collection operators to gorm instance db.
+func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	return ApplyCollectionOperatorsEx(ctx, db, obj, NewDefaultPbToOrmConverter(pb), f, s, p, fs)
+}
+
+// Deprecated: use ApplyFilteringEx instead
+// ApplyFiltering applies filtering operator f to gorm instance db.
 func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
 	str, args, assocToJoin, err := FilteringToGorm(ctx, f, obj, pb)
 	if err != nil {
@@ -56,6 +106,7 @@ func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj in
 	return db, nil, nil
 }
 
+// Deprecated: use ApplySortingEx instead
 // ApplySorting applies sorting operator s to gorm instance db.
 func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
 	var crs []string
