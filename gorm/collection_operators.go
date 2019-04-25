@@ -69,7 +69,7 @@ func ApplySortingEx(ctx context.Context, db *gorm.DB, s *query.Sorting, obj inte
 	var crs []string
 	var assocToJoin map[string]struct{}
 	for _, cr := range s.GetCriterias() {
-		dbCr, assoc, err :=c.SortingCriteriaToGorm(ctx, cr, obj)
+		dbCr, assoc, err := c.SortingCriteriaToGorm(ctx, cr, obj)
 		if err != nil {
 			return nil, nil, err
 		}
