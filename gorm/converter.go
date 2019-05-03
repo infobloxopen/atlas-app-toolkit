@@ -15,11 +15,16 @@ import (
 )
 
 type DefaultPbToOrmConverter struct {
+	pb        proto.Message
+	processor FilteringConditionProcessor
+}
+
+type DefaultFilteringConditionProcessor struct {
 	pb proto.Message
 }
 
 func NewDefaultPbToOrmConverter(pb proto.Message) CollectionOperatorsConverter {
-	return &DefaultPbToOrmConverter{pb}
+	return &DefaultPbToOrmConverter{pb, &DefaultFilteringConditionProcessor{pb}}
 }
 
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
@@ -134,7 +139,7 @@ func (converter *DefaultPbToOrmConverter) StringConditionToGorm(ctx context.Cont
 	}
 
 	var value interface{}
-	if v, err := converter.processStringCondition(ctx, c.FieldPath, c.Value); err != nil {
+	if v, err := converter.processor.ProcessStringCondition(ctx, c.FieldPath, c.Value); err != nil {
 		value = c.Value
 	} else {
 		value = v
@@ -151,8 +156,9 @@ func (converter *DefaultPbToOrmConverter) insensitiveCaseStringConditionToGorm(n
 	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
 }
 
-func (converter *DefaultPbToOrmConverter) processStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
-	objType := indirectType(reflect.TypeOf(converter.pb))
+//func (converter *DefaultPbToOrmConverter) processStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
+func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
+	objType := indirectType(reflect.TypeOf(p.pb))
 	pathLength := len(fieldPath)
 	for i, part := range fieldPath {
 		sf, ok := objType.FieldByName(generator.CamelCase(part))
@@ -308,7 +314,7 @@ func (converter *DefaultPbToOrmConverter) StringArrayConditionToGorm(ctx context
 	placeholder := ""
 	for _, str := range c.Values {
 		placeholder += "?, "
-		if val, err := converter.processStringCondition(ctx, c.FieldPath, str); err == nil {
+		if val, err := converter.processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
 			values = append(values, val)
 			continue
 		}

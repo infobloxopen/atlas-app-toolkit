@@ -42,6 +42,10 @@ type FilteringConditionConverter interface {
 	NumberArrayConditionConverter
 }
 
+type FilteringConditionProcessor interface {
+	ProcessStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error)
+}
+
 // FilterStringToGorm is a shortcut to parse a filter string using default FilteringParser implementation
 // and call FilteringToGorm on the returned filtering expression.
 func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
