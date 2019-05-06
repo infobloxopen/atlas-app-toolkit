@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -120,11 +121,13 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 		restErr["fields"] = fields
 	}
 
-	errs, _ := errorsAndSuccessFromContext(ctx)
+	errs, _, overrideErr := errorsAndSuccessFromContext(ctx)
 	restResp := &RestErrs{
 		Error: errs,
 	}
-	restResp.Error = append(restResp.Error, restErr)
+	if !overrideErr {
+		restResp.Error = append(restResp.Error, restErr)
+	}
 	if !headerWritten {
 		rw.Header().Del("Trailer")
 		rw.Header().Set("Content-Type", marshaler.ContentType())
@@ -210,6 +213,33 @@ func WithError(ctx context.Context, err error) {
 	grpc.SetTrailer(ctx, md)
 }
 
+// NewResponseError sets the error in the context with extra fields, to
+// override the standard message-only error
+func NewResponseError(ctx context.Context, msg string, kvpairs ...interface{}) error {
+	md := metadata.Pairs("error", fmt.Sprintf("message:%s", msg))
+	if len(kvpairs) > 0 {
+		fields := make(map[string]interface{})
+		for i := 0; i+1 < len(kvpairs); i += 2 {
+			k, ok := kvpairs[i].(string)
+			if !ok {
+				return errors.New("Key value for error details must be a string")
+			}
+			fields[k] = kvpairs[i+1]
+		}
+		b, _ := json.Marshal(fields)
+		md.Append("error", fmt.Sprintf("fields:%q", b))
+	}
+	grpc.SetTrailer(ctx, md)
+	return errors.New(msg) // Message should be overridden in error response writer
+}
+
+// NewResponseErrorWithCode sets the return code in addition to setting the
+// md fields needed to add extra fields in the error
+func NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{}) error {
+	SetStatus(ctx, status.New(c, msg))
+	return NewResponseError(ctx, msg, kvpairs)
+}
+
 // WithSuccess will save a MessageWithFields into the grpc trailer metadata.
 // This success message will then be inserted into the return JSON if the
 // ResponseForwarder is used
@@ -223,14 +253,34 @@ func WithSuccess(ctx context.Context, msg MessageWithFields) {
 	grpc.SetTrailer(ctx, md)
 }
 
-func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}) {
+// WithCodedSuccess just combines calling SetStatus and WithSuccess into a single call
+func WithCodedSuccess(ctx context.Context, c codes.Code, msg string, args ...interface{}) {
+	SetStatus(ctx, status.New(c, msg))
+	WithSuccess(ctx, NewWithFields(msg, args))
+}
+
+func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}, errorOverride bool) {
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
-		return nil, nil
+		return nil, nil, false
 	}
 	errors = make([]map[string]interface{}, 0)
 	latestSuccess := int64(-1)
 	for k, vs := range md.TrailerMD {
+		if k == "error" {
+			err := make(map[string]interface{})
+			for _, v := range vs {
+				parts := strings.SplitN(v, ":", 2)
+				if parts[0] == "fields" {
+					uq, _ := strconv.Unquote(parts[1])
+					json.Unmarshal([]byte(uq), &err)
+				} else if parts[0] == "message" {
+					err["message"] = parts[1]
+				}
+			}
+			errors = append(errors, err)
+			errorOverride = true
+		}
 		if strings.HasPrefix(k, "error-") {
 			err := make(map[string]interface{})
 			for _, v := range vs {

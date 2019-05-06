@@ -90,7 +90,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	}
 
 	retainFields(ctx, req, dynmap)
-	errs, suc := errorsAndSuccessFromContext(ctx)
+	errs, suc, _ := errorsAndSuccessFromContext(ctx)
 	if _, ok := dynmap["error"]; len(errs) > 0 && !ok {
 		dynmap["error"] = errs
 	}
