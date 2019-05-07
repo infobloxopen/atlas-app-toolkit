@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/sirupsen/logrus"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
@@ -88,12 +89,16 @@ func (h *ProtoErrorHandler) StreamHandler(ctx context.Context, headerWritten boo
 }
 
 func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, marshaler runtime.Marshaler, rw http.ResponseWriter, err error) {
-	const fallback = `{"error":[{"message":"%s"}]}`
+	var fallback = `{"error":[{"message":"%s"}]}`
+	if setStatusDetails {
+		fallback = `{"error":[{"message":"%s", "code":500, "status": "INTERNAL"}]}`
+	}
 
 	st, ok := status.FromError(err)
 	if !ok {
 		st = status.New(codes.Unknown, err.Error())
 	}
+	statusCode, statusStr := HTTPStatus(ctx, st)
 
 	details := []interface{}{}
 	var fields interface{}
@@ -120,18 +125,26 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if fields != nil {
 		restErr["fields"] = fields
 	}
+	if setStatusDetails {
+		restErr["code"] = statusCode
+		restErr["status"] = statusStr
+	}
 
 	errs, _, overrideErr := errorsAndSuccessFromContext(ctx)
 	restResp := &RestErrs{
 		Error: errs,
 	}
+	logrus.Infof("%v", overrideErr)
 	if !overrideErr {
 		restResp.Error = append(restResp.Error, restErr)
+	} else if setStatusDetails && len(restResp.Error) > 0 {
+		restResp.Error[0]["code"] = statusCode
+		restResp.Error[0]["status"] = statusStr
 	}
 	if !headerWritten {
 		rw.Header().Del("Trailer")
 		rw.Header().Set("Content-Type", marshaler.ContentType())
-		rw.WriteHeader(HTTPStatus(ctx, st))
+		rw.WriteHeader(statusCode)
 	}
 
 	buf, merr := marshaler.Marshal(restResp)
@@ -222,7 +235,8 @@ func NewResponseError(ctx context.Context, msg string, kvpairs ...interface{}) e
 		for i := 0; i+1 < len(kvpairs); i += 2 {
 			k, ok := kvpairs[i].(string)
 			if !ok {
-				return errors.New("Key value for error details must be a string")
+				grpclog.Infof("Key value for error details must be a string")
+				continue
 			}
 			fields[k] = kvpairs[i+1]
 		}
@@ -230,14 +244,14 @@ func NewResponseError(ctx context.Context, msg string, kvpairs ...interface{}) e
 		md.Append("error", fmt.Sprintf("fields:%q", b))
 	}
 	grpc.SetTrailer(ctx, md)
-	return errors.New(msg) // Message should be overridden in error response writer
+	return errors.New(msg) // Message should be overridden in response writer
 }
 
-// NewResponseErrorWithCode sets the return code in addition to setting the
-// md fields needed to add extra fields in the error
+// NewResponseErrorWithCode sets the return code
 func NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{}) error {
 	SetStatus(ctx, status.New(c, msg))
-	return NewResponseError(ctx, msg, kvpairs)
+	NewResponseError(ctx, msg, kvpairs...)
+	return status.Error(c, msg)
 }
 
 // WithSuccess will save a MessageWithFields into the grpc trailer metadata.
@@ -253,7 +267,6 @@ func WithSuccess(ctx context.Context, msg MessageWithFields) {
 	grpc.SetTrailer(ctx, md)
 }
 
-// WithCodedSuccess just combines calling SetStatus and WithSuccess into a single call
 func WithCodedSuccess(ctx context.Context, c codes.Code, msg string, args ...interface{}) {
 	SetStatus(ctx, status.New(c, msg))
 	WithSuccess(ctx, NewWithFields(msg, args))
@@ -265,6 +278,7 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 		return nil, nil, false
 	}
 	errors = make([]map[string]interface{}, 0)
+	var primaryError map[string]interface{}
 	latestSuccess := int64(-1)
 	for k, vs := range md.TrailerMD {
 		if k == "error" {
@@ -278,7 +292,7 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 					err["message"] = parts[1]
 				}
 			}
-			errors = append(errors, err)
+			primaryError = err
 			errorOverride = true
 		}
 		if strings.HasPrefix(k, "error-") {
@@ -315,6 +329,9 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 				}
 			}
 		}
+	}
+	if errorOverride {
+		errors = append([]map[string]interface{}{primaryError}, errors...)
 	}
 	return
 }

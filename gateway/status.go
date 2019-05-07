@@ -66,17 +66,16 @@ func SetRunning(ctx context.Context, message, resource string) error {
 }
 
 // Status returns REST representation of gRPC status.
-// If status.Status is not nil it will be converted in accrodance with REST
+// If status.Status is not nil it will be converted in accordance with REST
 // API Syntax otherwise context will be used to extract
-// `grpcgatewau-status-code` and `grpcgateway-status-message` from
-// gRPC metadata.
-// If `grpcgatewau-status-code` is not set it is assumed that it is OK.
-func HTTPStatus(ctx context.Context, st *status.Status) int {
+// `grpcgateway-status-code` from gRPC metadata.
+// If `grpcgateway-status-code` is not set it is assumed that it is OK.
+func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
 
 	if st != nil {
 		httpStatus := HTTPStatusFromCode(st.Code())
 
-		return httpStatus
+		return httpStatus, st.Code().String()
 	}
 	code := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {
@@ -84,7 +83,7 @@ func HTTPStatus(ctx context.Context, st *status.Status) int {
 	}
 	httpStatus := HTTPStatusFromCode(Code(code))
 
-	return httpStatus
+	return httpStatus, code
 }
 
 // CodeName returns stringname of gRPC code, function handles as standard
