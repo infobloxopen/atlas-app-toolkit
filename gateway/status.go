@@ -77,13 +77,13 @@ func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
 
 		return httpStatus, CodeName(st.Code())
 	}
-	code := CodeName(codes.OK)
+	statusName := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {
-		code = sc
+		statusName = sc
 	}
-	httpStatus := HTTPStatusFromCode(Code(code))
+	httpCode := HTTPStatusFromCode(Code(statusName))
 
-	return httpStatus, code
+	return httpCode, statusName
 }
 
 // CodeName returns stringname of gRPC code, function handles as standard

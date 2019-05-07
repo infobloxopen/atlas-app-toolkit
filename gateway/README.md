@@ -229,9 +229,9 @@ Response with no results
 ```json
 {
   "success": {
-    "status": 201,
+    "status": "CREATED",
     "message": "Account provisioned",
-    "code": "CREATED"
+    "code": 201
   }
 }
 ```
@@ -240,9 +240,9 @@ Response with results
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "Found 2 items",
-    "code": "OK"
+    "code": 200
   },
   "results": [
     {
@@ -269,9 +269,9 @@ Response for get by id operation
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "object found",
-    "code": "OK"
+    "code": 200
   },
   "results": {
       "account_id": 4,
@@ -286,9 +286,9 @@ Response with results and service-defined results tag `rpz_hits`
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "Read 360 items",
-    "code": "OK"
+    "code": 200
   },
   "rpz_hits": [
     {

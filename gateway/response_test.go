@@ -98,11 +98,11 @@ func TestForwardResponseMessage(t *testing.T) {
 	}
 
 	if v.Success["status"] != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Success["code"], CodeName(Created))
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
 	}
 
 	if v.Success["code"].(float64) != http.StatusCreated {
-		t.Errorf("invalid http status code: %d - expected: %d", v.Success["status"], http.StatusCreated)
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["code"], http.StatusCreated)
 	}
 
 	if v.Success["message"] != "created 1 item" {
@@ -158,11 +158,11 @@ func TestForwardResponseMessageWithDetailsIncluded(t *testing.T) {
 	}
 
 	if v.Success["status"] != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Success["code"], CodeName(Created))
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
 	}
 
 	if v.Success["code"].(float64) != http.StatusCreated {
-		t.Errorf("invalid http status code: %d - expected: %d", v.Success["status"], http.StatusCreated)
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["code"], http.StatusCreated)
 	}
 
 	if v.Success["message"] != "created 1 item" {
@@ -224,7 +224,7 @@ func TestForwardResponseMessageWithErrorsAndDetailsIncluded(t *testing.T) {
 	}
 
 	if v.Success["status"] != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Success["status"], CodeName(Created))
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
 	}
 
 	if v.Success["code"].(float64) != http.StatusCreated {
