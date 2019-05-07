@@ -75,7 +75,7 @@ func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
 	if st != nil {
 		httpStatus := HTTPStatusFromCode(st.Code())
 
-		return httpStatus, st.Code().String()
+		return httpStatus, CodeName(st.Code())
 	}
 	code := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {

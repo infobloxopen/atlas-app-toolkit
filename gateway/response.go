@@ -40,6 +40,8 @@ var (
 	setStatusDetails = false
 )
 
+// IncludeStatusDetails enables/disables output of status & code fields in all http json
+// translated in the gateway with this package's ForwardResponseMessage
 func IncludeStatusDetails(withDetails bool) {
 	setStatusDetails = withDetails
 }

@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -36,6 +38,53 @@ func TestProtoMessageErrorHandlerUnknownCode(t *testing.T) {
 
 	if v.Error[0]["message"] != "simple text error" {
 		t.Errorf("invalid message: %s", v.Error[0]["message"])
+	}
+}
+
+func TestProtoMessageErrorHandlerWithDetails(t *testing.T) {
+	IncludeStatusDetails(true)
+	defer IncludeStatusDetails(false)
+	err := status.Error(codes.NotFound, "overridden error")
+	v := &RestErrs{}
+
+	b := &bytes.Buffer{}
+	enc := json.NewEncoder(b)
+	enc.Encode(map[string]interface{}{"bar": 2})
+	md := runtime.ServerMetadata{
+		HeaderMD: metadata.Pairs(
+		//	"status-code", CodeName(codes.NotFound),
+		),
+		TrailerMD: metadata.Pairs(
+			"error", "message:err message",
+			"error", fmt.Sprintf("fields:%q", string(b.Bytes()))),
+	}
+	ctx := runtime.NewServerMetadataContext(context.Background(), md)
+
+	rw := httptest.NewRecorder()
+	ProtoMessageErrorHandler(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, err)
+
+	if ct := rw.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("invalid content-type: %s - expected: %s", ct, "application/json")
+	}
+	if rw.Code != http.StatusNotFound {
+		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusNotFound)
+	}
+
+	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
+		t.Fatalf("failed to unmarshal response: %s", err)
+	}
+
+	if v.Error[0]["message"] != "err message" {
+		t.Errorf("invalid message: %s", v.Error[0]["message"])
+	}
+	if v.Error[0]["bar"].(float64) != 2 {
+		t.Errorf("invalid bar field: %d", v.Error[0]["bar"])
+	}
+	if v.Error[0]["status"] != CodeName(codes.NotFound) {
+		t.Errorf("invalid status name: %s - expected: %s", v.Error[0]["status"], CodeName(codes.NotFound))
+	}
+	if v.Error[0]["code"].(float64) != http.StatusNotFound {
+		t.Errorf("invalid status code: %d - expected: %d", v.Error[0]["code"], http.StatusNotFound)
 	}
 }
 

@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/sirupsen/logrus"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
@@ -134,7 +133,6 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	restResp := &RestErrs{
 		Error: errs,
 	}
-	logrus.Infof("%v", overrideErr)
 	if !overrideErr {
 		restResp.Error = append(restResp.Error, restErr)
 	} else if setStatusDetails && len(restResp.Error) > 0 {
@@ -247,7 +245,8 @@ func NewResponseError(ctx context.Context, msg string, kvpairs ...interface{}) e
 	return errors.New(msg) // Message should be overridden in response writer
 }
 
-// NewResponseErrorWithCode sets the return code
+// NewResponseErrorWithCode sets the return code and returns an error with extra
+// fields in MD to be extracted in the gateway response writer
 func NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{}) error {
 	SetStatus(ctx, status.New(c, msg))
 	NewResponseError(ctx, msg, kvpairs...)
@@ -267,9 +266,10 @@ func WithSuccess(ctx context.Context, msg MessageWithFields) {
 	grpc.SetTrailer(ctx, md)
 }
 
-func WithCodedSuccess(ctx context.Context, c codes.Code, msg string, args ...interface{}) {
-	SetStatus(ctx, status.New(c, msg))
+// WithCodedSuccess wraps a SetStatus and WithSuccess call into one, just to make things a little more "elegant"
+func WithCodedSuccess(ctx context.Context, c codes.Code, msg string, args ...interface{}) error {
 	WithSuccess(ctx, NewWithFields(msg, args))
+	return SetStatus(ctx, status.New(c, msg))
 }
 
 func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}, errorOverride bool) {
