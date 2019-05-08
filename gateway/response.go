@@ -36,7 +36,15 @@ var (
 	ForwardResponseMessage = NewForwardResponseMessage(PrefixOutgoingHeaderMatcher, ProtoMessageErrorHandler, ProtoStreamErrorHandler)
 	// ForwardResponseStream is default implementation of ForwardResponseStreamFunc
 	ForwardResponseStream = NewForwardResponseStream(PrefixOutgoingHeaderMatcher, ProtoMessageErrorHandler, ProtoStreamErrorHandler)
+
+	setStatusDetails = false
 )
+
+// IncludeStatusDetails enables/disables output of status & code fields in all http json
+// translated in the gateway with this package's ForwardResponseMessage
+func IncludeStatusDetails(withDetails bool) {
+	setStatusDetails = withDetails
+}
 
 // NewForwardResponseMessage returns ForwardResponseMessageFunc
 func NewForwardResponseMessage(out runtime.HeaderMatcherFunc, meh runtime.ProtoErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseMessageFunc {
@@ -89,18 +97,27 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
 
+	httpStatus, statusStr := HTTPStatus(ctx, nil)
+
 	retainFields(ctx, req, dynmap)
-	errs, suc := errorsAndSuccessFromContext(ctx)
+	errs, suc, _ := errorsAndSuccessFromContext(ctx)
 	if _, ok := dynmap["error"]; len(errs) > 0 && !ok {
 		dynmap["error"] = errs
 	}
 	// this is the edge case, if user sends response that has field 'success'
 	// let him see his response object instead of our status
-	if _, ok := dynmap["success"]; !ok && suc != nil {
-		dynmap["success"] = suc
+	if _, ok := dynmap["success"]; !ok {
+		if setStatusDetails {
+			if suc == nil {
+				suc = map[string]interface{}{}
+			}
+			suc["code"] = httpStatus
+			suc["status"] = statusStr
+		}
+		if suc != nil {
+			dynmap["success"] = suc
+		}
 	}
-
-	httpStatus := HTTPStatus(ctx, nil)
 
 	data, err = json.Marshal(dynmap)
 	if err != nil {
@@ -143,7 +160,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 		return
 	}
 
-	httpStatus := HTTPStatus(ctx, nil)
+	httpStatus, _ := HTTPStatus(ctx, nil)
 	// if user did not set status explicitly
 	if httpStatus == http.StatusOK {
 		httpStatus = HTTPStatusFromCode(PartialContent)

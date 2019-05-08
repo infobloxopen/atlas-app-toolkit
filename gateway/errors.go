@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -87,12 +88,16 @@ func (h *ProtoErrorHandler) StreamHandler(ctx context.Context, headerWritten boo
 }
 
 func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, marshaler runtime.Marshaler, rw http.ResponseWriter, err error) {
-	const fallback = `{"error":[{"message":"%s"}]}`
+	var fallback = `{"error":[{"message":"%s"}]}`
+	if setStatusDetails {
+		fallback = `{"error":[{"message":"%s", "code":500, "status": "INTERNAL"}]}`
+	}
 
 	st, ok := status.FromError(err)
 	if !ok {
 		st = status.New(codes.Unknown, err.Error())
 	}
+	statusCode, statusStr := HTTPStatus(ctx, st)
 
 	details := []interface{}{}
 	var fields interface{}
@@ -119,16 +124,25 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if fields != nil {
 		restErr["fields"] = fields
 	}
+	if setStatusDetails {
+		restErr["code"] = statusCode
+		restErr["status"] = statusStr
+	}
 
-	errs, _ := errorsAndSuccessFromContext(ctx)
+	errs, _, overrideErr := errorsAndSuccessFromContext(ctx)
 	restResp := &RestErrs{
 		Error: errs,
 	}
-	restResp.Error = append(restResp.Error, restErr)
+	if !overrideErr {
+		restResp.Error = append(restResp.Error, restErr)
+	} else if setStatusDetails && len(restResp.Error) > 0 {
+		restResp.Error[0]["code"] = statusCode
+		restResp.Error[0]["status"] = statusStr
+	}
 	if !headerWritten {
 		rw.Header().Del("Trailer")
 		rw.Header().Set("Content-Type", marshaler.ContentType())
-		rw.WriteHeader(HTTPStatus(ctx, st))
+		rw.WriteHeader(statusCode)
 	}
 
 	buf, merr := marshaler.Marshal(restResp)
@@ -210,6 +224,35 @@ func WithError(ctx context.Context, err error) {
 	grpc.SetTrailer(ctx, md)
 }
 
+// NewResponseError sets the error in the context with extra fields, to
+// override the standard message-only error
+func NewResponseError(ctx context.Context, msg string, kvpairs ...interface{}) error {
+	md := metadata.Pairs("error", fmt.Sprintf("message:%s", msg))
+	if len(kvpairs) > 0 {
+		fields := make(map[string]interface{})
+		for i := 0; i+1 < len(kvpairs); i += 2 {
+			k, ok := kvpairs[i].(string)
+			if !ok {
+				grpclog.Infof("Key value for error details must be a string")
+				continue
+			}
+			fields[k] = kvpairs[i+1]
+		}
+		b, _ := json.Marshal(fields)
+		md.Append("error", fmt.Sprintf("fields:%q", b))
+	}
+	grpc.SetTrailer(ctx, md)
+	return errors.New(msg) // Message should be overridden in response writer
+}
+
+// NewResponseErrorWithCode sets the return code and returns an error with extra
+// fields in MD to be extracted in the gateway response writer
+func NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{}) error {
+	SetStatus(ctx, status.New(c, msg))
+	NewResponseError(ctx, msg, kvpairs...)
+	return status.Error(c, msg)
+}
+
 // WithSuccess will save a MessageWithFields into the grpc trailer metadata.
 // This success message will then be inserted into the return JSON if the
 // ResponseForwarder is used
@@ -223,14 +266,35 @@ func WithSuccess(ctx context.Context, msg MessageWithFields) {
 	grpc.SetTrailer(ctx, md)
 }
 
-func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}) {
+// WithCodedSuccess wraps a SetStatus and WithSuccess call into one, just to make things a little more "elegant"
+func WithCodedSuccess(ctx context.Context, c codes.Code, msg string, args ...interface{}) error {
+	WithSuccess(ctx, NewWithFields(msg, args))
+	return SetStatus(ctx, status.New(c, msg))
+}
+
+func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]interface{}, success map[string]interface{}, errorOverride bool) {
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
-		return nil, nil
+		return nil, nil, false
 	}
 	errors = make([]map[string]interface{}, 0)
+	var primaryError map[string]interface{}
 	latestSuccess := int64(-1)
 	for k, vs := range md.TrailerMD {
+		if k == "error" {
+			err := make(map[string]interface{})
+			for _, v := range vs {
+				parts := strings.SplitN(v, ":", 2)
+				if parts[0] == "fields" {
+					uq, _ := strconv.Unquote(parts[1])
+					json.Unmarshal([]byte(uq), &err)
+				} else if parts[0] == "message" {
+					err["message"] = parts[1]
+				}
+			}
+			primaryError = err
+			errorOverride = true
+		}
 		if strings.HasPrefix(k, "error-") {
 			err := make(map[string]interface{})
 			for _, v := range vs {
@@ -265,6 +329,9 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 				}
 			}
 		}
+	}
+	if errorOverride {
+		errors = append([]map[string]interface{}{primaryError}, errors...)
 	}
 	return
 }

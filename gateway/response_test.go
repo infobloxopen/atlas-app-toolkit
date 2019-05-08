@@ -63,7 +63,7 @@ type response struct {
 func TestForwardResponseMessage(t *testing.T) {
 	b := &bytes.Buffer{}
 	enc := json.NewEncoder(b)
-	enc.Encode(map[string]interface{}{"code": CodeName(Created), "status": 201})
+	enc.Encode(map[string]interface{}{"code": 201, "status": CodeName(Created)})
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.Pairs(
 			"grpcgateway-status-code", CodeName(Created),
@@ -97,16 +97,146 @@ func TestForwardResponseMessage(t *testing.T) {
 		t.Fatalf("failed to unmarshal JSON response: %s", err)
 	}
 
-	if v.Success["code"] != CodeName(Created) {
-		t.Errorf("invalid status code: %s - expected: %s", v.Success["code"], CodeName(Created))
+	if v.Success["status"] != CodeName(Created) {
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
 	}
 
-	if v.Success["status"].(float64) != http.StatusCreated {
-		t.Errorf("invalid http status code: %d - expected: %d", v.Success["status"], http.StatusCreated)
+	if v.Success["code"].(float64) != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["code"], http.StatusCreated)
 	}
 
 	if v.Success["message"] != "created 1 item" {
 		t.Errorf("invalid status message: %s - expected: %s", v.Success["message"], "created 1 item")
+	}
+
+	if l := len(v.Result); l != 2 {
+		t.Fatalf("invalid number of items in response result: %d - expected: %d", l, 2)
+	}
+
+	poe, hemingway := v.Result[0], v.Result[1]
+	if poe.Name != "Poe" || poe.Age != 209 {
+		t.Errorf("invalid result item: %+v - expected: %+v", poe, &user{"Poe", 209})
+	}
+
+	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
+		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+	}
+}
+
+func TestForwardResponseMessageWithDetailsIncluded(t *testing.T) {
+	IncludeStatusDetails(true)
+	defer IncludeStatusDetails(false)
+	md := runtime.ServerMetadata{
+		HeaderMD: metadata.Pairs(
+			"grpcgateway-status-code", CodeName(Created),
+		),
+		TrailerMD: metadata.Pairs(
+			"success-1", "message:deleted 1 item",
+			"success-5", "message:created 1 item",
+		),
+	}
+	ctx := runtime.NewServerMetadataContext(context.Background(), md)
+	rw := httptest.NewRecorder()
+	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
+
+	if rw.Code != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusCreated)
+	}
+
+	if ct := rw.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("invalid content-type: %s - expected: %s", ct, "application/json")
+	}
+
+	mdSt := "Grpc-Metadata-Grpcgateway-Status-Code"
+	if h := rw.Header().Get(mdSt); h != "" {
+		t.Errorf("got %s: %s", mdSt, h)
+	}
+
+	v := &response{}
+	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
+		t.Fatalf("failed to unmarshal JSON response: %s", err)
+	}
+
+	if v.Success["status"] != CodeName(Created) {
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
+	}
+
+	if v.Success["code"].(float64) != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["code"], http.StatusCreated)
+	}
+
+	if v.Success["message"] != "created 1 item" {
+		t.Errorf("invalid status message: %s - expected: %s", v.Success["message"], "created 1 item")
+	}
+
+	if l := len(v.Result); l != 2 {
+		t.Fatalf("invalid number of items in response result: %d - expected: %d", l, 2)
+	}
+
+	poe, hemingway := v.Result[0], v.Result[1]
+	if poe.Name != "Poe" || poe.Age != 209 {
+		t.Errorf("invalid result item: %+v - expected: %+v", poe, &user{"Poe", 209})
+	}
+
+	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
+		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+	}
+}
+
+func TestForwardResponseMessageWithErrorsAndDetailsIncluded(t *testing.T) {
+	IncludeStatusDetails(true)
+	defer IncludeStatusDetails(false)
+	b := &bytes.Buffer{}
+	enc := json.NewEncoder(b)
+	enc.Encode(map[string]interface{}{"bar": 2})
+	md := runtime.ServerMetadata{
+		HeaderMD: metadata.Pairs(
+			"grpcgateway-status-code", CodeName(Created),
+		),
+		TrailerMD: metadata.Pairs(
+			"error-1", "message:err message",
+			"error-1", fmt.Sprintf("fields:%q", string(b.Bytes()))),
+	}
+	ctx := runtime.NewServerMetadataContext(context.Background(), md)
+	rw := httptest.NewRecorder()
+	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
+
+	if rw.Code != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusCreated)
+	}
+
+	if ct := rw.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("invalid content-type: %s - expected: %s", ct, "application/json")
+	}
+
+	mdSt := "Grpc-Metadata-Grpcgateway-Status-Code"
+	if h := rw.Header().Get(mdSt); h != "" {
+		t.Errorf("got %s: %s", mdSt, h)
+	}
+
+	v := &response{}
+	if err := json.Unmarshal(rw.Body.Bytes(), v); err != nil {
+		t.Fatalf("failed to unmarshal JSON response: %s", err)
+	}
+
+	if len(v.Error) != 1 {
+		t.Errorf("did not contain expected error in response")
+	}
+
+	if v.Success["status"] != CodeName(Created) {
+		t.Errorf("invalid status string: %s - expected: %s", v.Success["status"], CodeName(Created))
+	}
+
+	if v.Success["code"].(float64) != http.StatusCreated {
+		t.Errorf("invalid http status code: %d - expected: %d", v.Success["code"], http.StatusCreated)
+	}
+
+	if v.Error[0]["bar"].(float64) != 2 {
+		t.Errorf("unexpected err field: %d - expected: %d", v.Error[0]["bar"], 2)
+	}
+
+	if v.Error[0]["message"] != "err message" {
+		t.Errorf("invalid status message: %s - expected: %s", v.Error[0]["message"], "err message")
 	}
 
 	if l := len(v.Result); l != 2 {

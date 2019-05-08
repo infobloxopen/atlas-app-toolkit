@@ -169,11 +169,49 @@ func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
 ### Response Format
 Unless another format is specified in the request `Accept` header that the service supports, services render resources in responses in JSON format by default.
 
-Services must embed their response in a Success JSON structure.
+By default for a successful RPC call only the proto response is rendered as JSON, however for a failed call a special format is used, and by calling special methods the response can include additional metadata.
 
-The Success JSON structure provides a uniform structure for expressing normal responses using a structure similar to the Error JSON structure used to render errors. The structure provides an enumerated set of codes and associated HTTP statuses (see Errors below) along with a message.
+The `WithSuccess(ctx context.Context, msg MessageWithFields)` function allows you to add a `success` block to the returned JSON.
+By default this block only contains a message field, however arbitrary key-value pairs can also be included.
+This is included at top level, alongside the assumed `result` or `results` field.
 
-The Success JSON structure has the following format. The results tag is optional and appears when the response contains one or more resources.
+Ex.
+```json
+{
+  "success": {
+    "foo": "bar",
+    "baz": 1,
+    "message": <message-text>
+  },
+  "results": <service-response>
+}
+```
+
+The `WithError(ctx context.Context, err error)` function allows you to add an extra `error` to the `errors` list in the returned JSON.
+The `NewWithFields(message string, kvpairs ...interface{})` function can be used to create this error, which then includes additional fields in the error, otherwise only the error message will be included.
+This is included at top level, alongside the assumed `result` or `results` field if the call succeeded despite the error, or alone otherwise.
+
+Ex.
+```json
+{
+  "errors": [
+    {
+      "foo": "bar",
+      "baz": 1,
+      "message": <message-text>
+    }
+  ],
+  "results": <service-response>
+}
+```
+
+To return an error with fields and fail the RPC, return an error from `NewResponseError(ctx context.Context, msg string, kvpairs ...interface{})` or `NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{})` to also set the return code.
+
+The function `IncludeStatusDetails(withDetails bool)` allows you to include the `success` block with fields `code` and `status` automatically for all responses,
+and the first of the `errors` in failed responses will also include the fields.
+Note that this choice affects all responses that pass through `gateway.ForwardResponseMessage`.
+
+Ex:
 ```json
 {
   "success": {
@@ -185,19 +223,15 @@ The Success JSON structure has the following format. The results tag is optional
 }
 ```
 
-The `results` content follows the [Google model](https://cloud.google.com/apis/design/standard_methods): an object is returned for Get, Create and Update operations and list of objects for List operation.
-
-To allow compatibility with existing systems, the results tag name can be changed to a service-defined tag. In this way the success data becomes just a tag added to an existing structure.
-
-#### Example Success Responses
+#### Example Success Responses With IncludeStatusDetails(true)
 
 Response with no results
 ```json
 {
   "success": {
-    "status": 201,
+    "status": "CREATED",
     "message": "Account provisioned",
-    "code": "CREATED"
+    "code": 201
   }
 }
 ```
@@ -206,9 +240,9 @@ Response with results
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "Found 2 items",
-    "code": "OK"
+    "code": 200
   },
   "results": [
     {
@@ -235,9 +269,9 @@ Response for get by id operation
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "object found",
-    "code": "OK"
+    "code": 200
   },
   "results": {
       "account_id": 4,
@@ -252,9 +286,9 @@ Response with results and service-defined results tag `rpz_hits`
 ```json
 {
   "success": {
-    "status": 200,
+    "status": "OK",
     "message": "Read 360 items",
-    "code": "OK"
+    "code": 200
   },
   "rpz_hits": [
     {
@@ -304,33 +338,6 @@ operators using the one defined in [filter.go](filter.go).
 filter_Foobar_List_0 = gateway.DefaultQueryFilter
 ```
 
-## Errors
-
-### Format
-Method error responses are rendered in the Error JSON format. The Error JSON format is similar to the Success JSON format.
-
-The Error JSON structure has the following format. The details tag is optional and appears when the service provides more details about the error.
-```json
-{
-  "error": {
-    "status": <http-status-code>,
-    "code": <enumerated-error-code>,
-    "message": <message-text>
-  },
-  "details": [
-    {
-      "message": <message-text>,
-      "code": <enumerated-error-code>,
-      "target": <resource-name>,
-    },
-    ...
-  ],
-  "fields": {
-      "field1": [<message-1>, <message-2>, ...],
-      "field2": ...,
-  }
-}
-```
 
 ### Translating gRPC Errors to HTTP
 
@@ -370,6 +377,9 @@ You can find sample in example folder. See [code](example/cmd/gateway/main.go)
 
 The idiomatic way to send an error from you gRPC service is to simple return
 it from you gRPC handler either as `status.Errorf()` or `errors.New()`.
+If additional fields are required, then use the
+`NewResponseError(ctx context.Context, msg string, kvpairs ...interface{})` or
+`NewResponseErrorWithCode(ctx context.Context, c codes.Code, msg string, kvpairs ...interface{})` functions instead.
 
 ```go
 import (
@@ -379,5 +389,9 @@ import (
 
 func (s *myServiceImpl) MyMethod(req *MyRequest) (*MyResponse, error) {
     return nil, status.Errorf(codes.Unimplemented, "method is not implemented: %v", req)
+}
+
+func (s *myServiceImpl) MyMethod2(ctx context.Context, req *MyRequest) (*MyResponse, error) {
+    return nil, NewResponseErrorWithCode(ctx, codes.Internal, "something broke on our end", "retry_in", 30)
 }
 ```
