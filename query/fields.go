@@ -47,11 +47,16 @@ func ParseFieldSelection(input string, delimiter ...string) *FieldSelection {
 //GoString converts FieldSelection to a string representation
 //It implements fmt.GoStringer interface and returns dot-notated fields separated by commas
 func (f *FieldSelection) GoString() string {
+	return strings.Join(f.AllFieldStrings(), opCommonDelimiter)
+}
+
+// AllFieldStrings returns a slice of dot-notated fields
+func (f *FieldSelection) AllFieldStrings() []string {
 	result := make([]string, 0, len(f.Fields))
 	for _, field := range f.Fields {
 		addChildFieldString(&result, "", field)
 	}
-	return strings.Join(result, opCommonDelimiter)
+	return result
 }
 
 func addChildFieldString(result *[]string, parent string, field *Field) {
