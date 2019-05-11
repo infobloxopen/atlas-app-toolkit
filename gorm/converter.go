@@ -331,3 +331,10 @@ func (converter *DefaultPbToOrmConverter) SortingCriteriaToGorm(ctx context.Cont
 	}
 	return dbCr, assoc, err
 }
+
+func (converter *DefaultPbToOrmConverter) PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32) {
+	if p != nil {
+		return p.GetOffset(), p.GetLimit()
+	}
+	return 0, 0
+}

@@ -15,9 +15,19 @@ type SortingCriteriaConverter interface {
 	SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error)
 }
 
+type FieldSelectionConverter interface {
+	FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error)
+}
+
+type PaginationConverter interface {
+	PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32)
+}
+
 type CollectionOperatorsConverter interface {
 	FilteringConditionConverter
 	SortingCriteriaConverter
+	FieldSelectionConverter
+	PaginationConverter
 }
 
 func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{}, c CollectionOperatorsConverter, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
@@ -42,9 +52,9 @@ func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{
 		return nil, err
 	}
 
-	db = ApplyPagination(ctx, db, p)
+	db = ApplyPaginationEx(ctx, db, p, c)
 
-	db, err = ApplyFieldSelection(ctx, db, fs, obj)
+	db, err = ApplyFieldSelectionEx(ctx, db, fs, obj, c)
 	if err != nil {
 		return nil, err
 	}
@@ -123,24 +133,29 @@ func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{
 	return db, nil
 }
 
-// ApplyPagination applies pagination operator p to gorm instance db.
-func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
-	if p != nil {
-		if p.GetOffset() > 0 {
-			db = db.Offset(p.GetOffset())
-		}
+// ApplyPaginationEx applies pagination operator p to gorm instance db.
+func ApplyPaginationEx(ctx context.Context, db *gorm.DB, p *query.Pagination, c PaginationConverter) *gorm.DB {
+	offset, limit := c.PaginationToGorm(ctx, p)
 
-		if p.GetLimit() > 0 {
-			db = db.Limit(p.GetLimit())
-		}
+	if offset > 0 {
+		db = db.Offset(offset)
+	}
+
+	if limit > 0 {
+		db = db.Limit(limit)
 	}
 
 	return db
 }
 
-// ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
-	toPreload, err := FieldSelectionToGorm(ctx, fs, obj)
+// ApplyPagination applies pagination operator p to gorm instance db.
+func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
+	return ApplyPaginationEx(ctx, db, p, NewDefaultPbToOrmConverter(nil))
+}
+
+// ApplyFieldSelectionEx applies field selection operator fs to gorm instance db.
+func ApplyFieldSelectionEx(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}, c FieldSelectionConverter) (*gorm.DB, error) {
+	toPreload, err := c.FieldSelectionToGorm(ctx, fs, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -151,4 +166,10 @@ func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelect
 		}
 	}
 	return db, nil
+}
+
+// Deprecated: use ApplyFieldSelectionEx instead
+// ApplyFieldSelection applies field selection operator fs to gorm instance db.
+func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
+	return ApplyFieldSelectionEx(ctx, db, fs, obj, NewDefaultPbToOrmConverter(nil))
 }
