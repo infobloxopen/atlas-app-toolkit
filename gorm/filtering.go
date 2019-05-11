@@ -53,7 +53,7 @@ func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb 
 	if err != nil {
 		return "", nil, nil, err
 	}
-	return FilteringToGorm(ctx, f, obj, pb)
+	return FilteringToGormEx(ctx, f, obj, NewDefaultPbToOrmConverter(pb))
 }
 
 //Deprecated: Use FilteringToGormEx instead
