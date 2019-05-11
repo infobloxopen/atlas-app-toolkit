@@ -96,42 +96,13 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 // Deprecated: use ApplyFilteringEx instead
 // ApplyFiltering applies filtering operator f to gorm instance db.
 func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
-	str, args, assocToJoin, err := FilteringToGorm(ctx, f, obj, pb)
-	if err != nil {
-		return nil, nil, err
-	}
-	if str != "" {
-		return db.Where(str, args...), assocToJoin, nil
-	}
-	return db, nil, nil
+	return ApplyFilteringEx(ctx, db, f, obj, NewDefaultPbToOrmConverter(pb))
 }
 
 // Deprecated: use ApplySortingEx instead
 // ApplySorting applies sorting operator s to gorm instance db.
 func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
-	var crs []string
-	var assocToJoin map[string]struct{}
-	for _, cr := range s.GetCriterias() {
-		dbName, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
-		if err != nil {
-			return nil, nil, err
-		}
-		if assoc != "" {
-			if assocToJoin == nil {
-				assocToJoin = make(map[string]struct{})
-			}
-			assocToJoin[assoc] = struct{}{}
-		}
-		if cr.IsDesc() {
-			crs = append(crs, dbName+" desc")
-		} else {
-			crs = append(crs, dbName)
-		}
-	}
-	if len(crs) == 0 {
-		return db, nil, nil
-	}
-	return db.Order(strings.Join(crs, ",")), assocToJoin, nil
+	return ApplySortingEx(ctx, db, s, obj, NewDefaultPbToOrmConverter(nil))
 }
 
 // JoinAssociations joins obj's associations from assoc to the current gorm query.

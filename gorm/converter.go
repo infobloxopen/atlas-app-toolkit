@@ -15,7 +15,6 @@ import (
 )
 
 type DefaultPbToOrmConverter struct {
-	pb        proto.Message
 	processor FilteringConditionProcessor
 }
 
@@ -24,7 +23,7 @@ type DefaultFilteringConditionProcessor struct {
 }
 
 func NewDefaultPbToOrmConverter(pb proto.Message) CollectionOperatorsConverter {
-	return &DefaultPbToOrmConverter{pb, &DefaultFilteringConditionProcessor{pb}}
+	return &DefaultPbToOrmConverter{&DefaultFilteringConditionProcessor{pb}}
 }
 
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
@@ -156,7 +155,7 @@ func (converter *DefaultPbToOrmConverter) insensitiveCaseStringConditionToGorm(n
 	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
 }
 
-//func (converter *DefaultPbToOrmConverter) processStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
+// ProcessStringCondition processes a string condition to GORM Plain SQL representation
 func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.Context, fieldPath []string, value string) (interface{}, error) {
 	objType := indirectType(reflect.TypeOf(p.pb))
 	pathLength := len(fieldPath)
