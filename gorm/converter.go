@@ -14,20 +14,42 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
-type DefaultPbToOrmConverter struct {
-	processor FilteringConditionProcessor
-}
-
+// DefaultFilteringConditionProcessor processes filter operator conversion
 type DefaultFilteringConditionProcessor struct {
 	pb proto.Message
 }
 
+// DefaultFilteringConditionConverter performs default convertion for Filter collection operator
+type DefaultFilteringConditionConverter struct {
+	processor FilteringConditionProcessor
+}
+
+// DefaultSortingCriteriaConverter performs default convertion for Sorting collection operator
+type DefaultSortingCriteriaConverter struct{}
+
+// DefaultPaginationConverter performs default convertion for Paging collection operator
+type DefaultPaginationConverter struct{}
+
+// DefaultPbToOrmConverter performs default convertion for all collection operators
+type DefaultPbToOrmConverter struct {
+	DefaultFilteringConditionConverter
+	DefaultSortingCriteriaConverter
+	DefaultFieldSelectionConverter
+	DefaultPaginationConverter
+}
+
+// NewDefaultPbToOrmConverter creates default converter for all collection operators
 func NewDefaultPbToOrmConverter(pb proto.Message) CollectionOperatorsConverter {
-	return &DefaultPbToOrmConverter{&DefaultFilteringConditionProcessor{pb}}
+	return &DefaultPbToOrmConverter{
+		DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}},
+		DefaultSortingCriteriaConverter{},
+		DefaultFieldSelectionConverter{},
+		DefaultPaginationConverter{},
+	}
 }
 
 // LogicalOperatorToGorm returns GORM Plain SQL representation of the logical operator.
-func (converter *DefaultPbToOrmConverter) LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var lres string
 	var largs []interface{}
 	var lAssocToJoin map[string]struct{}
@@ -97,7 +119,7 @@ func (converter *DefaultPbToOrmConverter) LogicalOperatorToGorm(ctx context.Cont
 }
 
 // StringConditionToGorm returns GORM Plain SQL representation of the string condition.
-func (converter *DefaultPbToOrmConverter) StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) StringConditionToGorm(ctx context.Context, c *query.StringCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var (
 		assocToJoin   map[string]struct{}
 		dbName, assoc string
@@ -151,7 +173,7 @@ func (converter *DefaultPbToOrmConverter) StringConditionToGorm(ctx context.Cont
 	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
 }
 
-func (converter *DefaultPbToOrmConverter) insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
+func (converter *DefaultFilteringConditionConverter) insensitiveCaseStringConditionToGorm(neg, dbName, operator string) string {
 	return fmt.Sprintf("%s(lower(%s) %s lower(?))", neg, dbName, operator)
 }
 
@@ -208,7 +230,7 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 }
 
 // NumberConditionToGorm returns GORM Plain SQL representation of the number condition.
-func (converter *DefaultPbToOrmConverter) NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) NumberConditionToGorm(ctx context.Context, c *query.NumberCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -239,7 +261,7 @@ func (converter *DefaultPbToOrmConverter) NumberConditionToGorm(ctx context.Cont
 }
 
 // NullConditionToGorm returns GORM Plain SQL representation of the null condition.
-func (converter *DefaultPbToOrmConverter) NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) NullConditionToGorm(ctx context.Context, c *query.NullCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -257,7 +279,7 @@ func (converter *DefaultPbToOrmConverter) NullConditionToGorm(ctx context.Contex
 	return fmt.Sprintf("%s(%s %s)", neg, dbName, o), nil, assocToJoin, nil
 }
 
-func (converter *DefaultPbToOrmConverter) NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var assocToJoin map[string]struct{}
 	dbName, assoc, err := HandleFieldPath(ctx, c.FieldPath, obj)
 	if err != nil {
@@ -284,7 +306,7 @@ func (converter *DefaultPbToOrmConverter) NumberArrayConditionToGorm(ctx context
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
 
-func (converter *DefaultPbToOrmConverter) StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+func (converter *DefaultFilteringConditionConverter) StringArrayConditionToGorm(ctx context.Context, c *query.StringArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
 	var (
 		assocToJoin   map[string]struct{}
 		dbName, assoc string
@@ -324,7 +346,7 @@ func (converter *DefaultPbToOrmConverter) StringArrayConditionToGorm(ctx context
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
 
-func (converter *DefaultPbToOrmConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {
+func (converter *DefaultSortingCriteriaConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {
 	dbCr, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
 	if cr.IsDesc() {
 		dbCr += " desc"
@@ -332,7 +354,7 @@ func (converter *DefaultPbToOrmConverter) SortingCriteriaToGorm(ctx context.Cont
 	return dbCr, assoc, err
 }
 
-func (converter *DefaultPbToOrmConverter) PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32) {
+func (converter *DefaultPaginationConverter) PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32) {
 	if p != nil {
 		return p.GetOffset(), p.GetLimit()
 	}

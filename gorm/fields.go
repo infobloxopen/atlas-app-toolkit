@@ -13,15 +13,18 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
+// DefaultFieldSelectionConverter performs default convertion for FieldSelection collection operator
+type DefaultFieldSelectionConverter struct{}
+
 // FieldSelectionStringToGorm is a shortcut to parse a string into FieldSelection struct and
 // receive a list of associations to preload.
 func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}) ([]string, error) {
-	c := NewDefaultPbToOrmConverter(nil)
+	c := &DefaultFieldSelectionConverter{}
 	return c.FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj)
 }
 
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
-func (converter *DefaultPbToOrmConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
+func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
 	objType := indirectType(reflect.TypeOf(obj))
 	if fs.GetFields() == nil {
 		return preloadEverything(objType, nil)

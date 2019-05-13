@@ -9,7 +9,7 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
-type LogicaOperatorConverter interface {
+type LogicalOperatorConverter interface {
 	LogicalOperatorToGorm(ctx context.Context, lop *query.LogicalOperator, obj interface{}) (string, []interface{}, map[string]struct{}, error)
 }
 
@@ -34,7 +34,7 @@ type NumberArrayConditionConverter interface {
 }
 
 type FilteringConditionConverter interface {
-	LogicaOperatorConverter
+	LogicalOperatorConverter
 	NullConditionConverter
 	StringConditionConverter
 	StringArrayConditionConverter
@@ -53,13 +53,15 @@ func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb 
 	if err != nil {
 		return "", nil, nil, err
 	}
-	return FilteringToGormEx(ctx, f, obj, NewDefaultPbToOrmConverter(pb))
+	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
+	return FilteringToGormEx(ctx, f, obj, c)
 }
 
 //Deprecated: Use FilteringToGormEx instead
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
 func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
-	return FilteringToGormEx(ctx, m, obj, NewDefaultPbToOrmConverter(pb))
+	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
+	return FilteringToGormEx(ctx, m, obj, c)
 }
 
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.

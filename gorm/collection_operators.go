@@ -106,13 +106,14 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 // Deprecated: use ApplyFilteringEx instead
 // ApplyFiltering applies filtering operator f to gorm instance db.
 func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
-	return ApplyFilteringEx(ctx, db, f, obj, NewDefaultPbToOrmConverter(pb))
+	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
+	return ApplyFilteringEx(ctx, db, f, obj, c)
 }
 
 // Deprecated: use ApplySortingEx instead
 // ApplySorting applies sorting operator s to gorm instance db.
 func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
-	return ApplySortingEx(ctx, db, s, obj, NewDefaultPbToOrmConverter(nil))
+	return ApplySortingEx(ctx, db, s, obj, &DefaultSortingCriteriaConverter{})
 }
 
 // JoinAssociations joins obj's associations from assoc to the current gorm query.
@@ -150,7 +151,7 @@ func ApplyPaginationEx(ctx context.Context, db *gorm.DB, p *query.Pagination, c 
 
 // ApplyPagination applies pagination operator p to gorm instance db.
 func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
-	return ApplyPaginationEx(ctx, db, p, NewDefaultPbToOrmConverter(nil))
+	return ApplyPaginationEx(ctx, db, p, &DefaultPaginationConverter{})
 }
 
 // ApplyFieldSelectionEx applies field selection operator fs to gorm instance db.
@@ -171,5 +172,5 @@ func ApplyFieldSelectionEx(ctx context.Context, db *gorm.DB, fs *query.FieldSele
 // Deprecated: use ApplyFieldSelectionEx instead
 // ApplyFieldSelection applies field selection operator fs to gorm instance db.
 func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
-	return ApplyFieldSelectionEx(ctx, db, fs, obj, NewDefaultPbToOrmConverter(nil))
+	return ApplyFieldSelectionEx(ctx, db, fs, obj, &DefaultFieldSelectionConverter{})
 }
