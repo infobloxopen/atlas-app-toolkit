@@ -11,14 +11,32 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
-// ApplyCollectionOperators applies collection operators to gorm instance db.
-func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
-	db, fAssocToJoin, err := ApplyFiltering(ctx, db, f, obj, pb)
+type SortingCriteriaConverter interface {
+	SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error)
+}
+
+type FieldSelectionConverter interface {
+	FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error)
+}
+
+type PaginationConverter interface {
+	PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32)
+}
+
+type CollectionOperatorsConverter interface {
+	FilteringConditionConverter
+	SortingCriteriaConverter
+	FieldSelectionConverter
+	PaginationConverter
+}
+
+func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{}, c CollectionOperatorsConverter, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	db, fAssocToJoin, err := ApplyFilteringEx(ctx, db, f, obj, c)
 	if err != nil {
 		return nil, err
 	}
 
-	db, sAssocToJoin, err := ApplySorting(ctx, db, s, obj)
+	db, sAssocToJoin, err := ApplySortingEx(ctx, db, s, obj, c)
 	if err != nil {
 		return nil, err
 	}
@@ -34,9 +52,9 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 		return nil, err
 	}
 
-	db = ApplyPagination(ctx, db, p)
+	db = ApplyPaginationEx(ctx, db, p, c)
 
-	db, err = ApplyFieldSelection(ctx, db, fs, obj)
+	db, err = ApplyFieldSelectionEx(ctx, db, fs, obj, c)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +63,8 @@ func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{},
 }
 
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
-	str, args, assocToJoin, err := FilteringToGorm(ctx, f, obj, pb)
+func ApplyFilteringEx(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, c FilteringConditionConverter) (*gorm.DB, map[string]struct{}, error) {
+	str, args, assocToJoin, err := FilteringToGormEx(ctx, f, obj, c)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,11 +75,11 @@ func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj in
 }
 
 // ApplySorting applies sorting operator s to gorm instance db.
-func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
+func ApplySortingEx(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}, c SortingCriteriaConverter) (*gorm.DB, map[string]struct{}, error) {
 	var crs []string
 	var assocToJoin map[string]struct{}
 	for _, cr := range s.GetCriterias() {
-		dbName, assoc, err := HandleFieldPath(ctx, strings.Split(cr.GetTag(), "."), obj)
+		dbCr, assoc, err := c.SortingCriteriaToGorm(ctx, cr, obj)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -71,16 +89,31 @@ func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interf
 			}
 			assocToJoin[assoc] = struct{}{}
 		}
-		if cr.IsDesc() {
-			crs = append(crs, dbName+" desc")
-		} else {
-			crs = append(crs, dbName)
-		}
+		crs = append(crs, dbCr)
 	}
 	if len(crs) == 0 {
 		return db, nil, nil
 	}
 	return db.Order(strings.Join(crs, ",")), assocToJoin, nil
+}
+
+// Deprecated: use ApplyCollectionOperatorsEx instead
+// ApplyCollectionOperators applies collection operators to gorm instance db.
+func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+	return ApplyCollectionOperatorsEx(ctx, db, obj, NewDefaultPbToOrmConverter(pb), f, s, p, fs)
+}
+
+// Deprecated: use ApplyFilteringEx instead
+// ApplyFiltering applies filtering operator f to gorm instance db.
+func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
+	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
+	return ApplyFilteringEx(ctx, db, f, obj, c)
+}
+
+// Deprecated: use ApplySortingEx instead
+// ApplySorting applies sorting operator s to gorm instance db.
+func ApplySorting(ctx context.Context, db *gorm.DB, s *query.Sorting, obj interface{}) (*gorm.DB, map[string]struct{}, error) {
+	return ApplySortingEx(ctx, db, s, obj, &DefaultSortingCriteriaConverter{})
 }
 
 // JoinAssociations joins obj's associations from assoc to the current gorm query.
@@ -101,24 +134,29 @@ func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{
 	return db, nil
 }
 
-// ApplyPagination applies pagination operator p to gorm instance db.
-func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
-	if p != nil {
-		if p.GetOffset() > 0 {
-			db = db.Offset(p.GetOffset())
-		}
+// ApplyPaginationEx applies pagination operator p to gorm instance db.
+func ApplyPaginationEx(ctx context.Context, db *gorm.DB, p *query.Pagination, c PaginationConverter) *gorm.DB {
+	offset, limit := c.PaginationToGorm(ctx, p)
 
-		if p.GetLimit() > 0 {
-			db = db.Limit(p.GetLimit())
-		}
+	if offset > 0 {
+		db = db.Offset(offset)
+	}
+
+	if limit > 0 {
+		db = db.Limit(limit)
 	}
 
 	return db
 }
 
-// ApplyFieldSelection applies field selection operator fs to gorm instance db.
-func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
-	toPreload, err := FieldSelectionToGorm(ctx, fs, obj)
+// ApplyPagination applies pagination operator p to gorm instance db.
+func ApplyPagination(ctx context.Context, db *gorm.DB, p *query.Pagination) *gorm.DB {
+	return ApplyPaginationEx(ctx, db, p, &DefaultPaginationConverter{})
+}
+
+// ApplyFieldSelectionEx applies field selection operator fs to gorm instance db.
+func ApplyFieldSelectionEx(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}, c FieldSelectionConverter) (*gorm.DB, error) {
+	toPreload, err := c.FieldSelectionToGorm(ctx, fs, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -129,4 +167,10 @@ func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelect
 		}
 	}
 	return db, nil
+}
+
+// Deprecated: use ApplyFieldSelectionEx instead
+// ApplyFieldSelection applies field selection operator fs to gorm instance db.
+func ApplyFieldSelection(ctx context.Context, db *gorm.DB, fs *query.FieldSelection, obj interface{}) (*gorm.DB, error) {
+	return ApplyFieldSelectionEx(ctx, db, fs, obj, &DefaultFieldSelectionConverter{})
 }
