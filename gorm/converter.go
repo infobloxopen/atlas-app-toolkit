@@ -21,7 +21,7 @@ type DefaultFilteringConditionProcessor struct {
 
 // DefaultFilteringConditionConverter performs default convertion for Filter collection operator
 type DefaultFilteringConditionConverter struct {
-	processor FilteringConditionProcessor
+	Processor FilteringConditionProcessor
 }
 
 // DefaultSortingCriteriaConverter performs default convertion for Sorting collection operator
@@ -160,7 +160,7 @@ func (converter *DefaultFilteringConditionConverter) StringConditionToGorm(ctx c
 	}
 
 	var value interface{}
-	if v, err := converter.processor.ProcessStringCondition(ctx, c.FieldPath, c.Value); err != nil {
+	if v, err := converter.Processor.ProcessStringCondition(ctx, c.FieldPath, c.Value); err != nil {
 		value = c.Value
 	} else {
 		value = v
@@ -335,7 +335,7 @@ func (converter *DefaultFilteringConditionConverter) StringArrayConditionToGorm(
 	placeholder := ""
 	for _, str := range c.Values {
 		placeholder += "?, "
-		if val, err := converter.processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
+		if val, err := converter.Processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
 			values = append(values, val)
 			continue
 		}
