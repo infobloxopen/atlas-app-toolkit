@@ -113,3 +113,19 @@ func handleForwardResponseTrailer(w http.ResponseWriter, md runtime.ServerMetada
 		}
 	}
 }
+
+// CustomIncomingHeaderMatcher func is used to add custom headers to be matched
+// from incoming http requests, If this returns true the header will be added to grpc context
+func CustomIncomingHeaderMatcher(headerNames ...string) func(string) (string, bool) {
+	customHeaders := map[string]bool{}
+	for _, name := range headerNames {
+		customHeaders[strings.ToLower(name)] = true
+	}
+	return func(headerName string) (string, bool) {
+		if key, ok := runtime.DefaultHeaderMatcher(headerName); ok {
+			return key, ok
+		}
+		_, ok := customHeaders[strings.ToLower(headerName)]
+		return headerName, ok
+	}
+}

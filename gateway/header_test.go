@@ -62,3 +62,52 @@ func TestPrefixOutgoingHeaderMatcher(t *testing.T) {
 		t.Errorf("header %s hasn't been discarded: %s", key, v)
 	}
 }
+
+func TestCustomHeaderMatcher(t *testing.T) {
+	var customMatcherTests = []struct {
+		name          string
+		customHeaders []string
+		in            string
+		isValid       bool
+	}{
+		{
+			name:          "Customer headers | success",
+			customHeaders: []string{"Request-ID", "ophid"},
+			in:            "Request-Id",
+			isValid:       true,
+		},
+		{
+			name:          "Customer headers| failure",
+			customHeaders: []string{"Request-ID", "ophid"},
+			in:            "RequestId",
+			isValid:       false,
+		},
+		{
+			name:          "Default headers | success",
+			customHeaders: []string{"Request-ID", "ophid"},
+			in:            "grpc-metadata-Request-Id",
+			isValid:       true,
+		},
+		{
+			name:          "Default headers | without custom headers",
+			customHeaders: []string{},
+			in:            "grpc-metadata-Request-Id",
+			isValid:       true,
+		},
+		{
+			name:          "custom headers in | without custom headers | failure",
+			customHeaders: []string{},
+			in:            "Request-Id",
+			isValid:       false,
+		},
+	}
+	for _, tt := range customMatcherTests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := CustomIncomingHeaderMatcher(tt.customHeaders...)
+			_, ok := f(tt.in)
+			if ok != tt.isValid {
+				t.Errorf("got %v, want %v", ok, tt.isValid)
+			}
+		})
+	}
+}
