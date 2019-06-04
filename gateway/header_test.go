@@ -63,7 +63,7 @@ func TestPrefixOutgoingHeaderMatcher(t *testing.T) {
 	}
 }
 
-func TestCustomHeaderMatcher(t *testing.T) {
+func TestExtendedDefaultHeaderMatcher(t *testing.T) {
 	var customMatcherTests = []struct {
 		name          string
 		customHeaders []string
@@ -71,13 +71,13 @@ func TestCustomHeaderMatcher(t *testing.T) {
 		isValid       bool
 	}{
 		{
-			name:          "Customer headers | success",
+			name:          "Custom headers | success",
 			customHeaders: []string{"Request-ID", "ophid"},
 			in:            "Request-Id",
 			isValid:       true,
 		},
 		{
-			name:          "Customer headers| failure",
+			name:          "Custom headers | failure",
 			customHeaders: []string{"Request-ID", "ophid"},
 			in:            "RequestId",
 			isValid:       false,
@@ -103,7 +103,7 @@ func TestCustomHeaderMatcher(t *testing.T) {
 	}
 	for _, tt := range customMatcherTests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := CustomIncomingHeaderMatcher(tt.customHeaders...)
+			f := ExtendedDefaultHeaderMatcher(tt.customHeaders...)
 			_, ok := f(tt.in)
 			if ok != tt.isValid {
 				t.Errorf("got %v, want %v", ok, tt.isValid)
