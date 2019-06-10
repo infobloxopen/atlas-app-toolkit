@@ -21,6 +21,7 @@ func TestAnnotator(t *testing.T) {
 		`{}`: metadata.MD{fieldPresenceMetaKey: nil},
 		`{`:  nil,
 		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
+		`{"one": {}}`: {fieldPresenceMetaKey: []string{"One"}},
 		`{
   "name": "atlas",
   "burden": {
