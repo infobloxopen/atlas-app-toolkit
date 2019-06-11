@@ -70,6 +70,11 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 					newPath[l] = generator.CamelCase(k)
 					queue = append(queue, pathItem{path: newPath, node: v})
 				}
+
+				if len(m) == 0 && l > 0 {
+					// otherwise, it's a leaf node so print its path
+					paths = append(paths, strings.Join(item.path, "."))
+				}
 			} else if len(item.path) > 0 {
 				// otherwise, it's a leaf node so print its path
 				paths = append(paths, strings.Join(item.path, "."))
