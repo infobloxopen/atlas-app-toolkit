@@ -151,7 +151,7 @@ func HTTPStatusFromCode(code codes.Code) int {
 	case Created:
 		return http.StatusCreated
 	case Updated:
-		return http.StatusCreated
+		return http.StatusOK
 	case Deleted:
 		return http.StatusNoContent
 	case LongRunning:
