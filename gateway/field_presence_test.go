@@ -23,7 +23,7 @@ func TestAnnotator(t *testing.T) {
 		`{`:  nil,
 		`{"objects":[{"one": {"two":"a", "three":[]}, "four": 5}, {"one":{"two":"a", "three":[]}, "four": 5}]}`: {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three", "Four$One.Two$One.Three"}},
 		`{"one":{"two":"a", "three":[]}, "four": 5}`:                                                            {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three"}},
-		`{"one": {}}`: {fieldPresenceMetaKey: []string{"One"}},
+		`{"one": {}}`:                                                                                           {fieldPresenceMetaKey: []string{"One"}},
 		`{
   "name": "atlas",
   "burden": {
