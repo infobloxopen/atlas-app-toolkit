@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -20,8 +21,9 @@ func TestAnnotator(t *testing.T) {
 		``:   metadata.MD{fieldPresenceMetaKey: nil},
 		`{}`: metadata.MD{fieldPresenceMetaKey: nil},
 		`{`:  nil,
-		`{"one":{"two":"a", "three":[]}, "four": 5}`: {fieldPresenceMetaKey: []string{"Four", "One.Two", "One.Three"}},
-		`{"one": {}}`:                                {fieldPresenceMetaKey: []string{"One"}},
+		`{"objects":[{"one": {"two":"a", "three":[]}, "four": 5}, {"one":{"two":"a", "three":[]}, "four": 5}]}`: {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three", "Four$One.Two$One.Three"}},
+		`{"one":{"two":"a", "three":[]}, "four": 5}`:                                                            {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three"}},
+		`{"one": {}}`:                                                                                           {fieldPresenceMetaKey: []string{"One"}},
 		`{
   "name": "atlas",
   "burden": {
@@ -40,9 +42,7 @@ func TestAnnotator(t *testing.T) {
 			"mortals": []
 		}
   }
-}`: {fieldPresenceMetaKey: []string{"Name", "Burden.Duration", "Burden.Weight",
-			"Burden.Breaks", "Burden.Replacements.Hero.Name", "Burden.Replacements.Hero.Duration",
-			"Burden.Replacements.Hero.Lineage.Mother", "Burden.Replacements.Hero.Lineage.Father", "Burden.Replacements.Mortals"}},
+}`: {fieldPresenceMetaKey: []string{"Name$Burden.Duration$Burden.Weight$Burden.Breaks$Burden.Replacements.Hero.Name$Burden.Replacements.Hero.Duration$Burden.Replacements.Hero.Lineage.Mother$Burden.Replacements.Hero.Lineage.Father$Burden.Replacements.Mortals"}},
 	} {
 		postReq := &http.Request{
 			Method: "POST",
@@ -54,13 +54,31 @@ func TestAnnotator(t *testing.T) {
 			continue
 		}
 		// Because the order of objects at the same depth is not guaranteed
-		sort.Strings(md[fieldPresenceMetaKey])
-		sort.Strings(expect[fieldPresenceMetaKey])
-		if !reflect.DeepEqual(md, expect) {
+		if !isEqualFieldMasks(md[fieldPresenceMetaKey], expect[fieldPresenceMetaKey]) {
 			t.Errorf("Did not produce expected metadata %+v, got %+v", expect, md)
 		}
 
 	}
+}
+
+func isEqualFieldMasks(s1 []string, s2 []string) bool {
+	if len(s1) != len(s2) {
+		fmt.Println("len(s1) != len(s2)", len(s1), len(s2))
+		return false
+	}
+
+	for i := 0; i < len(s1); i++ {
+		mask1, mask2 := strings.Split(s1[i], "$"), strings.Split(s2[i], "$")
+		sort.Strings(mask1)
+		sort.Strings(mask2)
+
+		if !reflect.DeepEqual(mask1, mask2) {
+			fmt.Println("!reflect.DeepEqual(mask1, mask2)")
+			return false
+		}
+	}
+
+	return true
 }
 
 type dummyReq struct {
@@ -80,7 +98,7 @@ func TestUnaryServerInterceptor(t *testing.T) {
 	interceptor := PresenceClientInterceptor()
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.MD{
-			fieldPresenceMetaKey: []string{"one.two.three", "one.four"},
+			fieldPresenceMetaKey: []string{"one.two.three$one.four"},
 		},
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
@@ -112,7 +130,7 @@ func TestUnaryServerInterceptor(t *testing.T) {
 		if req == nil {
 			t.Fatal("For some reason it deleted the request object")
 		}
-		got, want := req.SomeFieldMaskField, &field_mask.FieldMask{Paths: nil}
+		got, want := req.SomeFieldMaskField, &field_mask.FieldMask{}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Didn't properly set the fieldmask in the request.\ngot :%v\nwant:%v", got, want)
 		}
