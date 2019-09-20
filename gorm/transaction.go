@@ -8,6 +8,7 @@ import (
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -147,7 +148,7 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 				terr = txn.Rollback()
 			} else {
 				if terr = txn.Commit(ctx); terr != nil {
-					err = status.Error(codes.Internal, "failed to commit transaction")
+					err = translateCommitError(terr)
 				}
 			}
 
@@ -174,4 +175,15 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 
 		return resp, err
 	}
+}
+
+func translateCommitError(err error) error {
+	switch pgErr := err.(type) {
+	case *pq.Error:
+		switch pgErr.Code.Name() {
+		case "serialization_failure":
+			return status.Error(codes.Aborted, "failed to commit transaction due to collision with other transaction")
+		}
+	}
+	return status.Error(codes.Internal, "failed to commit transaction")
 }
