@@ -354,20 +354,32 @@ func TestBeginFromContext_Bad(t *testing.T) {
 
 func TestTranslateCommitError(t *testing.T) {
 	r := require.New(t)
-
-	// unknown error
-	s, ok := status.FromError(translateCommitError(fmt.Errorf("some error")))
-	r.True(ok)
-	r.Equal(codes.Internal, s.Code())
-
-	// unknown PG error
-	s, ok = status.FromError(translateCommitError(&pq.Error{Code: "40005"}))
-	r.True(ok)
-	r.Equal(codes.Internal, s.Code())
-
-	// known error
-	serializationFailure := pq.Error{Code: "40001"}
-	s, ok = status.FromError(translateCommitError(&serializationFailure))
-	r.True(ok)
-	r.Equal(codes.Aborted, s.Code())
+	tests := []struct {
+		name       string
+		inputErr   error
+		wantedCode codes.Code
+	}{
+		{
+			name:       "unknown error",
+			inputErr:   fmt.Errorf("some error"),
+			wantedCode: codes.Internal,
+		},
+		{
+			name:       "unknown PG error",
+			inputErr:   &pq.Error{Code: "40005"},
+			wantedCode: codes.Internal,
+		},
+		{
+			name:       "serialization failure",
+			inputErr:   &pq.Error{Code: "40001"},
+			wantedCode: codes.Aborted,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, ok := status.FromError(translateCommitError(tt.inputErr))
+			r.True(ok)
+			r.Equal(tt.wantedCode, s.Code())
+		})
+	}
 }
