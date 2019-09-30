@@ -3,12 +3,15 @@ package gorm
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -347,4 +350,36 @@ func TestBeginFromContext_Bad(t *testing.T) {
 		t.Error("Did not receive an error opening a txn with nil DB")
 	}
 
+}
+
+func TestTranslateCommitError(t *testing.T) {
+	r := require.New(t)
+	tests := []struct {
+		name       string
+		inputErr   error
+		wantedCode codes.Code
+	}{
+		{
+			name:       "unknown error",
+			inputErr:   fmt.Errorf("some error"),
+			wantedCode: codes.Internal,
+		},
+		{
+			name:       "unknown PG error",
+			inputErr:   &pq.Error{Code: "40005"},
+			wantedCode: codes.Internal,
+		},
+		{
+			name:       "serialization failure",
+			inputErr:   &pq.Error{Code: "40001"},
+			wantedCode: codes.Aborted,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, ok := status.FromError(translateCommitError(tt.inputErr))
+			r.True(ok)
+			r.Equal(tt.wantedCode, s.Code())
+		})
+	}
 }
