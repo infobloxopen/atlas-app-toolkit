@@ -17,14 +17,14 @@ import (
 )
 
 func TestAnnotator(t *testing.T) {
-	for input, expect := range map[string]metadata.MD{
-		``:   metadata.MD{fieldPresenceMetaKey: nil},
-		`{}`: metadata.MD{fieldPresenceMetaKey: nil},
-		`{`:  nil,
-		`{"objects":[{"one": {"two":"a", "three":[]}, "four": 5}, {"one":{"two":"a", "three":[]}, "four": 5}]}`: {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three", "Four$One.Two$One.Three"}},
-		`{"one":{"two":"a", "three":[]}, "four": 5}`:                                                            {fieldPresenceMetaKey: []string{"Four$One.Two$One.Three"}},
-		`{"one": {}}`:                                                                                           {fieldPresenceMetaKey: []string{"One"}},
-		`{
+	tests := map[string]metadata.MD{}
+	tests[``] = metadata.MD{fieldPresenceMetaKey: nil}
+	tests[`{}`] = metadata.MD{fieldPresenceMetaKey: nil}
+	tests[`{`] = nil
+	tests[`{"one": {}}`] = metadata.MD{fieldPresenceMetaKey: []string{"One"}}
+	tests[`{"one":{"two":"a", "three":[]}, "four": 5}`] = metadata.MD{fieldPresenceMetaKey: []string{"Four$One.Two$One.Three"}}
+	tests[`{"objects":[{"one": {"two":"a", "three":[]}, "four": 5}, {"one":{"two":"a", "three":[]}, "four": 5}]}`] = metadata.MD{fieldPresenceMetaKey: []string{"Four$One.Two$One.Three", "Four$One.Two$One.Three"}}
+	tests[`{
   "name": "atlas",
   "burden": {
     "duration": "forever",
@@ -42,8 +42,9 @@ func TestAnnotator(t *testing.T) {
 			"mortals": []
 		}
   }
-}`: {fieldPresenceMetaKey: []string{"Name$Burden.Duration$Burden.Weight$Burden.Breaks$Burden.Replacements.Hero.Name$Burden.Replacements.Hero.Duration$Burden.Replacements.Hero.Lineage.Mother$Burden.Replacements.Hero.Lineage.Father$Burden.Replacements.Mortals"}},
-	} {
+}`] = metadata.MD{fieldPresenceMetaKey: []string{"Name$Burden.Duration$Burden.Weight$Burden.Breaks$Burden.Replacements.Hero.Name$Burden.Replacements.Hero.Duration$Burden.Replacements.Hero.Lineage.Mother$Burden.Replacements.Hero.Lineage.Father$Burden.Replacements.Mortals"}}
+
+	for input, expect := range tests {
 		postReq := &http.Request{
 			Method: "POST",
 			Body:   ioutil.NopCloser(strings.NewReader(input)),
