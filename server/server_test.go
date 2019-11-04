@@ -127,8 +127,8 @@ func TestWithHandler(t *testing.T) {
 	}
 }
 
-func TestWithMiddleware(t *testing.T) {
-	s, err := NewServer(WithMiddleware(testStatusVerify))
+func TestWithMiddlewares(t *testing.T) {
+	s, err := NewServer(WithMiddlewares(testStatusVerify, testParamVerify))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,10 +145,22 @@ func TestWithMiddleware(t *testing.T) {
 	if resp.Header.Get("status") != "ok" {
 		t.Error("Expected another status")
 	}
+
+	resp2, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/v1/hello?name=test"))
+	if resp2.Header.Get("param") != "status" {
+		t.Error("Expected another status")
+	}
 }
 func testStatusVerify(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("status", "ok")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func testParamVerify(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("param", "status")
 		h.ServeHTTP(w, r)
 	})
 }
