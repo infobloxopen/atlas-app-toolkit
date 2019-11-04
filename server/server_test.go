@@ -127,6 +127,32 @@ func TestWithHandler(t *testing.T) {
 	}
 }
 
+func TestWithMiddleware(t *testing.T) {
+	s, err := NewServer(WithMiddleware(testStatusVerify))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	httpL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go s.Serve(nil, httpL)
+	defer s.Stop()
+
+	resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/v1/hello?name=test"))
+	if resp.Header.Get("status") != "ok" {
+		t.Error("Expected another status")
+	}
+}
+func testStatusVerify(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("status", "ok")
+		h.ServeHTTP(w, r)
+	})
+}
+
 func TestWithGateway(t *testing.T) {
 	grpcL, err := servertest.NewLocalListener()
 	if err != nil {

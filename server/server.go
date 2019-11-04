@@ -31,6 +31,7 @@ type Server struct {
 	initializers      []InitializerFunc
 	initializeTimeout time.Duration
 	registrars        []func(mux *http.ServeMux) error
+	middleware        Middleware
 
 	// GRPCServer will be started whenever this is served
 	GRPCServer *grpc.Server
@@ -38,6 +39,9 @@ type Server struct {
 	// HTTPServer will be started whenever this is served
 	HTTPServer *http.Server
 }
+
+//Middleware wrapper
+type Middleware func(handler http.Handler) http.Handler
 
 // Option is a functional option for creating a Server
 type Option func(*Server) error
@@ -66,6 +70,14 @@ func NewServer(opts ...Option) (*Server, error) {
 		}
 	}
 	s.HTTPServer.Handler = mux
+
+	var handler http.Handler
+	if s.middleware != nil {
+		handler = s.middleware(mux)
+	} else {
+		handler = mux
+	}
+	s.HTTPServer.Handler = handler
 
 	return s, nil
 }
@@ -125,6 +137,14 @@ func WithGateway(options ...gateway.Option) Option {
 			_, err := gateway.NewGateway(append(options, gateway.WithMux(mux))...)
 			return err
 		})
+		return nil
+	}
+}
+
+// WithMiddleware add opportunity to add different middleware
+func WithMiddleware(middleware Middleware) Option {
+	return func(s *Server) error {
+		s.middleware = middleware
 		return nil
 	}
 }
