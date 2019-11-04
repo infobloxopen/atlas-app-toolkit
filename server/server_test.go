@@ -145,9 +145,7 @@ func TestWithMiddlewares(t *testing.T) {
 	if resp.Header.Get("status") != "ok" {
 		t.Error("Expected another status")
 	}
-
-	resp2, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/v1/hello?name=test"))
-	if resp2.Header.Get("param") != "status" {
+	if resp.Header.Get("param") != "status" {
 		t.Error("Expected another status")
 	}
 }
