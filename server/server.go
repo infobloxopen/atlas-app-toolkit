@@ -141,13 +141,13 @@ func WithGateway(options ...gateway.Option) Option {
 func WithMiddlewares(middleware ...Middleware) Option {
 	return func(s *Server) error {
 		s.middlewares = append(s.middlewares, middleware...)
-		s.Sort()
+		s.sort()
 		return nil
 	}
 }
 
 // Sort args for middleware
-func (s *Server) Sort() {
+func (s *Server) sort() {
 	for i, j := 0, len(s.middlewares)-1; i < j; i, j = i+1, j-1 {
 		s.middlewares[i], s.middlewares[j] = s.middlewares[j], s.middlewares[i]
 	}
