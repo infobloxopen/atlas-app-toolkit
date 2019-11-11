@@ -71,6 +71,11 @@ func NewServer(opts ...Option) (*Server, error) {
 	}
 	s.HTTPServer.Handler = mux
 
+	// Revert user input middlewares
+	for i, j := 0, len(s.middlewares)-1; i < j; i, j = i+1, j-1 {
+		s.middlewares[i], s.middlewares[j] = s.middlewares[j], s.middlewares[i]
+	}
+
 	for _, m := range s.middlewares {
 		s.HTTPServer.Handler = m(s.HTTPServer.Handler)
 	}
@@ -141,15 +146,7 @@ func WithGateway(options ...gateway.Option) Option {
 func WithMiddlewares(middleware ...Middleware) Option {
 	return func(s *Server) error {
 		s.middlewares = append(s.middlewares, middleware...)
-		s.sort()
 		return nil
-	}
-}
-
-// Sort args for middleware
-func (s *Server) sort() {
-	for i, j := 0, len(s.middlewares)-1; i < j; i, j = i+1, j-1 {
-		s.middlewares[i], s.middlewares[j] = s.middlewares[j], s.middlewares[i]
 	}
 }
 

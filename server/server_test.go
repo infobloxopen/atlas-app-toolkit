@@ -150,22 +150,24 @@ func TestWithMiddlewares(t *testing.T) {
 	}
 }
 func testParamSetter(h http.Handler) http.Handler {
-	fmt.Println("Param setter start")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("status", "ok")
-		fmt.Println("Test param setter")
 		h.ServeHTTP(w, r)
 	})
 }
 
 func testParamVerify(h http.Handler) http.Handler {
-	fmt.Println("Param verify start")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("param", "status")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func newTestParamVerify(t *testing.T, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		status := w.Header().Get("status")
-		if status == "ok" {
-			fmt.Println("Valid status")
-		} else {
-			fmt.Println("Invalid test")
+		if status != "ok" {
+			t.Error("Invalid status")
 		}
 		w.Header().Set("param", "status")
 		fmt.Println("Test param verify")
