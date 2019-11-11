@@ -169,9 +169,6 @@ func newTestParamVerify(t *testing.T, h http.Handler) http.Handler {
 		if status != "ok" {
 			t.Error("Invalid status")
 		}
-		w.Header().Set("param", "status")
-		fmt.Println("Test param verify")
-		h.ServeHTTP(w, r)
 	})
 }
 
