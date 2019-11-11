@@ -128,7 +128,7 @@ func TestWithHandler(t *testing.T) {
 }
 
 func TestWithMiddlewares(t *testing.T) {
-	s, err := NewServer(WithMiddlewares(testParamSetter, testParamVerify))
+	s, err := NewServer(WithMiddlewares(testParamSetter, (&testHttpServer{t}).testParamVerify))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,20 +156,19 @@ func testParamSetter(h http.Handler) http.Handler {
 	})
 }
 
-func testParamVerify(h http.Handler) http.Handler {
+func (t *testHttpServer) testParamVerify(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		status := w.Header().Get("status")
+		if status != "ok" {
+			t.T.Error("Invalid status")
+		}
 		w.Header().Set("param", "status")
 		h.ServeHTTP(w, r)
 	})
 }
 
-func newTestParamVerify(t *testing.T, h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		status := w.Header().Get("status")
-		if status != "ok" {
-			t.Error("Invalid status")
-		}
-	})
+type testHttpServer struct {
+	*testing.T
 }
 
 func TestWithGateway(t *testing.T) {
