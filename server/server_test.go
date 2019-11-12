@@ -127,6 +127,50 @@ func TestWithHandler(t *testing.T) {
 	}
 }
 
+func TestWithMiddlewares(t *testing.T) {
+	s, err := NewServer(WithMiddlewares(testParamSetter, (&testHttpServer{t}).testParamVerify))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	httpL, err := servertest.NewLocalListener()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go s.Serve(nil, httpL)
+	defer s.Stop()
+
+	resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/v1/hello?name=test"))
+	if resp.Header.Get("status") != "ok" {
+		t.Error("Expected another status")
+	}
+	if resp.Header.Get("param") != "status" {
+		t.Error("Expected another status")
+	}
+}
+func testParamSetter(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("status", "ok")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (t *testHttpServer) testParamVerify(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		status := w.Header().Get("status")
+		if status != "ok" {
+			t.T.Error("Invalid status")
+		}
+		w.Header().Set("param", "status")
+		h.ServeHTTP(w, r)
+	})
+}
+
+type testHttpServer struct {
+	*testing.T
+}
+
 func TestWithGateway(t *testing.T) {
 	grpcL, err := servertest.NewLocalListener()
 	if err != nil {
