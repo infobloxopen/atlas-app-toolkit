@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
-	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
+	server_test "github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 	"github.com/infobloxopen/atlas-app-toolkit/servertest"
 	"google.golang.org/grpc"
 )
@@ -425,7 +426,14 @@ func TestServe(t *testing.T) {
 			t.Fatal(err)
 		}
 		// start the server
-		go s.Serve(grpcL, httpL)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := s.Serve(grpcL, httpL); err != nil {
+				t.Fatal(err)
+			}
+		}()
 
 		resp, err := http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/test/204"))
 		if err != nil {
@@ -436,6 +444,8 @@ func TestServe(t *testing.T) {
 		}
 
 		s.GRPCServer.Stop()
+		// Serve() method must complete before http server is stopped
+		wg.Wait()
 
 		if _, err = http.Get(fmt.Sprint("http://", httpL.Addr().String(), "/test/204")); err == nil {
 			t.Fatal("expected http server to be closed, but request was successfully sent")
