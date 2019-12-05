@@ -3,7 +3,7 @@ package requestid
 import (
 	"context"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 )
 
@@ -17,7 +17,7 @@ import (
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 
-		reqID := handleRequestID(ctx)
+		reqID := HandleRequestID(ctx)
 		// add request id to logger
 		addRequestIDToLogger(ctx, reqID)
 
@@ -35,7 +35,7 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 
 		ctx := stream.Context()
 
-		reqID := handleRequestID(ctx)
+		reqID := HandleRequestID(ctx)
 		// add request id to logger
 		addRequestIDToLogger(ctx, reqID)
 
