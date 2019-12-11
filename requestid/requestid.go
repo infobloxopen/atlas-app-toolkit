@@ -5,26 +5,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 // DefaultRequestIDKey is the metadata key name for request ID
 const DefaultRequestIDKey = "Request-Id"
 
-func handleRequestID(ctx context.Context) (reqID string) {
+// HandleRequestID either extracts a existing and valid request ID from the context or generates a new one
+func HandleRequestID(ctx context.Context) (reqID string) {
 	reqID, exists := FromContext(ctx)
-	if !exists {
+	if !exists || reqID == "" {
 		reqID := newRequestID()
 		return reqID
 	}
-
-	if reqID == "" {
-		reqID := newRequestID()
-		return reqID
-	}
-
 	return reqID
 }
 
