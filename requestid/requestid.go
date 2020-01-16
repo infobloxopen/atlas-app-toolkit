@@ -12,7 +12,10 @@ import (
 )
 
 // DefaultRequestIDKey is the metadata key name for request ID
-const DefaultRequestIDKey = "Request-Id"
+const (
+	DeprecatedRequestIDKey = "Request-Id"
+	DefaultRequestIDKey    = "request_id"
+)
 
 // HandleRequestID either extracts a existing and valid request ID from the context or generates a new one
 func HandleRequestID(ctx context.Context) (reqID string) {
@@ -29,9 +32,16 @@ func newRequestID() string {
 }
 
 // FromContext returns the Request-Id information from ctx if it exists.
-func FromContext(ctx context.Context) (reqID string, exists bool) {
-	reqID, exists = gateway.Header(ctx, DefaultRequestIDKey)
-	return
+func FromContext(ctx context.Context) (string, bool) {
+	if reqID, ok := gateway.Header(ctx, DefaultRequestIDKey); ok {
+		return reqID, ok
+	}
+
+	if reqID, ok := gateway.Header(ctx, DeprecatedRequestIDKey); ok {
+		return reqID, ok
+	}
+
+	return "", false
 }
 
 // NewContext creates a new context with Request-Id attached if not exists.
