@@ -68,7 +68,7 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 					if m, ok := item.node.(map[string]interface{}); ok {
 						// if the item is an object, then enqueue all of its children
 						for k, v := range m {
-							newPath := extendPath(item.path, k, v)
+							newPath := extendPath(item.path, k)
 							queue = append(queue, pathItem{path: newPath, node: v})
 						}
 					}
@@ -87,9 +87,9 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 	}
 }
 
-func extendPath(parrent []string, key string, value interface{}) []string {
-	newPath := make([]string, len(parrent)+1)
-	copy(newPath, parrent)
+func extendPath(parent []string, key string) []string {
+	newPath := make([]string, len(parent)+1)
+	copy(newPath, parent)
 	newPath[len(newPath)-1] = generator.CamelCase(key)
 	return newPath
 }
@@ -196,6 +196,8 @@ func PresenceClientInterceptor(options ...presenceInterceptorOption) grpc.UnaryC
 				if ops.overrideFieldMask || f.IsNil() {
 					f.Set(reflect.ValueOf(fieldMask))
 				}
+
+				return
 			}
 		}
 		return
