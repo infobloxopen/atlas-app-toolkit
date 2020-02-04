@@ -157,3 +157,48 @@ func TestUnaryServerInterceptor(t *testing.T) {
 		}
 	})
 }
+
+type RequestWithFieldMask struct {
+	FieldMask *field_mask.FieldMask
+}
+
+func TestOverrideFieldMaskOption(t *testing.T) {
+	defaultInvoker := func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, ...grpc.CallOption) error {
+		return nil
+	}
+
+	f := func(ctx context.Context, req *RequestWithFieldMask, expected *field_mask.FieldMask, overrideEnabled bool) {
+		interceptor := PresenceClientInterceptor()
+		if overrideEnabled {
+			interceptor = PresenceClientInterceptor(WithOverrideFieldMask)
+		}
+
+		if err := interceptor(ctx, "", req, nil, nil, defaultInvoker); err != nil {
+			t.Logf("Unexpected error %s\n", err)
+			t.Fail()
+		}
+
+		result := req.FieldMask
+
+		if !isEqualFieldMasks(expected.Paths, result.Paths) {
+			t.Logf("Unexpected result field mask, expect %+v, got %+v\n", expected.Paths, result.Paths)
+			t.Fail()
+		}
+
+	}
+
+	r1 := &RequestWithFieldMask{FieldMask: &field_mask.FieldMask{Paths: []string{"One"}}}
+	f(context.Background(), r1, &field_mask.FieldMask{Paths: []string{"One"}}, true)
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD{fieldPresenceMetaKey: []string{"One"}})
+	r2 := &RequestWithFieldMask{}
+	f(ctx, r2, &field_mask.FieldMask{Paths: []string{"One"}}, true)
+
+	ctx = metadata.NewIncomingContext(context.Background(), metadata.MD{fieldPresenceMetaKey: []string{"Two"}})
+	r3 := &RequestWithFieldMask{FieldMask: &field_mask.FieldMask{Paths: []string{"One"}}}
+	f(ctx, r3, &field_mask.FieldMask{Paths: []string{"Two"}}, true)
+
+	ctx = metadata.NewIncomingContext(context.Background(), metadata.MD{fieldPresenceMetaKey: []string{"Two"}})
+	r4 := &RequestWithFieldMask{FieldMask: &field_mask.FieldMask{Paths: []string{"One"}}}
+	f(ctx, r4, &field_mask.FieldMask{Paths: []string{"One"}}, false)
+}
