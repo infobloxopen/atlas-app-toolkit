@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	runtime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
 type (
@@ -134,6 +134,11 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	handleForwardResponseTrailer(rw, md)
 }
 
+type delimited interface {
+	// Delimiter returns the record seperator for the stream.
+	Delimiter() []byte
+}
+
 // ForwardStream implements runtime.ForwardResponseStreamFunc.
 // RestStatus comes first in the chuncked result.
 func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, recv func() (proto.Message, error), opts ...func(context.Context, http.ResponseWriter, proto.Message) error) {
@@ -169,7 +174,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	rw.WriteHeader(httpStatus)
 
 	var delimiter []byte
-	if d, ok := marshaler.(runtime.Delimited); ok {
+	if d, ok := marshaler.(delimited); ok {
 		delimiter = d.Delimiter()
 	} else {
 		delimiter = []byte("\n")

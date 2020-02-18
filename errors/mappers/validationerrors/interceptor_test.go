@@ -7,13 +7,20 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/transport"
 )
+
+type DummyTransportStream struct{}
+
+func (*DummyTransportStream) Method() string                  { return "unimplemented" }
+func (*DummyTransportStream) SetHeader(md metadata.MD) error  { return nil }
+func (*DummyTransportStream) SendHeader(md metadata.MD) error { return nil }
+func (*DummyTransportStream) SetTrailer(md metadata.MD) error { return nil }
 
 // DummyContextWithServerTransportStream returns a dummy context for testing.
 func DummyContextWithServerTransportStream() context.Context {
-	expectedStream := &transport.Stream{}
+	expectedStream := &DummyTransportStream{}
 	return grpc.NewContextWithServerTransportStream(context.Background(), expectedStream)
 }
 

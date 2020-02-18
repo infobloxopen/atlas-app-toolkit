@@ -4,14 +4,13 @@ sudo: required
 services:
   - docker
 go:
-  - "1.9"
   - "1.10"
   - "1.11"
   - "1.12"
   - "1.13"
 
 env:
-  - DEP_VERSION="0.4.1"
+  - DEP_VERSION="0.5.4"
 
 before_install:
   # add dep for dependency management
