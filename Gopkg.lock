@@ -27,9 +27,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b0add830aeeb55d56127cb60199eca80cbff045ee0cd1ed4b82153fd17288b5b"
+  digest = "1:9fee40cfc3cae491f24267524705425275fdaec674f1b537eadab3e92823cc18"
   name = "github.com/golang/protobuf"
   packages = [
+    "descriptor",
     "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
@@ -72,17 +73,17 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:36d8bdf4367306ad70e7fb62c6cd6735a3c448a5ef3ac912b384fd143a36ff3a"
+  digest = "1:cacc4e85cbba0033e53a4c08aed0af00e253263216e88dd7dc2cba3732674ec3"
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
+    "internal",
     "protoc-gen-swagger/options",
     "runtime",
-    "runtime/internal",
     "utilities",
   ]
   pruneopts = "UT"
-  revision = "92583770e3f01b09a0d3e9bdf64321d8bebd48f2"
-  version = "v1.4.1"
+  revision = "4c2cec4158f65aebe0290d3bee883b13f7b07c6f"
+  version = "v1.13.0"
 
 [[projects]]
   digest = "1:6895fbe5a10c5aebd1965cac6f6905dcdb21bee01e08912d3ba6a805c2485f6a"
@@ -207,10 +208,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:99c78803152bb77d5cfb7d7c903d5c99c3db256185da066c3f9d17ced45938b1"
+  digest = "1:41662ac6d97390b47331ee4196ea3faa782d565d20ab29c694fffafe512164c5"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
+    "googleapis/api/httpbody",
     "googleapis/rpc/code",
     "googleapis/rpc/status",
     "protobuf/field_mask",
@@ -286,7 +288,6 @@
     "google.golang.org/grpc/grpclog",
     "google.golang.org/grpc/metadata",
     "google.golang.org/grpc/status",
-    "google.golang.org/grpc/transport",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
