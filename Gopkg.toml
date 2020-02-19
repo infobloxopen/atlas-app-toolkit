@@ -8,11 +8,15 @@
 
 [[constraint]]
   name = "github.com/grpc-ecosystem/go-grpc-middleware"
-  version = "1.0.0"
+  version = "1.2.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/lib/pq"
+
+[[constraint]]
+  name = "github.com/grpc-ecosystem/grpc-gateway"
+  version = "1.13.0"
 
 [[override]]
   name = "github.com/lyft/protoc-gen-validate"
@@ -20,7 +24,7 @@
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.2.0"
+  version = "1.4.2"
 
 [[constraint]]
   branch = "master"
@@ -29,6 +33,10 @@
 [[constraint]]
   branch = "master"
   name = "google.golang.org/genproto"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  version = "1.27.1"
 
 [prune]
   go-tests = true
