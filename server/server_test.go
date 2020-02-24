@@ -15,7 +15,7 @@ import (
 
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
-	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
+	server_test "github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 	"github.com/infobloxopen/atlas-app-toolkit/servertest"
 	"google.golang.org/grpc"
 )
