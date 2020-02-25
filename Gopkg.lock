@@ -209,7 +209,7 @@
     "protobuf/field_mask",
   ]
   pruneopts = "UT"
-  revision = "e50cd9704f63023d62cd06a1994b98227fc4d21a"
+  revision = "fc8f554266884563332e03c40daaf5db88ecce10"
 
 [[projects]]
   digest = "1:de21a2d5b9c8697d83f5ab48f3e8fe3616c33ac4b2d057083662dede0e81488e"
