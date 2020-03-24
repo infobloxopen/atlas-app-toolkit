@@ -38,6 +38,14 @@
   name = "google.golang.org/grpc"
   version = ">=1.0.0"
 
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "github.com/fsnotify/fsnotify.git"
+
+[[override]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.17.4"
+
 [prune]
   go-tests = true
   unused-packages = true
