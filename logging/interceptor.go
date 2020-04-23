@@ -67,7 +67,7 @@ func UnaryClientInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnaryCli
 		startTime := time.Now()
 		fields := newLoggerFields(method, startTime, DefaultClientKindValue)
 
-		fillInterceptor(ctx, fields, logger, options, startTime)
+		ctx = fillInterceptor(ctx, fields, logger, options, startTime)
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
@@ -94,7 +94,7 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 		fields := newLoggerFields(info.FullMethod, startTime, DefaultServerKindValue)
 		newCtx := newLoggerForCall(ctx, logrus.NewEntry(logger), fields)
 
-		fillInterceptor(ctx, fields, logger, options, startTime)
+		newCtx = fillInterceptor(newCtx, fields, logger, options, startTime)
 
 		resp, err := handler(newCtx, req)
 		if err != nil {
@@ -113,56 +113,58 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 	}
 }
 
-func fillInterceptor(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) {
+func fillInterceptor(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) context.Context {
 	durField, durVal := options.durationFunc(time.Since(start))
 	fields[durField] = durVal
 
-	addRequestIDField(ctx, fields, logger, options)
-	err := addAccountIDField(ctx, fields, logger, options)
+	ctx = addRequestIDField(ctx, fields, logger, options)
+	ctx, err := addAccountIDField(ctx, fields, logger, options)
 	if err != nil {
 		logger.Warn(err)
 	}
 
 	for _, v := range options.fields {
-		err = addCustomField(ctx, fields, logger, v)
+		ctx, err = addCustomField(ctx, fields, logger, v)
 		if err != nil {
 			logger.Warn(err)
 		}
 	}
+
+	return ctx
 }
 
-func addRequestIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) {
+func addRequestIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) context.Context {
 	reqID, exists := requestid.FromContext(ctx)
 	if !exists || reqID == "" {
 		reqID = uuid.New().String()
 	}
 
 	fields[DefaultRequestIDKey] = reqID
-	ctx = metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID)
+
+	return metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID)
 }
 
-func addAccountIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) error {
+func addAccountIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) (context.Context, error) {
 	accountID, err := auth.GetAccountID(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("Unable to get %q from context", DefaultAccountIDKey)
+		return ctx, fmt.Errorf("Unable to get %q from context", DefaultAccountIDKey)
 	}
 
 	fields[DefaultAccountIDKey] = accountID
-	ctx = metadata.AppendToOutgoingContext(ctx, auth.MultiTenancyField, accountID)
 
-	return nil
+	return metadata.AppendToOutgoingContext(ctx, auth.MultiTenancyField, accountID), err
 }
 
-func addCustomField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, customField string) error {
+func addCustomField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, customField string) (context.Context, error) {
 	field, err := auth.GetJWTField(ctx, customField, nil)
 	if err != nil {
-		return fmt.Errorf("Unable to get custom %q field from context", customField)
+		return ctx, fmt.Errorf("Unable to get custom %q field from context", customField)
 	}
 
 	fields[customField] = field
 	ctx = metadata.AppendToOutgoingContext(ctx, customField, field)
 
-	return err
+	return metadata.AppendToOutgoingContext(ctx, customField, field), err
 }
 
 func newLoggerFields(fullMethodString string, start time.Time, kind string) logrus.Fields {
