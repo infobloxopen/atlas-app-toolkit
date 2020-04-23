@@ -3,80 +3,111 @@ package logging
 import (
 	"time"
 
-	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
 )
 
-func NewLogger(level string) *logrus.Logger {
-	log := logrus.StandardLogger()
+func New(level string) *logrus.Logger {
+	log := logrus.New()
 
 	// Default timeFormat
 	log.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	// Set the log level on the default log based on command line flag
-	logLevels := map[string]logrus.Level{
-		"debug":   logrus.DebugLevel,
-		"info":    logrus.InfoLevel,
-		"warning": logrus.WarnLevel,
-		"error":   logrus.ErrorLevel,
-		"fatal":   logrus.FatalLevel,
-		"panic":   logrus.PanicLevel,
-	}
-
-	if lvl, ok := logLevels[level]; !ok {
-		log.Errorf("Invalid %q provided for log level", lvl)
+	parsedLevel, err := logrus.ParseLevel(level)
+	if err != nil {
+		log.Errorf("Invalid %q level provided for log", level)
 		log.SetLevel(logrus.InfoLevel)
-	} else {
-		log.SetLevel(lvl)
+		return log
 	}
 
+	log.SetLevel(parsedLevel)
 	return log
 }
 
-var (
-	defaultOptions = &options{
-		levelFunc:    nil,
-		shouldLog:    grpc_logging.DefaultDeciderMethod,
-		codeFunc:     grpc_logging.DefaultErrorToCode,
-		durationFunc: grpc_logrus.DefaultDurationToField,
-		ophIDEnabled: false,
-	}
-)
-
 type options struct {
-	levelFunc    grpc_logrus.CodeToLevel
-	shouldLog    grpc_logging.Decider
-	codeFunc     grpc_logging.ErrorToCode
-	durationFunc grpc_logrus.DurationToField
-	ophIDEnabled bool
+	codeToLevel  CodeToLevel
+	durationFunc DurationToField
+	fields       []string
 }
 
 type Option func(*options)
 
-// Enables ophid field in interceptors logs
-func EnableOphID(opts *options) {
-	opts.ophIDEnabled = true
+func initOptions(opts []Option) *options {
+	o := &options{
+		codeToLevel:  grpc_logrus.DefaultCodeToLevel,
+		durationFunc: DefaultDurationToField,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	return o
 }
 
-func evaluateServerOpt(opts []Option) *options {
-	optCopy := &options{}
-	*optCopy = *defaultOptions
-	optCopy.levelFunc = grpc_logrus.DefaultCodeToLevel
-	for _, o := range opts {
-		o(optCopy)
+// CodeToLevel function defines the mapping between gRPC return codes and interceptor log level.
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L57
+type CodeToLevel func(code codes.Code) logrus.Level
+
+// WithLevels customizes the function for mapping gRPC return codes and interceptor log level statements.
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L70
+func WithLevels(f CodeToLevel) Option {
+	return func(o *options) {
+		o.codeToLevel = f
 	}
-	return optCopy
 }
 
-func evaluateClientOpt(opts []Option) *options {
-	optCopy := &options{}
-	*optCopy = *defaultOptions
-	optCopy.levelFunc = grpc_logrus.DefaultClientCodeToLevel
-	for _, o := range opts {
-		o(optCopy)
+// DefaultDurationToField is the default implementation of converting request duration to a log field (key and value).
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L182
+var DefaultDurationToField = DurationToTimeMillisField
+
+// DurationToTimeMillisField converts the duration to milliseconds and uses the key `grpc.time_ms`.
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L184
+func DurationToTimeMillisField(duration time.Duration) (key string, value interface{}) {
+	return "grpc.time_ms", durationToMilliseconds(duration)
+}
+
+// DurationToField function defines how to produce duration fields for logging
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L60
+type DurationToField func(duration time.Duration) (key string, value interface{})
+
+// WithDurationField customizes the function for mapping request durations to log fields.
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L83
+func WithDurationField(f DurationToField) Option {
+	return func(o *options) {
+		o.durationFunc = f
 	}
-	return optCopy
+}
+
+// Allows to provide custom fields for logging which are expected to be in JWT token
+func WithCustomFields(fields []string) Option {
+	return func(o *options) {
+		o.fields = fields
+	}
+}
+
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L194
+func durationToMilliseconds(duration time.Duration) float32 {
+	return float32(duration.Nanoseconds()/1000) / 1000
+}
+
+// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/cfaf5686ec79ff8344257723b6f5ba1ae0ffeb4d/logging/logrus/server_interceptors.go#L91
+func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {
+	switch level {
+	case logrus.DebugLevel:
+		entry.Debugf(format, args...)
+	case logrus.InfoLevel:
+		entry.Infof(format, args...)
+	case logrus.WarnLevel:
+		entry.Warningf(format, args...)
+	case logrus.ErrorLevel:
+		entry.Errorf(format, args...)
+	case logrus.FatalLevel:
+		entry.Fatalf(format, args...)
+	case logrus.PanicLevel:
+		entry.Panicf(format, args...)
+	}
 }
