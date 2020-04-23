@@ -67,7 +67,7 @@ func UnaryClientInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnaryCli
 		startTime := time.Now()
 		fields := newLoggerFields(method, startTime, DefaultClientKindValue)
 
-		ctx = fillInterceptor(ctx, fields, logger, options, startTime)
+		ctx = setInterceptorFields(ctx, fields, logger, options, startTime)
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
@@ -94,7 +94,7 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 		fields := newLoggerFields(info.FullMethod, startTime, DefaultServerKindValue)
 		newCtx := newLoggerForCall(ctx, logrus.NewEntry(logger), fields)
 
-		newCtx = fillInterceptor(newCtx, fields, logger, options, startTime)
+		newCtx = setInterceptorFields(newCtx, fields, logger, options, startTime)
 
 		resp, err := handler(newCtx, req)
 		if err != nil {
@@ -113,11 +113,12 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 	}
 }
 
-func fillInterceptor(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) context.Context {
+func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) context.Context {
 	durField, durVal := options.durationFunc(time.Since(start))
 	fields[durField] = durVal
 
 	ctx = addRequestIDField(ctx, fields)
+
 	ctx, err := addAccountIDField(ctx, fields)
 	if err != nil {
 		logger.Warn(err)
@@ -152,7 +153,7 @@ func addAccountIDField(ctx context.Context, fields logrus.Fields) (context.Conte
 
 	fields[DefaultAccountIDKey] = accountID
 
-	return metadata.AppendToOutgoingContext(ctx, auth.MultiTenancyField, accountID), err
+	return metadata.AppendToOutgoingContext(ctx, DefaultAccountIDKey, accountID), err
 }
 
 func addCustomField(ctx context.Context, fields logrus.Fields, customField string) (context.Context, error) {
@@ -162,7 +163,6 @@ func addCustomField(ctx context.Context, fields logrus.Fields, customField strin
 	}
 
 	fields[customField] = field
-	ctx = metadata.AppendToOutgoingContext(ctx, customField, field)
 
 	return metadata.AppendToOutgoingContext(ctx, customField, field), err
 }
