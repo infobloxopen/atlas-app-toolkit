@@ -117,14 +117,14 @@ func fillInterceptor(ctx context.Context, fields logrus.Fields, logger *logrus.L
 	durField, durVal := options.durationFunc(time.Since(start))
 	fields[durField] = durVal
 
-	ctx = addRequestIDField(ctx, fields, logger, options)
-	ctx, err := addAccountIDField(ctx, fields, logger, options)
+	ctx = addRequestIDField(ctx, fields)
+	ctx, err := addAccountIDField(ctx, fields)
 	if err != nil {
 		logger.Warn(err)
 	}
 
 	for _, v := range options.fields {
-		ctx, err = addCustomField(ctx, fields, logger, v)
+		ctx, err = addCustomField(ctx, fields, v)
 		if err != nil {
 			logger.Warn(err)
 		}
@@ -133,7 +133,7 @@ func fillInterceptor(ctx context.Context, fields logrus.Fields, logger *logrus.L
 	return ctx
 }
 
-func addRequestIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) context.Context {
+func addRequestIDField(ctx context.Context, fields logrus.Fields) context.Context {
 	reqID, exists := requestid.FromContext(ctx)
 	if !exists || reqID == "" {
 		reqID = uuid.New().String()
@@ -144,7 +144,7 @@ func addRequestIDField(ctx context.Context, fields logrus.Fields, logger *logrus
 	return metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID)
 }
 
-func addAccountIDField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, o *options) (context.Context, error) {
+func addAccountIDField(ctx context.Context, fields logrus.Fields) (context.Context, error) {
 	accountID, err := auth.GetAccountID(ctx, nil)
 	if err != nil {
 		return ctx, fmt.Errorf("Unable to get %q from context", DefaultAccountIDKey)
@@ -155,7 +155,7 @@ func addAccountIDField(ctx context.Context, fields logrus.Fields, logger *logrus
 	return metadata.AppendToOutgoingContext(ctx, auth.MultiTenancyField, accountID), err
 }
 
-func addCustomField(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, customField string) (context.Context, error) {
+func addCustomField(ctx context.Context, fields logrus.Fields, customField string) (context.Context, error) {
 	field, err := auth.GetJWTField(ctx, customField, nil)
 	if err != nil {
 		return ctx, fmt.Errorf("Unable to get custom %q field from context", customField)
