@@ -29,16 +29,15 @@ func New(level string) *logrus.Logger {
 
 type options struct {
 	codeToLevel  CodeToLevel
-	durationFunc DurationToField
-	fields       []string
+	grpcFields   []string
+	headerFields []string
 }
 
 type Option func(*options)
 
 func initOptions(opts []Option) *options {
 	o := &options{
-		codeToLevel:  grpc_logrus.DefaultCodeToLevel,
-		durationFunc: DefaultDurationToField,
+		codeToLevel: grpc_logrus.DefaultCodeToLevel,
 	}
 
 	for _, opt := range opts {
@@ -60,38 +59,18 @@ func WithLevels(f CodeToLevel) Option {
 	}
 }
 
-// DefaultDurationToField is the default implementation of converting request duration to a log field (key and value).
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L182
-var DefaultDurationToField = DurationToTimeMillisField
-
-// DurationToTimeMillisField converts the duration to milliseconds and uses the key `grpc.time_ms`.
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L184
-func DurationToTimeMillisField(duration time.Duration) (key string, value interface{}) {
-	return "grpc.time_ms", durationToMilliseconds(duration)
-}
-
-// DurationToField function defines how to produce duration fields for logging
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L60
-type DurationToField func(duration time.Duration) (key string, value interface{})
-
-// WithDurationField customizes the function for mapping request durations to log fields.
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L83
-func WithDurationField(f DurationToField) Option {
-	return func(o *options) {
-		o.durationFunc = f
-	}
-}
-
 // Allows to provide custom fields for logging which are expected to be in JWT token
 func WithCustomFields(fields []string) Option {
 	return func(o *options) {
-		o.fields = fields
+		o.grpcFields = fields
 	}
 }
 
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/06f64829ca1f521d41cd6235a7a204a6566fb0dc/logging/logrus/options.go#L194
-func durationToMilliseconds(duration time.Duration) float32 {
-	return float32(duration.Nanoseconds()/1000) / 1000
+// Allows to provide custom fields for logging from request headers
+func WithCustomHeaders(headers []string) Option {
+	return func(o *options) {
+		o.headerFields = headers
+	}
 }
 
 // From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/cfaf5686ec79ff8344257723b6f5ba1ae0ffeb4d/logging/logrus/server_interceptors.go#L91

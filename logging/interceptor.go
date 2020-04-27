@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,8 @@ import (
 const (
 	DefaultAccountIDKey     = "account_id"
 	DefaultRequestIDKey     = "request_id"
+	DefaultSubjectKey       = "subject" // Might be used for different purposes
+	DefaultDurationKey      = "grpc.time_ms"
 	DefaultGRPCCodeKey      = "grpc.code"
 	DefaultGRPCMethodKey    = "grpc.method"
 	DefaultGRPCServiceKey   = "grpc.service"
@@ -114,8 +117,10 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 }
 
 func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) context.Context {
-	durField, durVal := options.durationFunc(time.Since(start))
-	fields[durField] = durVal
+	// In latest versions of Go use
+	// https://golang.org/src/time/time.go?s=25178:25216#L780
+	duration := int64(time.Since(start) / 1e6)
+	fields[DefaultDurationKey] = duration
 
 	ctx = addRequestIDField(ctx, fields)
 
@@ -124,8 +129,17 @@ func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *log
 		logger.Warn(err)
 	}
 
-	for _, v := range options.fields {
+	ctx, err = addCustomField(ctx, fields, DefaultSubjectKey)
+
+	for _, v := range options.grpcFields {
 		ctx, err = addCustomField(ctx, fields, v)
+		if err != nil {
+			logger.Warn(err)
+		}
+	}
+
+	for _, v := range options.headerFields {
+		ctx, err = addHeaderField(ctx, fields, v)
 		if err != nil {
 			logger.Warn(err)
 		}
@@ -165,6 +179,16 @@ func addCustomField(ctx context.Context, fields logrus.Fields, customField strin
 	fields[customField] = field
 
 	return metadata.AppendToOutgoingContext(ctx, customField, field), err
+}
+
+func addHeaderField(ctx context.Context, fields logrus.Fields, header string) (context.Context, error) {
+	field, ok := gateway.Header(ctx, header)
+	if !ok {
+		return ctx, fmt.Errorf("Unable to get custom header %q from context", header)
+	}
+
+	fields[strings.ToLower(header)] = field
+	return metadata.AppendToOutgoingContext(ctx, header, field), nil
 }
 
 func newLoggerFields(fullMethodString string, start time.Time, kind string) logrus.Fields {
