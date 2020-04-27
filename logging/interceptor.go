@@ -130,15 +130,18 @@ func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *log
 	}
 
 	ctx, err = addCustomField(ctx, fields, DefaultSubjectKey)
+	if err != nil {
+		logger.Warn(err)
+	}
 
-	for _, v := range options.grpcFields {
+	for _, v := range options.fields {
 		ctx, err = addCustomField(ctx, fields, v)
 		if err != nil {
 			logger.Warn(err)
 		}
 	}
 
-	for _, v := range options.headerFields {
+	for _, v := range options.headers {
 		ctx, err = addHeaderField(ctx, fields, v)
 		if err != nil {
 			logger.Warn(err)
@@ -188,6 +191,7 @@ func addHeaderField(ctx context.Context, fields logrus.Fields, header string) (c
 	}
 
 	fields[strings.ToLower(header)] = field
+
 	return metadata.AppendToOutgoingContext(ctx, header, field), nil
 }
 

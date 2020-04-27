@@ -28,9 +28,9 @@ func New(level string) *logrus.Logger {
 }
 
 type options struct {
-	codeToLevel  CodeToLevel
-	grpcFields   []string
-	headerFields []string
+	codeToLevel CodeToLevel
+	fields      []string
+	headers     []string
 }
 
 type Option func(*options)
@@ -62,14 +62,14 @@ func WithLevels(f CodeToLevel) Option {
 // Allows to provide custom fields for logging which are expected to be in JWT token
 func WithCustomFields(fields []string) Option {
 	return func(o *options) {
-		o.grpcFields = fields
+		o.fields = fields
 	}
 }
 
 // Allows to provide custom fields for logging from request headers
 func WithCustomHeaders(headers []string) Option {
 	return func(o *options) {
-		o.headerFields = headers
+		o.headers = headers
 	}
 }
 
