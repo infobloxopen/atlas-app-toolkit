@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"reflect"
 	"sync"
@@ -71,6 +72,21 @@ func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	return db, nil
 }
 
+func BeginWithOptionsFromContext(ctx context.Context, opts *sql.TxOptions) (*gorm.DB, error) {
+	txn, ok := FromContext(ctx)
+	if !ok {
+		return nil, ErrCtxTxnMissing
+	}
+	if txn.parent == nil {
+		return nil, ErrCtxTxnNoDB
+	}
+	db := txn.BeginWithOptions(opts)
+	if db.Error != nil {
+		return nil, db.Error
+	}
+	return db, nil
+}
+
 // Begin starts new transaction by calling `*gorm.DB.Begin()`
 // Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
 func (t *Transaction) Begin() *gorm.DB {
@@ -79,6 +95,19 @@ func (t *Transaction) Begin() *gorm.DB {
 
 	if t.current == nil {
 		t.current = t.parent.Begin()
+	}
+
+	return t.current
+}
+
+// BeginWithOptions starts new transaction by calling `*gorm.DB.BeginTx()`
+// Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
+func (t *Transaction) BeginWithOptions(opts *sql.TxOptions) *gorm.DB {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.current == nil {
+		t.current = t.parent.BeginTx(context.Background(), opts)
 	}
 
 	return t.current

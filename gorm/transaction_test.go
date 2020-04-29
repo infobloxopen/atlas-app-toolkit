@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"reflect"
 	"testing"
@@ -120,32 +121,61 @@ func TestUnaryServerInterceptor_details(t *testing.T) {
 }
 
 func TestTransaction_Begin(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock - %s", err)
+	tests := []struct {
+		desc     string
+		withOpts bool
+	}{
+		{
+			desc:     "begin without options",
+			withOpts: false,
+		},
+		{
+			desc:     "begin with options",
+			withOpts: true,
+		},
 	}
-	mock.ExpectBegin()
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			mock.ExpectBegin()
 
-	gdb, err := gorm.Open("postgres", db)
-	if err != nil {
-		t.Fatalf("failed to open gorm db - %s", err)
-	}
-	txn := &Transaction{parent: gdb}
+			gdb, err := gorm.Open("postgres", db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+			txn := &Transaction{parent: gdb}
 
-	// test singleton behavior
-	txn.Begin()
-	if txn.current == nil {
-		t.Fatal("failed to begin transaction")
-	}
-	prev := txn.current
-	txn.Begin()
-	if txn.current != prev {
-		t.Fatal("transaction does not behaves like singleton")
-	}
+			// test singleton behavior
+			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
+			switch test.withOpts {
+			case true:
+				txn.BeginWithOptions(opt)
+			case false:
+				txn.Begin()
+			}
+			if txn.current == nil {
+				t.Fatal("failed to begin transaction")
+			}
+			prev := txn.current
+			switch test.withOpts {
+			case true:
+				txn.BeginWithOptions(opt)
+			case false:
+				txn.Begin()
+			}
+			if txn.current != prev {
+				t.Fatal("transaction does not behaves like singleton")
+			}
 
-	// test begin behavior: no error
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("failed to begin transaction - %s", err)
+			// test begin behavior: no error
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("failed to begin transaction - %s", err)
+			}
+		})
 	}
 }
 
@@ -271,80 +301,148 @@ func TestContext(t *testing.T) {
 }
 
 func TestBeginFromContext_Good(t *testing.T) {
-	ctx := context.Background()
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock - %s", err)
+	tests := []struct {
+		desc     string
+		withOpts bool
+	}{
+		{
+			desc:     "begin without options",
+			withOpts: false,
+		},
+		{
+			desc:     "begin with options",
+			withOpts: true,
+		},
 	}
-	gdb, err := gorm.Open("postgres", db)
-	if err != nil {
-		t.Fatalf("failed to open gorm db - %s", err)
-	}
-	mock.ExpectBegin()
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
-	// Case: All good
-	ctxtxn := &Transaction{parent: gdb}
-	ctx = NewContext(ctx, ctxtxn)
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			gdb, err := gorm.Open("postgres", db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+			mock.ExpectBegin()
 
-	txn1, err := BeginFromContext(ctx)
-	if txn1 == nil {
-		t.Error("Did not receive a transaction from context")
-	}
-	if err != nil {
-		t.Error("Received an error beginning transaction")
-	}
-	if err = mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("failed to begin transaction - %s", err)
-	}
+			// Case: All good
+			ctxtxn := &Transaction{parent: gdb}
+			ctx = NewContext(ctx, ctxtxn)
 
-	// Case: Transaction begin is idempotent
-	txn2, err := BeginFromContext(ctx)
-	if txn2 != txn1 {
-		t.Error("Got a different txn than was opened before")
-	}
-	if err != nil {
-		t.Error("Received an error opening transaction")
+			var txn1, txn2 *gorm.DB
+			switch test.withOpts {
+			case true:
+				txn1, err = BeginWithOptionsFromContext(ctx, opt)
+			case false:
+				txn1, err = BeginFromContext(ctx)
+			}
+			if txn1 == nil {
+				t.Error("Did not receive a transaction from context")
+			}
+			if err != nil {
+				t.Error("Received an error beginning transaction")
+			}
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("failed to begin transaction - %s", err)
+			}
+
+			// Case: Transaction begin is idempotent
+			switch test.withOpts {
+			case true:
+				txn2, err = BeginWithOptionsFromContext(ctx, opt)
+			case false:
+				txn2, err = BeginFromContext(ctx)
+			}
+			if txn2 != txn1 {
+				t.Error("Got a different txn than was opened before")
+			}
+			if err != nil {
+				t.Error("Received an error opening transaction")
+			}
+		})
 	}
 }
 
 func TestBeginFromContext_Bad(t *testing.T) {
-	ctx := context.Background()
+	tests := []struct {
+		desc     string
+		withOpts bool
+	}{
+		{
+			desc:     "begin without options",
+			withOpts: false,
+		},
+		{
+			desc:     "begin with options",
+			withOpts: true,
+		},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
-	// Case: Transaction missing from context
-	txn1, err := BeginFromContext(ctx)
-	if err != ErrCtxTxnMissing {
-		t.Error("Did not receive a CtxTxnError when no context transaction was present")
-	}
-	if txn1 != nil {
-		t.Error("Got some txn returned when nil was expected")
-	}
+			// Case: Transaction missing from context
+			var (
+				txn1, txn2, txn3 *gorm.DB
+				err              error
+			)
+			switch test.withOpts {
+			case true:
+				txn1, err = BeginWithOptionsFromContext(ctx, opt)
+			case false:
+				txn1, err = BeginFromContext(ctx)
+			}
+			if err != ErrCtxTxnMissing {
+				t.Error("Did not receive a CtxTxnError when no context transaction was present")
+			}
+			if txn1 != nil {
+				t.Error("Got some txn returned when nil was expected")
+			}
 
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock - %s", err)
-	}
-	gdb, err := gorm.Open("postgres", db)
-	if err != nil {
-		t.Fatalf("failed to open gorm db - %s", err)
-	}
-	mock.ExpectBegin().WillReturnError(errors.New(""))
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			gdb, err := gorm.Open("postgres", db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+			mock.ExpectBegin().WillReturnError(errors.New(""))
 
-	// Case: Transaction fails to open
-	txn2, err := BeginFromContext(NewContext(ctx, &Transaction{parent: gdb}))
-	if txn2 != nil {
-		t.Error("Got some txn returned when nil was expected")
-	}
-	if err == nil {
-		t.Error("Did not receive an error when transaction begin returned error")
-	}
+			// Case: Transaction fails to open
+			switch test.withOpts {
+			case true:
+				txn2, err = BeginWithOptionsFromContext(NewContext(ctx, &Transaction{parent: gdb}), opt)
+			case false:
+				txn2, err = BeginFromContext(NewContext(ctx, &Transaction{parent: gdb}))
+			}
+			if txn2 != nil {
+				t.Error("Got some txn returned when nil was expected")
+			}
+			if err == nil {
+				t.Error("Did not receive an error when transaction begin returned error")
+			}
 
-	// Case: DB Missing from Transaction in Context
-	txn3, err := BeginFromContext(NewContext(ctx, &Transaction{}))
-	if txn3 != nil {
-		t.Error("Got some txn returned when nil was expected")
+			// Case: DB Missing from Transaction in Context
+			switch test.withOpts {
+			case true:
+				txn3, err = BeginWithOptionsFromContext(NewContext(ctx, &Transaction{}), opt)
+			case false:
+				txn3, err = BeginFromContext(NewContext(ctx, &Transaction{}))
+			}
+			if txn3 != nil {
+				t.Error("Got some txn returned when nil was expected")
+			}
+			if err != ErrCtxTxnNoDB {
+				t.Error("Did not receive an error opening a txn with nil DB")
+			}
+		})
 	}
-	if err != ErrCtxTxnNoDB {
-		t.Error("Did not receive an error opening a txn with nil DB")
-	}
-
 }
