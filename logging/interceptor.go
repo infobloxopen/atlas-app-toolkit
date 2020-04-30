@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
@@ -122,9 +121,12 @@ func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *log
 	duration := int64(time.Since(start) / 1e6)
 	fields[DefaultDurationKey] = duration
 
-	ctx = addRequestIDField(ctx, fields)
+	ctx, err := addRequestIDField(ctx, fields)
+	if err != nil {
+		logger.Warn(err)
+	}
 
-	ctx, err := addAccountIDField(ctx, fields)
+	ctx, err = addAccountIDField(ctx, fields)
 	if err != nil {
 		logger.Warn(err)
 	}
@@ -151,15 +153,15 @@ func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *log
 	return ctx
 }
 
-func addRequestIDField(ctx context.Context, fields logrus.Fields) context.Context {
+func addRequestIDField(ctx context.Context, fields logrus.Fields) (context.Context, error) {
 	reqID, exists := requestid.FromContext(ctx)
 	if !exists || reqID == "" {
-		reqID = uuid.New().String()
+		return ctx, fmt.Errorf("Unable to get %q from context", DefaultRequestIDKey)
 	}
 
 	fields[DefaultRequestIDKey] = reqID
 
-	return metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID)
+	return metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID), nil
 }
 
 func addAccountIDField(ctx context.Context, fields logrus.Fields) (context.Context, error) {
