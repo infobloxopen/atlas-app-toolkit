@@ -134,6 +134,15 @@ func TestTransaction_Begin(t *testing.T) {
 			withOpts: true,
 		},
 	}
+	begin := func(txn *Transaction, withOpts bool) {
+		switch withOpts {
+		case true:
+			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
+			txn.BeginWithOptions(opt)
+		case false:
+			txn.Begin()
+		}
+	}
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -150,23 +159,12 @@ func TestTransaction_Begin(t *testing.T) {
 			txn := &Transaction{parent: gdb}
 
 			// test singleton behavior
-			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
-			switch test.withOpts {
-			case true:
-				txn.BeginWithOptions(opt)
-			case false:
-				txn.Begin()
-			}
+			begin(txn, test.withOpts)
 			if txn.current == nil {
 				t.Fatal("failed to begin transaction")
 			}
 			prev := txn.current
-			switch test.withOpts {
-			case true:
-				txn.BeginWithOptions(opt)
-			case false:
-				txn.Begin()
-			}
+			begin(txn, test.withOpts)
 			if txn.current != prev {
 				t.Fatal("transaction does not behaves like singleton")
 			}
@@ -300,6 +298,17 @@ func TestContext(t *testing.T) {
 	}
 }
 
+func beginFromContext(ctx context.Context, withOpts bool) (*gorm.DB, error) {
+	switch withOpts {
+	case true:
+		opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
+		return BeginWithOptionsFromContext(ctx, opt)
+	case false:
+		return BeginFromContext(ctx)
+	}
+	return nil, nil
+}
+
 func TestBeginFromContext_Good(t *testing.T) {
 	tests := []struct {
 		desc     string
@@ -318,7 +327,6 @@ func TestBeginFromContext_Good(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
 			db, mock, err := sqlmock.New()
 			if err != nil {
@@ -334,13 +342,7 @@ func TestBeginFromContext_Good(t *testing.T) {
 			ctxtxn := &Transaction{parent: gdb}
 			ctx = NewContext(ctx, ctxtxn)
 
-			var txn1, txn2 *gorm.DB
-			switch test.withOpts {
-			case true:
-				txn1, err = BeginWithOptionsFromContext(ctx, opt)
-			case false:
-				txn1, err = BeginFromContext(ctx)
-			}
+			txn1, err := beginFromContext(ctx, test.withOpts)
 			if txn1 == nil {
 				t.Error("Did not receive a transaction from context")
 			}
@@ -352,12 +354,7 @@ func TestBeginFromContext_Good(t *testing.T) {
 			}
 
 			// Case: Transaction begin is idempotent
-			switch test.withOpts {
-			case true:
-				txn2, err = BeginWithOptionsFromContext(ctx, opt)
-			case false:
-				txn2, err = BeginFromContext(ctx)
-			}
+			txn2, err := beginFromContext(ctx, test.withOpts)
 			if txn2 != txn1 {
 				t.Error("Got a different txn than was opened before")
 			}
@@ -386,19 +383,9 @@ func TestBeginFromContext_Bad(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			opt := &sql.TxOptions{Isolation: sql.LevelSerializable}
 
 			// Case: Transaction missing from context
-			var (
-				txn1, txn2, txn3 *gorm.DB
-				err              error
-			)
-			switch test.withOpts {
-			case true:
-				txn1, err = BeginWithOptionsFromContext(ctx, opt)
-			case false:
-				txn1, err = BeginFromContext(ctx)
-			}
+			txn1, err := beginFromContext(ctx, test.withOpts)
 			if err != ErrCtxTxnMissing {
 				t.Error("Did not receive a CtxTxnError when no context transaction was present")
 			}
@@ -417,12 +404,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 			mock.ExpectBegin().WillReturnError(errors.New(""))
 
 			// Case: Transaction fails to open
-			switch test.withOpts {
-			case true:
-				txn2, err = BeginWithOptionsFromContext(NewContext(ctx, &Transaction{parent: gdb}), opt)
-			case false:
-				txn2, err = BeginFromContext(NewContext(ctx, &Transaction{parent: gdb}))
-			}
+			txn2, err := beginFromContext(NewContext(ctx, &Transaction{parent: gdb}), test.withOpts)
 			if txn2 != nil {
 				t.Error("Got some txn returned when nil was expected")
 			}
@@ -431,12 +413,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 			}
 
 			// Case: DB Missing from Transaction in Context
-			switch test.withOpts {
-			case true:
-				txn3, err = BeginWithOptionsFromContext(NewContext(ctx, &Transaction{}), opt)
-			case false:
-				txn3, err = BeginFromContext(NewContext(ctx, &Transaction{}))
-			}
+			txn3, err := beginFromContext(NewContext(ctx, &Transaction{}), test.withOpts)
 			if txn3 != nil {
 				t.Error("Got some txn returned when nil was expected")
 			}

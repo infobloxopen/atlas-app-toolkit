@@ -57,6 +57,10 @@ func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
+// BeginFromContext will extract transaction wrapper from context and start new transaction.
+// As result new instance of `*gorm.DB` will be returned.
+// Error will be returned in case either transaction or db connection info is missing in context.
+// Gorm specific error can be checked by `*gorm.DB.Error`.
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	txn, ok := FromContext(ctx)
 	if !ok {
@@ -72,6 +76,11 @@ func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	return db, nil
 }
 
+// BeginWithOptionsFromContext will extract transaction wrapper from context and start new transaction,
+// options can be specified to control isolation level for transaction.
+// As result new instance of `*gorm.DB` will be returned.
+// Error will be returned in case either transaction or db connection info is missing in context.
+// Gorm specific error can be checked by `*gorm.DB.Error`.
 func BeginWithOptionsFromContext(ctx context.Context, opts *sql.TxOptions) (*gorm.DB, error) {
 	txn, ok := FromContext(ctx)
 	if !ok {
