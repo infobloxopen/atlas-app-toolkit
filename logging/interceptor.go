@@ -2,11 +2,34 @@ package logging
 
 import (
 	"context"
+	"fmt"
+	"path"
+	"strings"
+	"time"
 
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/requestid"
+)
+
+const (
+	DefaultAccountIDKey     = "account_id"
+	DefaultRequestIDKey     = "request_id"
+	DefaultSubjectKey       = "subject" // Might be used for different purposes
+	DefaultDurationKey      = "grpc.time_ms"
+	DefaultGRPCCodeKey      = "grpc.code"
+	DefaultGRPCMethodKey    = "grpc.method"
+	DefaultGRPCServiceKey   = "grpc.service"
+	DefaultGRPCStartTimeKey = "grpc.start_time"
+	DefaultClientKindValue  = "client"
+	DefaultServerKindValue  = "server"
 )
 
 // LogLevelInterceptor sets the level of the logger in the context to either
@@ -37,6 +60,161 @@ func LogLevelInterceptor(defaultLevel logrus.Level) grpc.UnaryServerInterceptor 
 		ctxlogrus.AddFields(ctx, resLogger.Data)
 		return
 	}
+}
+
+func UnaryClientInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnaryClientInterceptor {
+	options := initOptions(opts)
+
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		startTime := time.Now()
+		fields := newLoggerFields(method, startTime, DefaultClientKindValue)
+
+		ctx = setInterceptorFields(ctx, fields, logger, options, startTime)
+
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		if err != nil {
+			fields[logrus.ErrorKey] = err
+		}
+
+		code := status.Code(err)
+		fields[DefaultGRPCCodeKey] = code.String()
+
+		levelLogf(
+			logrus.NewEntry(logger).WithFields(fields),
+			options.codeToLevel(code),
+			"finished unary call with code "+code.String())
+
+		return err
+	}
+}
+
+func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnaryServerInterceptor {
+	options := initOptions(opts)
+
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		startTime := time.Now()
+		fields := newLoggerFields(info.FullMethod, startTime, DefaultServerKindValue)
+		newCtx := newLoggerForCall(ctx, logrus.NewEntry(logger), fields)
+
+		newCtx = setInterceptorFields(newCtx, fields, logger, options, startTime)
+
+		resp, err := handler(newCtx, req)
+		if err != nil {
+			fields[logrus.ErrorKey] = err
+		}
+
+		code := status.Code(err)
+		fields[DefaultGRPCCodeKey] = code.String()
+
+		levelLogf(
+			ctxlogrus.Extract(newCtx).WithFields(fields),
+			options.codeToLevel(code),
+			"finished unary call with code "+code.String())
+
+		return resp, err
+	}
+}
+
+func setInterceptorFields(ctx context.Context, fields logrus.Fields, logger *logrus.Logger, options *options, start time.Time) context.Context {
+	// In latest versions of Go use
+	// https://golang.org/src/time/time.go?s=25178:25216#L780
+	duration := int64(time.Since(start) / 1e6)
+	fields[DefaultDurationKey] = duration
+
+	ctx, err := addRequestIDField(ctx, fields)
+	if err != nil {
+		logger.Warn(err)
+	}
+
+	ctx, err = addAccountIDField(ctx, fields)
+	if err != nil {
+		logger.Warn(err)
+	}
+
+	ctx, err = addCustomField(ctx, fields, DefaultSubjectKey)
+	if err != nil {
+		logger.Warn(err)
+	}
+
+	for _, v := range options.fields {
+		ctx, err = addCustomField(ctx, fields, v)
+		if err != nil {
+			logger.Warn(err)
+		}
+	}
+
+	for _, v := range options.headers {
+		ctx, err = addHeaderField(ctx, fields, v)
+		if err != nil {
+			logger.Warn(err)
+		}
+	}
+
+	return ctx
+}
+
+func addRequestIDField(ctx context.Context, fields logrus.Fields) (context.Context, error) {
+	reqID, exists := requestid.FromContext(ctx)
+	if !exists || reqID == "" {
+		return ctx, fmt.Errorf("Unable to get %q from context", DefaultRequestIDKey)
+	}
+
+	fields[DefaultRequestIDKey] = reqID
+
+	return metadata.AppendToOutgoingContext(ctx, DefaultRequestIDKey, reqID), nil
+}
+
+func addAccountIDField(ctx context.Context, fields logrus.Fields) (context.Context, error) {
+	accountID, err := auth.GetAccountID(ctx, nil)
+	if err != nil {
+		return ctx, fmt.Errorf("Unable to get %q from context", DefaultAccountIDKey)
+	}
+
+	fields[DefaultAccountIDKey] = accountID
+
+	return metadata.AppendToOutgoingContext(ctx, DefaultAccountIDKey, accountID), err
+}
+
+func addCustomField(ctx context.Context, fields logrus.Fields, customField string) (context.Context, error) {
+	field, err := auth.GetJWTField(ctx, customField, nil)
+	if err != nil {
+		return ctx, fmt.Errorf("Unable to get custom %q field from context", customField)
+	}
+
+	fields[customField] = field
+
+	return metadata.AppendToOutgoingContext(ctx, customField, field), err
+}
+
+func addHeaderField(ctx context.Context, fields logrus.Fields, header string) (context.Context, error) {
+	field, ok := gateway.Header(ctx, header)
+	if !ok {
+		return ctx, fmt.Errorf("Unable to get custom header %q from context", header)
+	}
+
+	fields[strings.ToLower(header)] = field
+
+	return metadata.AppendToOutgoingContext(ctx, header, field), nil
+}
+
+func newLoggerFields(fullMethodString string, start time.Time, kind string) logrus.Fields {
+	service := path.Dir(fullMethodString)[1:]
+	method := path.Base(fullMethodString)
+
+	return logrus.Fields{
+		grpc_logrus.SystemField: "grpc",
+		grpc_logrus.KindField:   kind,
+		DefaultGRPCServiceKey:   service,
+		DefaultGRPCMethodKey:    method,
+		DefaultGRPCStartTimeKey: start.Format(time.RFC3339Nano),
+	}
+}
+
+func newLoggerForCall(ctx context.Context, entry *logrus.Entry, fields logrus.Fields) context.Context {
+	callLog := entry.WithFields(fields)
+	callLog = callLog.WithFields(ctxlogrus.Extract(ctx).Data)
+
+	return ctxlogrus.ToContext(ctx, callLog)
 }
 
 // CopyLoggerWithLevel makes a copy of the given (logrus) logger at the logger
