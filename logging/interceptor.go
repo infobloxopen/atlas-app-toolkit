@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
@@ -82,9 +83,35 @@ func UnaryClientInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnaryCli
 		levelLogf(
 			logrus.NewEntry(logger).WithFields(fields),
 			options.codeToLevel(code),
-			"finished unary call with code "+code.String())
+			fmt.Sprintf("finished unary call with code %s", code.String()))
 
 		return err
+	}
+}
+
+func StreamClientInterceptor(logger *logrus.Logger, opts ...Option) grpc.StreamClientInterceptor {
+	options := initOptions(opts)
+
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, option ...grpc.CallOption) (grpc.ClientStream, error) {
+		startTime := time.Now()
+		fields := newLoggerFields(method, startTime, DefaultClientKindValue)
+
+		ctx = setInterceptorFields(ctx, fields, logger, options, startTime)
+
+		clientStream, err := streamer(ctx, desc, cc, method, option...)
+		if err != nil {
+			fields[logrus.ErrorKey] = err
+		}
+
+		code := status.Code(err)
+		fields[DefaultGRPCCodeKey] = code.String()
+
+		levelLogf(
+			logrus.NewEntry(logger).WithFields(fields),
+			options.codeToLevel(code),
+			fmt.Sprintf("finished client streaming call with code %s", code.String()))
+
+		return clientStream, err
 	}
 }
 
@@ -109,9 +136,39 @@ func UnaryServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.UnarySer
 		levelLogf(
 			ctxlogrus.Extract(newCtx).WithFields(fields),
 			options.codeToLevel(code),
-			"finished unary call with code "+code.String())
+			fmt.Sprintf("finished unary call with code %s", code.String()))
 
 		return resp, err
+	}
+}
+
+func StreamServerInterceptor(logger *logrus.Logger, opts ...Option) grpc.StreamServerInterceptor {
+	options := initOptions(opts)
+
+	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		startTime := time.Now()
+		fields := newLoggerFields(info.FullMethod, startTime, DefaultServerKindValue)
+		newCtx := newLoggerForCall(stream.Context(), logrus.NewEntry(logger), fields)
+
+		newCtx = setInterceptorFields(newCtx, fields, logger, options, startTime)
+
+		wrapped := grpc_middleware.WrapServerStream(stream)
+		wrapped.WrappedContext = newCtx
+
+		err := handler(srv, wrapped)
+		if err != nil {
+			fields[logrus.ErrorKey] = err
+		}
+
+		code := status.Code(err)
+		fields[DefaultGRPCCodeKey] = code.String()
+
+		levelLogf(
+			ctxlogrus.Extract(newCtx).WithFields(fields),
+			options.codeToLevel(code),
+			fmt.Sprintf("finished server streaming call with code %s", code.String()))
+
+		return err
 	}
 }
 
