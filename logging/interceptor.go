@@ -237,7 +237,7 @@ func addCustomField(ctx context.Context, fields logrus.Fields, customField strin
 		return ctx, fmt.Errorf("Unable to get custom %q field from context", customField)
 	}
 
-	// Subject field is usually a map
+	// In case of subject field is a map
 	if customField == DefaultSubjectKey {
 		inner := strings.Split(strings.Replace(strings.Replace(field, "]", "", -1), "map[", "", -1), " ")
 

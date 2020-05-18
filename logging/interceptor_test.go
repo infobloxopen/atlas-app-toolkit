@@ -343,6 +343,18 @@ func TestAddCustomField(t *testing.T) {
 	assert.Equal(t, testCustomJWTFieldVal, result[testCustomJWTFieldKey])
 }
 
+func TestAddCustomField_SubjectNotAMap(t *testing.T) {
+	withSingleSubject := `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWJqZWN0IjoidGVzdC11c2VyIn0.WwqjPgnri4ArIv4vo5qMFwqTCvxYLlE1AYfD3HBP-v4`
+	md := metautils.NiceMD{}.Set(testAuthorizationHeader, withSingleSubject)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(md))
+
+	result := logrus.Fields{}
+	resultCtx, err := addCustomField(ctx, result, DefaultSubjectKey)
+	assert.NoError(t, err)
+	assert.Equal(t, ctx, resultCtx)
+	assert.Equal(t, "test-user", result[DefaultSubjectKey])
+}
+
 func TestAddCustomField_Failed(t *testing.T) {
 	ctx := context.Background()
 
