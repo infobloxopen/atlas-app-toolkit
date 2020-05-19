@@ -11,6 +11,7 @@ import (
 	"time"
 
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -185,6 +186,11 @@ func TestUnaryServerInterceptor(t *testing.T) {
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
 		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
 
+		entry := ctxlogrus.Extract(ctx)
+		assert.Equal(t, testRequestID, entry.Data[DefaultRequestIDKey])
+		assert.Equal(t, testAccID, entry.Data[DefaultAccountIDKey])
+		assert.Equal(t, testSubject, entry.Data[DefaultSubjectKey])
+
 		return nil, nil
 	}
 
@@ -245,6 +251,11 @@ func TestStreamServerInterceptor(t *testing.T) {
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
 		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
 
+		entry := ctxlogrus.Extract(stream.Context())
+		assert.Equal(t, testRequestID, entry.Data[DefaultRequestIDKey])
+		assert.Equal(t, testAccID, entry.Data[DefaultAccountIDKey])
+		assert.Equal(t, testSubject, entry.Data[DefaultSubjectKey])
+
 		return nil
 	}
 
@@ -299,47 +310,42 @@ func TestAddRequestIDField(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
 	result := logrus.Fields{}
-	resultCtx, err := addRequestIDField(ctx, result)
+	err := addRequestIDField(ctx, result)
 	assert.NoError(t, err)
-	assert.Equal(t, ctx, resultCtx)
 	assert.Equal(t, testRequestID, result[DefaultRequestIDKey])
 }
 
 func TestAddRequestIDField_Failed(t *testing.T) {
 	ctx := context.Background()
 
-	result, err := addRequestIDField(ctx, logrus.Fields{})
+	err := addRequestIDField(ctx, logrus.Fields{})
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf("Unable to get %q from context", DefaultRequestIDKey), err.Error())
-	assert.Equal(t, ctx, result)
 }
 
 func TestAddAccountIDField(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
 	result := logrus.Fields{}
-	resultCtx, err := addAccountIDField(ctx, result)
+	err := addAccountIDField(ctx, result)
 	assert.NoError(t, err)
-	assert.Equal(t, ctx, resultCtx)
 	assert.Equal(t, testAccID, result[DefaultAccountIDKey])
 }
 
 func TestAddAccountID_Failed(t *testing.T) {
 	ctx := context.Background()
 
-	result, err := addAccountIDField(ctx, logrus.Fields{})
+	err := addAccountIDField(ctx, logrus.Fields{})
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf("Unable to get %q from context", DefaultAccountIDKey), err.Error())
-	assert.Equal(t, ctx, result)
 }
 
 func TestAddCustomField(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
 	result := logrus.Fields{}
-	resultCtx, err := addCustomField(ctx, result, testCustomJWTFieldKey)
+	err := addCustomField(ctx, result, testCustomJWTFieldKey)
 	assert.NoError(t, err)
-	assert.Equal(t, ctx, resultCtx)
 	assert.Equal(t, testCustomJWTFieldVal, result[testCustomJWTFieldKey])
 }
 
@@ -349,38 +355,34 @@ func TestAddCustomField_SubjectNotAMap(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(md))
 
 	result := logrus.Fields{}
-	resultCtx, err := addCustomField(ctx, result, DefaultSubjectKey)
+	err := addCustomField(ctx, result, DefaultSubjectKey)
 	assert.NoError(t, err)
-	assert.Equal(t, ctx, resultCtx)
 	assert.Equal(t, "test-user", result[DefaultSubjectKey])
 }
 
 func TestAddCustomField_Failed(t *testing.T) {
 	ctx := context.Background()
 
-	result, err := addCustomField(ctx, logrus.Fields{}, "test")
+	err := addCustomField(ctx, logrus.Fields{}, "test")
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf("Unable to get custom %q field from context", "test"), err.Error())
-	assert.Equal(t, ctx, result)
 }
 
 func TestAddHeaderField(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
 	result := logrus.Fields{}
-	resultCtx, err := addHeaderField(ctx, result, testCustomHeaderKey)
+	err := addHeaderField(ctx, result, testCustomHeaderKey)
 	assert.NoError(t, err)
-	assert.Equal(t, ctx, resultCtx)
 	assert.Equal(t, testCustomHeaderVal, result[testCustomHeaderKey])
 }
 
 func TestAddHeaderField_Failed(t *testing.T) {
 	ctx := context.Background()
 
-	result, err := addHeaderField(ctx, logrus.Fields{}, "test")
+	err := addHeaderField(ctx, logrus.Fields{}, "test")
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf("Unable to get custom header %q from context", "test"), err.Error())
-	assert.Equal(t, ctx, result)
 }
 
 func TestSetInterceptorFields(t *testing.T) {
