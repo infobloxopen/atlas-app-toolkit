@@ -239,7 +239,10 @@ func addCustomField(ctx context.Context, fields logrus.Fields, customField strin
 
 	// In case of subject field is a map
 	if customField == DefaultSubjectKey {
-		inner := strings.Split(strings.Replace(strings.Replace(field, "]", "", -1), "map[", "", -1), " ")
+
+		replacer := strings.NewReplacer("map[", "", "]", "")
+		field = replacer.Replace(field)
+		inner := strings.Split(field, " ")
 
 		m := map[string]interface{}{}
 
