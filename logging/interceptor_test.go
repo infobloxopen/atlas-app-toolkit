@@ -277,7 +277,7 @@ func TestStreamServerInterceptor(t *testing.T) {
 	assert.Equal(t, testSubject, result[DefaultSubjectKey])
 	assert.Equal(t, "app.Object", result[DefaultGRPCServiceKey])
 	assert.Equal(t, testMethod, result[DefaultGRPCMethodKey])
-	assert.Equal(t, "finished server streaming call with code OK", result["msg"])
+	assert.Equal(t, "finished streaming call with code OK", result["msg"])
 }
 
 func TestStreamServerInterceptor_Failed(t *testing.T) {
@@ -385,7 +385,7 @@ func TestAddHeaderField_Failed(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("Unable to get custom header %q from context", "test"), err.Error())
 }
 
-func TestSetInterceptorFields(t *testing.T) {
+func TestSetClientInterceptorFields(t *testing.T) {
 	opts := []Option{
 		WithCustomFields(testFields),
 		WithCustomHeaders(testHeaders),
@@ -393,11 +393,10 @@ func TestSetInterceptorFields(t *testing.T) {
 
 	result := logrus.Fields{}
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
-	setInterceptorFields(ctx, result, testLogger, initOptions(opts), time.Now())
+	setClientInterceptorFields(ctx, result, testLogger, initOptions(opts), time.Now())
 
 	assert.Equal(t, testAccID, result[DefaultAccountIDKey])
 	assert.Equal(t, testCustomJWTFieldVal, result[testCustomJWTFieldKey])
 	assert.Equal(t, testCustomHeaderVal, result[testCustomHeaderKey])
-	assert.Equal(t, testRequestID, result[DefaultRequestIDKey])
 	assert.Equal(t, testSubject, result[DefaultSubjectKey])
 }
