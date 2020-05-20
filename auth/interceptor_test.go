@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -14,14 +14,17 @@ import (
 )
 
 func TestLogrusUnaryServerInterceptor(t *testing.T) {
-	testAccountId := "some-ib-customer"
+	testAccountID := "some-ib-customer"
 	testHandler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		logger := ctxlogrus.Extract(ctx)
-		assert.Equal(t, logger.Data[MultiTenancyField], testAccountId)
+		assert.Equal(t, logger.Data[MultiTenancyField], testAccountID)
 		return nil, nil
 	}
-	chain := grpc_middleware.ChainUnaryServer(grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logrus.StandardLogger())), LogrusUnaryServerInterceptor())
-	ctx := contextWithToken(makeToken(jwt.MapClaims{MultiTenancyField: testAccountId}, t), DefaultTokenType)
+	chain := grpc_middleware.ChainUnaryServer(
+		grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logrus.StandardLogger())),
+		LogrusUnaryServerInterceptor(),
+	)
+	ctx := contextWithToken(makeToken(jwt.MapClaims{MultiTenancyField: testAccountID}, t), DefaultTokenType)
 	chain(ctx, nil, &grpc.UnaryServerInfo{}, testHandler)
 
 	negativeTestHandler := func(ctx context.Context, req interface{}) (interface{}, error) {
