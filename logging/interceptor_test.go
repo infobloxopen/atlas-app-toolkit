@@ -60,6 +60,8 @@ func TestUnaryClientInterceptor(t *testing.T) {
 	testLogger.Out = &buf
 	interceptor := UnaryClientInterceptor(logrus.NewEntry(testLogger))
 
+	// FIXME: clients have OutgoingContext, so the mock should too
+	// https://github.com/infobloxopen/atlas-app-toolkit/issues/191
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
 	invokerMock := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
