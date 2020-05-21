@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	mock_transport "github.com/infobloxopen/atlas-app-toolkit/mocks/transport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -11,71 +12,6 @@ import (
 type testRequest struct{}
 
 type testResponse struct{}
-
-type mockServerTransportStream struct {
-	ctx context.Context
-}
-
-func (*mockServerTransportStream) Method() string {
-	return "unimplemente"
-}
-
-func (*mockServerTransportStream) SetHeader(metadata.MD) error {
-	return nil
-}
-
-func (*mockServerTransportStream) SendHeader(metadata.MD) error {
-	return nil
-}
-
-func (*mockServerTransportStream) SetTrailer(metadata.MD) error { return nil }
-
-func (m *mockServerTransportStream) Context() context.Context {
-	return m.ctx
-}
-
-func (*mockServerTransportStream) SendMsg(m interface{}) error {
-	return nil
-}
-
-func (*mockServerTransportStream) RecvMsg(m interface{}) error {
-	return nil
-}
-
-type mockServerStream struct {
-	ctx context.Context
-}
-
-func (*mockServerStream) Method() string {
-	return "unimplemente"
-}
-
-func (*mockServerStream) SetHeader(metadata.MD) error {
-	return nil
-}
-
-func (*mockServerStream) SendHeader(metadata.MD) error {
-	return nil
-}
-
-func (*mockServerStream) SetTrailer(metadata.MD) {}
-
-func (m *mockServerStream) Context() context.Context {
-	return m.ctx
-}
-
-func (*mockServerStream) SendMsg(m interface{}) error {
-	return nil
-}
-
-func (*mockServerStream) RecvMsg(m interface{}) error {
-	return nil
-}
-
-func DummyContextWithServerTransportStream() context.Context {
-	expectedStream := &mockServerTransportStream{}
-	return grpc.NewContextWithServerTransportStream(context.Background(), expectedStream)
-}
 
 func TestUnaryServerInterceptorWithoutRequestId(t *testing.T) {
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -85,7 +21,7 @@ func TestUnaryServerInterceptorWithoutRequestId(t *testing.T) {
 		}
 		return &testResponse{}, nil
 	}
-	ctx := DummyContextWithServerTransportStream()
+	ctx := mock_transport.DummyContextWithServerTransportStream()
 	_, err := UnaryServerInterceptor()(ctx, testRequest{}, nil, handler)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -101,7 +37,7 @@ func TestUnaryServerInterceptorWithDummyRequestId(t *testing.T) {
 		}
 		return &testResponse{}, nil
 	}
-	ctx := DummyContextWithServerTransportStream()
+	ctx := mock_transport.DummyContextWithServerTransportStream()
 	md := metadata.Pairs(DefaultRequestIDKey, dummyRequestID)
 	newCtx := metadata.NewIncomingContext(ctx, md)
 	_, err := UnaryServerInterceptor()(newCtx, testRequest{}, nil, handler)
@@ -118,8 +54,8 @@ func TestStreamServerInterceptorWithoutRequestId(t *testing.T) {
 		}
 		return nil
 	}
-	ctx := DummyContextWithServerTransportStream()
-	ms := &mockServerStream{ctx}
+	ctx := mock_transport.DummyContextWithServerTransportStream()
+	ms := mock_transport.NewMockServerStream(ctx)
 	err := StreamServerInterceptor()(testRequest{}, ms, nil, handler)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -135,11 +71,11 @@ func TestStreamServerInterceptorWithDummyRequestId(t *testing.T) {
 		}
 		return nil
 	}
-	ctx := DummyContextWithServerTransportStream()
+	ctx := mock_transport.DummyContextWithServerTransportStream()
 	md := metadata.Pairs(DefaultRequestIDKey, dummyRequestID)
 	newCtx := metadata.NewIncomingContext(ctx, md)
 	streamInterceptor := StreamServerInterceptor()
-	if err := streamInterceptor(testRequest{}, &mockServerStream{newCtx}, nil, handler); err != nil {
+	if err := streamInterceptor(testRequest{}, mock_transport.NewMockServerStream(newCtx), nil, handler); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
