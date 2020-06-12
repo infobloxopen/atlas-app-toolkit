@@ -38,6 +38,10 @@
   name = "google.golang.org/grpc"
   version = ">=1.0.0"
 
+[[constraint]]
+   name = "go.opencensus.io"
+   version = "0.22.3"
+
 [prune]
   go-tests = true
   unused-packages = true

@@ -27,6 +27,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b7cb6054d3dff43b38ad2e92492f220f57ae6087ee797dca298139776749ace8"
+  name = "github.com/golang/groupcache"
+  packages = ["lru"]
+  pruneopts = "UT"
+  revision = "8c9f03a8e57eb486e42badaed3fb287da51807ba"
+
+[[projects]]
+  branch = "master"
   digest = "1:21a338ab8d56ed1117b46cb9b9021d15d6425650af9da750cddb44e4475e9218"
   name = "github.com/golang/protobuf"
   packages = [
@@ -149,6 +157,31 @@
   version = "v1.5.1"
 
 [[projects]]
+  digest = "1:5dae67f1206b3c9fe0ba183912b1ec204f2b688b8875116c245887c4a0d5ee77"
+  name = "go.opencensus.io"
+  packages = [
+    ".",
+    "internal",
+    "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
+    "resource",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/internal",
+    "trace/propagation",
+    "trace/tracestate",
+  ]
+  pruneopts = "UT"
+  revision = "d835ff86be02193d324330acdb7d65546b05f814"
+  version = "v0.22.3"
+
+[[projects]]
   branch = "master"
   digest = "1:d60f1958ca4a7a5eb327a5f742777f1d238f78f9722a32cd12a7dc0311e1f50d"
   name = "golang.org/x/net"
@@ -212,7 +245,7 @@
   revision = "fc8f554266884563332e03c40daaf5db88ecce10"
 
 [[projects]]
-  digest = "1:12fec2fa11b76eed8e06f4837076ae18e4de32337e533324f57c2972d4035070"
+  digest = "1:de21a2d5b9c8697d83f5ab48f3e8fe3616c33ac4b2d057083662dede0e81488e"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -251,7 +284,6 @@
     "stats",
     "status",
     "tap",
-    "test/bufconn",
   ]
   pruneopts = "UT"
   revision = "f495f5b15ae7ccda3b38c53a1bfcde4c1a58a2bc"
@@ -280,6 +312,7 @@
     "github.com/grpc-ecosystem/go-grpc-middleware/auth",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus",
     "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus",
+    "github.com/grpc-ecosystem/go-grpc-middleware/util/metautils",
     "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options",
     "github.com/grpc-ecosystem/grpc-gateway/runtime",
     "github.com/grpc-ecosystem/grpc-gateway/utilities",
@@ -289,6 +322,9 @@
     "github.com/lib/pq",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
+    "go.opencensus.io/plugin/ochttp",
+    "go.opencensus.io/trace",
+    "go.opencensus.io/trace/propagation",
     "golang.org/x/net/context",
     "google.golang.org/genproto/googleapis/api/annotations",
     "google.golang.org/genproto/googleapis/rpc/code",
@@ -299,7 +335,6 @@
     "google.golang.org/grpc/grpclog",
     "google.golang.org/grpc/metadata",
     "google.golang.org/grpc/status",
-    "google.golang.org/grpc/test/bufconn",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
