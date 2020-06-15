@@ -202,7 +202,7 @@ func (w *responseBodyWrapper) Write(b []byte) (int, error) {
 }
 
 func markSpanReduced(s *trace.Span) {
-	s.AddAttributes(trace.StringAttribute("reduced_payload", "true"))
+	s.AddAttributes(trace.StringAttribute(ReducedMarkerKey, ReducedMarkerValue))
 }
 
 func shrinkPayloadToLimit(payload []byte, payloadLimit int) ([]byte, bool) {
