@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	//RequestHeaderAnnotationPrefix is a prefix which added to each request header attribute
+	//RequestHeaderAnnotationPrefix is a prefix which is added to each request header attribute
 	RequestHeaderAnnotationPrefix = "request.header."
 
 	//ResponseHeaderAnnotationPrefix is a prefix which is added to each response header attribute
