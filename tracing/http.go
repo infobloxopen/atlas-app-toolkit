@@ -28,7 +28,7 @@ const (
 	DefaultMaxPayloadSize = 1024 * 1024
 
 	//ReducedMarkerKey is a key for annotation which will be presented in span in case payload was reduced
-	ReducedMarkerKey = "reduced_payload"
+	ReducedMarkerKey = "payload.reduced"
 
 	//ReducedMarkerValue is a value for annotation which will be presented in span in case payload was reduced
 	ReducedMarkerValue = "true"

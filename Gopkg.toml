@@ -40,7 +40,7 @@
 
 [[constraint]]
    name = "go.opencensus.io"
-   version = "0.22.3"
+   version = ">=0.22.3"
 
 [prune]
   go-tests = true
