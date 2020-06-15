@@ -15,7 +15,7 @@ const (
 	//RequestHeaderAnnotationPrefix is a prefix which added to each request header attribute
 	RequestHeaderAnnotationPrefix = "request.header."
 
-	//ResponseHeaderAnnotationPrefix is a prefix which added to each response header attribute
+	//ResponseHeaderAnnotationPrefix is a prefix which is added to each response header attribute
 	ResponseHeaderAnnotationPrefix = "response.header."
 
 	//RequestPayloadAnnotationKey is a key under which request payload stored in span
