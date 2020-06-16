@@ -157,7 +157,7 @@
   version = "v1.5.1"
 
 [[projects]]
-  digest = "1:5dae67f1206b3c9fe0ba183912b1ec204f2b688b8875116c245887c4a0d5ee77"
+  digest = "1:c3fb8261925d709f3e94a640668d559bfa11bc21ce27cd6143f2be433e48563c"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -165,6 +165,7 @@
     "internal/tagencoding",
     "metric/metricdata",
     "metric/metricproducer",
+    "plugin/ocgrpc",
     "plugin/ochttp",
     "plugin/ochttp/propagation/b3",
     "resource",
@@ -322,6 +323,7 @@
     "github.com/lib/pq",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
+    "go.opencensus.io/plugin/ocgrpc",
     "go.opencensus.io/plugin/ochttp",
     "go.opencensus.io/trace",
     "go.opencensus.io/trace/propagation",
@@ -334,6 +336,7 @@
     "google.golang.org/grpc/credentials",
     "google.golang.org/grpc/grpclog",
     "google.golang.org/grpc/metadata",
+    "google.golang.org/grpc/stats",
     "google.golang.org/grpc/status",
   ]
   solver-name = "gps-cdcl"

@@ -15,8 +15,14 @@ const (
 	//RequestHeaderAnnotationPrefix is a prefix which is added to each request header attribute
 	RequestHeaderAnnotationPrefix = "request.header."
 
+	//RequestTrailerAnnotationPrefix is a prefix which is added to each request trailer attribute
+	RequestTrailerAnnotationPrefix = "request.trailer."
+
 	//ResponseHeaderAnnotationPrefix is a prefix which is added to each response header attribute
 	ResponseHeaderAnnotationPrefix = "response.header."
+
+	//ResponseTrailerAnnotationPrefix is a prefix which is added to each response header attribute
+	ResponseTrailerAnnotationPrefix = "request.trailer."
 
 	//RequestPayloadAnnotationKey is a key under which request payload stored in span
 	RequestPayloadAnnotationKey = "request.payload"
@@ -27,16 +33,16 @@ const (
 	//DefaultMaxPayloadSize represent max payload size which will be added to span
 	DefaultMaxPayloadSize = 1024 * 1024
 
-	//ReducedMarkerKey is a key for annotation which will be presented in span in case payload was reduced
-	ReducedMarkerKey = "payload.reduced"
+	//TruncatedMarkerKey is a key for annotation which will be presented in span in case payload was truncated
+	TruncatedMarkerKey = "payload.truncated"
 
-	//ReducedMarkerValue is a value for annotation which will be presented in span in case payload was reduced
-	ReducedMarkerValue = "true"
+	//TruncatedMarkerValue is a value for annotation which will be presented in span in case payload was truncated
+	TruncatedMarkerValue = "true"
 )
 
 type headerMatcher func(string) (string, bool)
 
-type options struct {
+type httpOptions struct {
 	spanWithHeaders func(*http.Request) bool
 	headerMatcher   headerMatcher
 
@@ -44,11 +50,11 @@ type options struct {
 	maxPayloadSize  int
 }
 
-//Option is a configuration unit for handler
-type Option func(*options)
+//HTTPOption allows extending handler with additional functionality
+type HTTPOption func(*httpOptions)
 
-func newDefaultOptions() *options {
-	return &options{
+func defaultHTTPOptions() *httpOptions {
+	return &httpOptions{
 		headerMatcher:  defaultHeaderMatcher,
 		maxPayloadSize: DefaultMaxPayloadSize,
 
@@ -57,37 +63,39 @@ func newDefaultOptions() *options {
 	}
 }
 
-//WithHeadersAnnotation annotate span with
-func WithHeadersAnnotation(f func(*http.Request) bool) Option {
-	return func(ops *options) {
+//WithHeadersAnnotation annotate span with http headers
+func WithHeadersAnnotation(f func(*http.Request) bool) HTTPOption {
+	return func(ops *httpOptions) {
 		ops.spanWithHeaders = f
 	}
 }
 
-//WithHeaderMatcher add request h
-func WithHeaderMatcher(matcher func(string) (string, bool)) Option {
-	return func(ops *options) {
-		ops.headerMatcher = matcher
+//WithHeaderMatcher set header matcher to filterout or preprocess headers
+func WithHeaderMatcher(f func(string) (string, bool)) HTTPOption {
+	return func(ops *httpOptions) {
+		ops.headerMatcher = f
 	}
 }
 
 //WithPayloadAnnotation add request/response body as an attribute to span if f returns true
-func WithPayloadAnnotation(f func(*http.Request) bool) Option {
-	return func(ops *options) {
+func WithPayloadAnnotation(f func(*http.Request) bool) HTTPOption {
+	return func(ops *httpOptions) {
 		ops.spanWithPayload = f
 	}
 }
 
-//WithPayloadSize ...
-func WithPayloadSize(maxSize int) Option {
-	return func(ops *options) {
+//WithHTTPPayloadSize limit payload size propogated to span
+//in case payload exceeds limit, payload truncated and
+//annotation payload.truncated=true added into span
+func WithHTTPPayloadSize(maxSize int) HTTPOption {
+	return func(ops *httpOptions) {
 		ops.maxPayloadSize = maxSize
 	}
 }
 
-//NewTracingMiddleware wrap handler
-func NewTracingMiddleware(ops ...Option) func(http.Handler) http.Handler {
-	options := newDefaultOptions()
+//NewMiddleware wrap handler
+func NewMiddleware(ops ...HTTPOption) func(http.Handler) http.Handler {
+	options := defaultHTTPOptions()
 	for _, op := range ops {
 		op(options)
 	}
@@ -104,11 +112,14 @@ func NewTracingMiddleware(ops ...Option) func(http.Handler) http.Handler {
 	}
 }
 
+//Check that &Handler comply with http.Handler interface
+var _ http.Handler = &Handler{}
+
 //Handler is a opencensus http plugin wrapper which do some usefull things to reach traces
 type Handler struct {
 	child http.Handler
 
-	options *options
+	options *httpOptions
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -119,13 +130,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if withHeaders {
 		//Annotate span with request headers
-		attrs := headerToAttributes(r.Header, RequestHeaderAnnotationPrefix, h.options.headerMatcher)
+		attrs := headersToAttributes(r.Header, RequestHeaderAnnotationPrefix, h.options.headerMatcher)
 		span.AddAttributes(attrs...)
 
 		//Annotate span with response headers
 		//calling in defer to get final headers state, after passing all handlers in chain
 		defer func() {
-			attrs := headerToAttributes(w.Header(), ResponseHeaderAnnotationPrefix, h.options.headerMatcher)
+			attrs := headersToAttributes(w.Header(), ResponseHeaderAnnotationPrefix, h.options.headerMatcher)
 			span.AddAttributes(attrs...)
 		}()
 	}
@@ -137,9 +148,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(requestPayload))
 
-		requestPayload, reduced := shrinkPayloadToLimit(requestPayload, h.options.maxPayloadSize)
-		if reduced {
-			markSpanReduced(span)
+		requestPayload, truncated := truncatePayload(requestPayload, h.options.maxPayloadSize)
+		if truncated {
+			markSpanTruncated(span)
 		}
 
 		attrs := []trace.Attribute{trace.StringAttribute(RequestPayloadAnnotationKey, string(requestPayload))}
@@ -150,9 +161,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w = wrapper
 
 		defer func() {
-			responsePayload, reduced := shrinkPayloadToLimit(wrapper.buffer.Bytes(), h.options.maxPayloadSize)
-			if reduced {
-				markSpanReduced(span)
+			responsePayload, truncated := truncatePayload(wrapper.buffer.Bytes(), h.options.maxPayloadSize)
+			if truncated {
+				markSpanTruncated(span)
 			}
 
 			attrs := []trace.Attribute{trace.StringAttribute(ResponsePayloadAnnotationKey, string(responsePayload))}
@@ -163,7 +174,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.child.ServeHTTP(w, r)
 }
 
-func headerToAttributes(headers http.Header, prefix string, matcher headerMatcher) []trace.Attribute {
+func headersToAttributes(headers http.Header, prefix string, matcher headerMatcher) []trace.Attribute {
 	attributes := make([]trace.Attribute, 0, len(headers))
 	for k, vals := range headers {
 		k, ok := matcher(k)
@@ -201,11 +212,11 @@ func (w *responseBodyWrapper) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func markSpanReduced(s *trace.Span) {
-	s.AddAttributes(trace.StringAttribute(ReducedMarkerKey, ReducedMarkerValue))
+func markSpanTruncated(s *trace.Span) {
+	s.AddAttributes(trace.StringAttribute(TruncatedMarkerKey, TruncatedMarkerValue))
 }
 
-func shrinkPayloadToLimit(payload []byte, payloadLimit int) ([]byte, bool) {
+func truncatePayload(payload []byte, payloadLimit int) ([]byte, bool) {
 	if len(payload) <= payloadLimit {
 		return payload, false
 	}
@@ -222,7 +233,7 @@ func defaultHeaderMatcher(h string) (string, bool) {
 	return h, true
 }
 
-//Always for each request returns true
-func Always(_ *http.Request) bool {
+//AlwaysHTTP for each request returns true
+func AlwaysHTTP(_ *http.Request) bool {
 	return true
 }
