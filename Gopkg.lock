@@ -2,12 +2,35 @@
 
 
 [[projects]]
+  digest = "1:7775dab5079acc5dbb9356e35a90029f68c61d51d0f95b3ccdeca6c2547d5ba4"
+  name = "contrib.go.opencensus.io/exporter/ocagent"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e52627691bab995e9de8b4359e70b29ceec700de"
+  version = "v0.7.0"
+
+[[projects]]
   digest = "1:63365cc19727fc5f786d5d95079016b3601120c9699543abae2d5d0bff139109"
   name = "github.com/DATA-DOG/go-sqlmock"
   packages = ["."]
   pruneopts = "UT"
   revision = "7d7fc89ac4d6e7994c74cf16a6cb774b0374f2f9"
   version = "v1.4.1"
+
+[[projects]]
+  digest = "1:8f5acd4d4462b5136af644d25101f0968a7a94ee90fcb2059cec5b7cc42e0b20"
+  name = "github.com/census-instrumentation/opencensus-proto"
+  packages = [
+    "gen-go/agent/common/v1",
+    "gen-go/agent/metrics/v1",
+    "gen-go/agent/trace/v1",
+    "gen-go/metrics/v1",
+    "gen-go/resource/v1",
+    "gen-go/trace/v1",
+  ]
+  pruneopts = "UT"
+  revision = "d89fa54de508111353cb0b06403c00569be780d8"
+  version = "v0.2.1"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -200,6 +223,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4692f916cb72b2c295f04841036d85a3f13e96d1cc9e8e4c2c30edebac518053"
+  name = "golang.org/x/sync"
+  packages = ["semaphore"]
+  pruneopts = "UT"
+  revision = "43a5402ce75a95522677f77c619865d66b8c57ab"
+
+[[projects]]
+  branch = "master"
   digest = "1:578046baf093df15df2904bbb0fe06f3f2385bad59987532201007754aa7e1d5"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -230,6 +261,14 @@
   pruneopts = "UT"
   revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
   version = "v0.3.2"
+
+[[projects]]
+  digest = "1:ba33d6448a1649fcde13983c86f7d8b58f7d02c59e43a12a6900a925f4ca6c18"
+  name = "google.golang.org/api"
+  packages = ["support/bundler"]
+  pruneopts = "UT"
+  revision = "6ca1abe345464ef58dab8fe1f9b4525b50b37336"
+  version = "v0.26.0"
 
 [[projects]]
   branch = "master"
@@ -302,6 +341,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "contrib.go.opencensus.io/exporter/ocagent",
     "github.com/DATA-DOG/go-sqlmock",
     "github.com/dgrijalva/jwt-go",
     "github.com/golang/protobuf/jsonpb",
