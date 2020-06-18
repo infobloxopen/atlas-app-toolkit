@@ -189,7 +189,7 @@ func headersToAttributes(headers http.Header, prefix string, matcher headerMatch
 			continue
 		}
 
-		key := fmt.Sprint(prefix, key)
+		key = fmt.Sprint(prefix, key)
 		valsStr := strings.Join(vals, ", ")
 		if _, ok := sensitiveHeaders[k]; ok {
 			valsStr = obfuscate(valsStr)
