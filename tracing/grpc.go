@@ -161,12 +161,15 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 func metadataToAttributes(md metadata.MD, prefix string, marcher metadataMatcher) []trace.Attribute {
 	attrs := make([]trace.Attribute, 0, len(md))
 	for k, vals := range md {
-		k, ok := marcher(k)
+		key, ok := marcher(k)
 		if !ok {
 			continue
 		}
 
-		key, valsStr := fmt.Sprint(prefix, k), strings.Join(vals, ", ")
+		key, valsStr := fmt.Sprint(prefix, key), strings.Join(vals, ", ")
+		if _, ok := sensitiveMetadata[k]; ok {
+			valsStr = obfuscate(valsStr)
+		}
 
 		//Check that key and value is a valid utf-8 encoded strings, in case they not span will be omitted from span
 		if !utf8.ValidString(key) || !utf8.ValidString(valsStr) {
@@ -190,13 +193,14 @@ func payloadToAttributes(key string, value interface{}, limit int) ([]trace.Attr
 	return attrs, truncated, nil
 }
 
+func obfuscate(x string) string {
+	countChars := int(float64(len(x)) * 0.20)
+
+	return x[:countChars] + "..."
+}
+
 //defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultMetadataMatcher(h string) (string, bool) {
-	//By default do not add  sensitive metadata to span
-	if _, ok := sensitiveMetadata[h]; ok {
-		return h, false
-	}
-
 	return h, true
 }
 

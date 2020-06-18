@@ -184,13 +184,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func headersToAttributes(headers http.Header, prefix string, matcher headerMatcher) []trace.Attribute {
 	attributes := make([]trace.Attribute, 0, len(headers))
 	for k, vals := range headers {
-		k, ok := matcher(k)
+		key, ok := matcher(k)
 		if !ok {
 			continue
 		}
 
-		key := fmt.Sprint(prefix, k)
+		key := fmt.Sprint(prefix, key)
 		valsStr := strings.Join(vals, ", ")
+		if _, ok := sensitiveHeaders[k]; ok {
+			valsStr = obfuscate(valsStr)
+		}
 
 		attributes = append(attributes, trace.StringAttribute(key, valsStr))
 	}
@@ -237,11 +240,6 @@ func truncatePayload(payload []byte, payloadLimit int) ([]byte, bool) {
 
 //defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultHeaderMatcher(h string) (string, bool) {
-	//By default do not add  sensitive header to span
-	if _, ok := sensitiveHeaders[h]; ok {
-		return h, false
-	}
-
 	return h, true
 }
 
