@@ -43,6 +43,10 @@ const (
 	TruncatedMarkerValue = "true"
 )
 
+var sensitiveHeaders = map[string]struct{}{
+	"Authorization": struct{}{},
+}
+
 type headerMatcher func(string) (string, bool)
 
 type httpOptions struct {
@@ -233,6 +237,11 @@ func truncatePayload(payload []byte, payloadLimit int) ([]byte, bool) {
 
 //defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultHeaderMatcher(h string) (string, bool) {
+	//By default do not add  sensitive header to span
+	if _, ok := sensitiveHeaders[h]; ok {
+		return h, false
+	}
+
 	return h, true
 }
 

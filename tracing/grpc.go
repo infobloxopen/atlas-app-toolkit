@@ -14,6 +14,11 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
+var sensitiveMetadata = map[string]struct{}{
+	"grpcgateway-authorization": struct{}{},
+	"authorization":             struct{}{},
+}
+
 //GRPCOption allows extending handler with additional functionality
 type GRPCOption func(*gRPCOptions)
 
@@ -187,6 +192,11 @@ func payloadToAttributes(key string, value interface{}, limit int) ([]trace.Attr
 
 //defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultMetadataMatcher(h string) (string, bool) {
+	//By default do not add  sensitive metadata to span
+	if _, ok := sensitiveMetadata[h]; ok {
+		return h, false
+	}
+
 	return h, true
 }
 
