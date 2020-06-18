@@ -90,12 +90,20 @@ func NewServerHandler(ops ...GRPCOption) *ServerHandler {
 
 // HandleRPC implements per-RPC tracing and stats instrumentation.
 func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
-	s.ServerHandler.HandleRPC(ctx, rs)
-
 	withHeaders := s.options.spanWithMetadata != nil && s.options.spanWithMetadata(ctx, rs)
 	withPayload := s.options.spanWithPayload != nil && s.options.spanWithPayload(ctx, rs)
 
 	span := trace.FromContext(ctx)
+
+	if withPayload {
+		switch rs := rs.(type) {
+		case *stats.End:
+			attrs := []trace.Attribute{trace.StringAttribute(ResponseErrorKey, rs.Error.Error())}
+			span.Annotate(attrs, "Response error")
+		}
+	}
+
+	s.ServerHandler.HandleRPC(ctx, rs)
 
 	if withHeaders {
 		switch rs := rs.(type) {

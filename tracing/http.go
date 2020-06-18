@@ -30,6 +30,9 @@ const (
 	//ResponsePayloadAnnotationKey is a key under which response payload stored in span
 	ResponsePayloadAnnotationKey = "response.payload"
 
+	//ResponseErrorKey is a key under which response error will be stored in span
+	ResponseErrorKey = "response.error"
+
 	//DefaultMaxPayloadSize represent max payload size which will be added to span
 	DefaultMaxPayloadSize = 1024 * 1024
 
