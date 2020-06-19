@@ -193,12 +193,6 @@ func payloadToAttributes(key string, value interface{}, limit int) ([]trace.Attr
 	return attrs, truncated, nil
 }
 
-func obfuscate(x string) string {
-	countChars := int(float64(len(x)) * 0.20)
-
-	return x[:countChars] + "..."
-}
-
 //defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultMetadataMatcher(h string) (string, bool) {
 	return h, true

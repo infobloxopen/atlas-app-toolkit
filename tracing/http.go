@@ -41,6 +41,9 @@ const (
 
 	//TruncatedMarkerValue is a value for annotation which will be presented in span in case payload was truncated
 	TruncatedMarkerValue = "true"
+
+	//ObfuscationFactor is a percent of value which will be omitted from obfuscated value
+	ObfuscationFactor = 0.80
 )
 
 var sensitiveHeaders = map[string]struct{}{
@@ -236,6 +239,12 @@ func truncatePayload(payload []byte, payloadLimit int) ([]byte, bool) {
 	payload = append(payload[:payloadLimit-3], flag...)
 
 	return payload, true
+}
+
+func obfuscate(x string) string {
+	countChars := int(float64(len(x)) * (1.0 - ObfuscationFactor))
+
+	return x[:countChars] + "..."
 }
 
 //defaultHeaderMatcher is a header matcher which just accept all headers
