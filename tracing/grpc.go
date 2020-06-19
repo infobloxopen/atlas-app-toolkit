@@ -103,12 +103,16 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	if withPayload {
 		switch rs := rs.(type) {
 		case *stats.End:
-			attrs := []trace.Attribute{trace.StringAttribute(ResponseErrorKey, rs.Error.Error())}
-			span.Annotate(attrs, "Response error")
+			if rs.Error != nil {
+				attrs := []trace.Attribute{trace.StringAttribute(ResponseErrorKey, rs.Error.Error())}
+				span.Annotate(attrs, "Response error")
+			}
 		}
 	}
 
 	s.ServerHandler.HandleRPC(ctx, rs)
+
+	span = trace.FromContext(ctx)
 
 	if withHeaders {
 		switch rs := rs.(type) {
