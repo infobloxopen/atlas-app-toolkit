@@ -190,6 +190,40 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 	return <-errC
 }
 
+//ServeTLS acts identically to Serve, except that it expects HTTPS connections.
+//GRPCServer must include ServerOption that sets TLS credentials for server connections.
+//This option can be set by grpc.Creds function
+func (s *Server) ServeTLS(grpcL, httpL net.Listener, certFile, keyFile string) error {
+	if grpcL == nil && httpL == nil {
+		return errors.New("both grpcL and httpL are nil")
+	}
+
+	if err := s.initialize(); err != nil {
+		return err
+	}
+	errC := make(chan error)
+
+	if httpL != nil {
+		if s.HTTPServer == nil {
+			return errors.New("httpL is specified, but no HTTPServer is provided")
+		}
+		go func() { errC <- s.HTTPServer.ServeTLS(httpL, certFile, keyFile) }()
+	} else {
+		s.HTTPServer = nil
+	}
+
+	if grpcL != nil {
+		if s.GRPCServer == nil {
+			return errors.New("grpcL is specified, but no GRPCServer is provided")
+		}
+		go func() { errC <- s.GRPCServer.Serve(grpcL) }()
+	} else {
+		s.GRPCServer = nil
+	}
+	defer s.Stop()
+	return <-errC
+}
+
 // Stop immediately terminates the grpc and http servers, immediately closing their active listeners
 func (s *Server) Stop() error {
 	wg := sync.WaitGroup{}
