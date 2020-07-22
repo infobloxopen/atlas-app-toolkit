@@ -12,6 +12,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
+const (
+	// XForwardedFor is a header to identify the origin of an IP address
+	XForwardedFor = "X-Forwarded-For"
+)
+
 // Header returns first value for a given key if it exists in gRPC metadata
 // from incoming or outcoming context, otherwise returns (nil, false)
 //
