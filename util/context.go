@@ -11,26 +11,37 @@ import (
 )
 
 // ForwardContext set to outgoing context request_id, auth_token and X-Forwarded-For header value
-func ForwardContext(ctx context.Context, token string) context.Context {
-	params := map[string][]string{}
-	if token != "" {
-		params[auth.AuthorizationHeader] = []string{token}
+func ForwardContext(ctx context.Context) context.Context {
+	keys := []string{
+		auth.AuthorizationHeader,
+		requestid.DefaultRequestIDKey,
+		gateway.XForwardedFor,
 	}
 
-	if rid, ok := requestid.FromContext(ctx); ok {
-		params[requestid.DefaultRequestIDKey] = []string{rid}
-	}
-
-	if rIPs, ok := gateway.Header(ctx, gateway.XForwardedFor); ok {
-		params[gateway.XForwardedFor] = []string{rIPs}
-	}
-
-	return ForwardContextWithCustomParams(ctx, params)
+	return ForwardContextWithCustomParams(ctx, keys)
 }
 
-// ForwardContextWithCustomParams set to outgoing context all params from incoming context + custom params
-func ForwardContextWithCustomParams(ctx context.Context, params map[string][]string) context.Context {
+// ForwardContextWithCustomParams set to outgoing context specified parameters from incoming context by keys
+func ForwardContextWithCustomParams(ctx context.Context, keys []string) context.Context {
 	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ctx
+	}
+
+	resultMD := make(metadata.MD, 0)
+
+	for _, key := range keys {
+		if params := md.Get(key); params != nil {
+			resultMD.Append(key, params...)
+		}
+	}
+
+	return metadata.NewOutgoingContext(ctx, resultMD)
+}
+
+// ReplaceParamsInContext replaces or adds the specified parameters to the outgoing context
+func ReplaceParamsInContext(ctx context.Context, params map[string][]string) context.Context {
+	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		return ctx
 	}
