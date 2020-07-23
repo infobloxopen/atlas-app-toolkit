@@ -14,7 +14,8 @@ import (
 // DefaultRequestIDKey is the metadata key name for request ID
 const (
 	DeprecatedRequestIDKey = "Request-Id"
-	DefaultRequestIDKey    = "request_id"
+	DefaultRequestIDKey    = "X-Request-ID"
+	RequestIDLogKey        = "request_id"
 )
 
 // HandleRequestID either extracts a existing and valid request ID from the context or generates a new one
@@ -51,5 +52,5 @@ func NewContext(ctx context.Context, reqID string) context.Context {
 }
 
 func addRequestIDToLogger(ctx context.Context, reqID string) {
-	ctxlogrus.AddFields(ctx, logrus.Fields{DefaultRequestIDKey: reqID})
+	ctxlogrus.AddFields(ctx, logrus.Fields{RequestIDLogKey: reqID})
 }
