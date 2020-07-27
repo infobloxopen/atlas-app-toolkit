@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/infobloxopen/atlas-app-toolkit/logging/mocks"
+	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 )
 
 const (
@@ -38,7 +39,7 @@ var (
 	buf         bytes.Buffer
 	reader      io.Reader
 	testLogger  = New("Info")
-	testMD      = metautils.NiceMD{}.Set(testAuthorizationHeader, testJWT).Set(DefaultRequestIDKey, testRequestID).Set(testCustomHeaderKey, testCustomHeaderVal)
+	testMD      = metautils.NiceMD{}.Set(testAuthorizationHeader, testJWT).Set(requestid.DefaultRequestIDKey, testRequestID).Set(testCustomHeaderKey, testCustomHeaderVal)
 	testSubject = map[string]interface{}{"id": "testID", "subject_type": "testUser", "authentication_type": "test"}
 )
 
@@ -68,7 +69,11 @@ func TestUnaryClientInterceptor(t *testing.T) {
 		newMD, ok := metadata.FromIncomingContext(ctx)
 		assert.True(t, ok)
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
-		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
+
+		reqID, ok := requestid.FromContext(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, testRequestID, reqID)
+
 		assert.Equal(t, testMethod, method)
 
 		return nil
@@ -126,7 +131,11 @@ func TestStreamClientInterceptor(t *testing.T) {
 		newMD, ok := metadata.FromIncomingContext(ctx)
 		assert.True(t, ok)
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
-		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
+
+		reqID, ok := requestid.FromContext(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, testRequestID, reqID)
+
 		assert.Equal(t, testMethod, method)
 
 		return nil, nil
@@ -186,7 +195,54 @@ func TestUnaryServerInterceptor(t *testing.T) {
 		newMD, ok := metadata.FromIncomingContext(ctx)
 		assert.True(t, ok)
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
-		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
+
+		reqID, ok := requestid.FromContext(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, testRequestID, reqID)
+
+		entry := ctxlogrus.Extract(ctx)
+		assert.Equal(t, testRequestID, entry.Data[DefaultRequestIDKey])
+		assert.Equal(t, testAccID, entry.Data[DefaultAccountIDKey])
+		assert.Equal(t, testSubject, entry.Data[DefaultSubjectKey])
+
+		return nil, nil
+	}
+
+	resp, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: testFullMethod}, handlerMock)
+	assert.NoError(t, err)
+	assert.Nil(t, resp)
+
+	reader = &buf
+	bts, err := ioutil.ReadAll(reader)
+	assert.NoError(t, err)
+
+	result := map[string]interface{}{}
+
+	err = json.Unmarshal(bts, &result)
+	assert.NoError(t, err)
+	assert.Equal(t, testAccID, result[DefaultAccountIDKey])
+	assert.Equal(t, testRequestID, result[DefaultRequestIDKey])
+	assert.Equal(t, testSubject, result[DefaultSubjectKey])
+	assert.Equal(t, "app.Object", result[DefaultGRPCServiceKey])
+	assert.Equal(t, testMethod, result[DefaultGRPCMethodKey])
+	assert.Equal(t, "finished unary call with code OK", result["msg"])
+}
+
+func TestUnaryServerInterceptorDeprecatedHeader(t *testing.T) {
+	testLogger.Out = &buf
+	interceptor := UnaryServerInterceptor(logrus.NewEntry(testLogger))
+
+	md := metautils.NiceMD{}.Set(testAuthorizationHeader, testJWT).Set(requestid.DeprecatedRequestIDKey, testRequestID).Set(testCustomHeaderKey, testCustomHeaderVal)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(md))
+
+	handlerMock := func(ctx context.Context, req interface{}) (interface{}, error) {
+		newMD, ok := metadata.FromIncomingContext(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
+
+		reqID, ok := requestid.FromContext(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, testRequestID, reqID)
 
 		entry := ctxlogrus.Extract(ctx)
 		assert.Equal(t, testRequestID, entry.Data[DefaultRequestIDKey])
@@ -251,7 +307,10 @@ func TestStreamServerInterceptor(t *testing.T) {
 		newMD, ok := metadata.FromIncomingContext(stream.Context())
 		assert.True(t, ok)
 		assert.Equal(t, testJWT, newMD.Get(testAuthorizationHeader)[0])
-		assert.Equal(t, testRequestID, newMD.Get(DefaultRequestIDKey)[0])
+
+		reqID, ok := requestid.FromContext(stream.Context())
+		assert.True(t, ok)
+		assert.Equal(t, testRequestID, reqID)
 
 		entry := ctxlogrus.Extract(stream.Context())
 		assert.Equal(t, testRequestID, entry.Data[DefaultRequestIDKey])

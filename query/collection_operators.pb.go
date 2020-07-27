@@ -167,7 +167,9 @@ var StringArrayCondition_Type_value = map[string]int32{
 func (x StringArrayCondition_Type) String() string {
 	return proto.EnumName(StringArrayCondition_Type_name, int32(x))
 }
-func (StringArrayCondition_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{9, 0} }
+func (StringArrayCondition_Type) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{9, 0}
+}
 
 type NumberArrayCondition_Type int32
 

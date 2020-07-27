@@ -18,6 +18,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
 
 		reqID := HandleRequestID(ctx)
+
 		// add request id to logger
 		addRequestIDToLogger(ctx, reqID)
 
@@ -36,6 +37,7 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 		ctx := stream.Context()
 
 		reqID := HandleRequestID(ctx)
+
 		// add request id to logger
 		addRequestIDToLogger(ctx, reqID)
 
