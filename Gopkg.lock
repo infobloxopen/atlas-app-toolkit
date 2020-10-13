@@ -365,6 +365,7 @@
     "github.com/stretchr/testify/assert",
     "go.opencensus.io/plugin/ocgrpc",
     "go.opencensus.io/plugin/ochttp",
+    "go.opencensus.io/plugin/ochttp/propagation/b3",
     "go.opencensus.io/trace",
     "go.opencensus.io/trace/propagation",
     "golang.org/x/net/context",
