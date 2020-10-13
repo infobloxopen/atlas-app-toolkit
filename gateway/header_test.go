@@ -97,7 +97,7 @@ func TestExtendedDefaultHeaderMatcher(t *testing.T) {
 		{
 			name:          "custom headers in | without custom headers | failure",
 			customHeaders: []string{},
-			in:            "Request-Id",
+			in:            "CustomHeader",
 			isValid:       false,
 		},
 	}

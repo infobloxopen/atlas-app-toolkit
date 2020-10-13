@@ -151,14 +151,16 @@ func AtlasDefaultHeaderMatcher() func(string) (string, bool) {
 
 // ExtendedDefaultHeaderMatcher func is used to add custom headers to be matched
 // from incoming http requests, If this returns true the header will be added to grpc context.
-// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
+// This function also passes through all the headers that AtlasDefaultHeaderMatcher handles.
 func ExtendedDefaultHeaderMatcher(headerNames ...string) func(string) (string, bool) {
 	customHeaders := map[string]bool{}
 	for _, name := range headerNames {
 		customHeaders[strings.ToLower(name)] = true
 	}
+
+	atlasMatcher := AtlasDefaultHeaderMatcher()
 	return func(headerName string) (string, bool) {
-		if key, ok := runtime.DefaultHeaderMatcher(headerName); ok {
+		if key, ok := atlasMatcher(headerName); ok {
 			return key, ok
 		}
 		_, ok := customHeaders[strings.ToLower(headerName)]
