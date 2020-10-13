@@ -12,6 +12,7 @@ import (
 
 	"errors"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
 	"google.golang.org/grpc"
@@ -135,14 +136,18 @@ func WithHealthChecks(checker health.Checker) Option {
 func WithGateway(options ...gateway.Option) Option {
 	return func(s *Server) error {
 		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
-			_, err := gateway.NewGateway(append(options, gateway.WithMux(mux))...)
+			_, err := gateway.NewGateway(append(options,
+				gateway.WithGatewayOptions(
+					runtime.WithIncomingHeaderMatcher(
+						gateway.AtlasDefaultHeaderMatcher())),
+				gateway.WithMux(mux))...)
 			return err
 		})
 		return nil
 	}
 }
 
-// WithMiddlewaries add opportunity to add different middleware
+// WithMiddlewares add opportunity to add different middleware
 func WithMiddlewares(middleware ...Middleware) Option {
 	return func(s *Server) error {
 		s.middlewares = append(s.middlewares, middleware...)
