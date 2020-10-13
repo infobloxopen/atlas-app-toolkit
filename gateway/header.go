@@ -114,6 +114,41 @@ func handleForwardResponseTrailer(w http.ResponseWriter, md runtime.ServerMetada
 	}
 }
 
+// AtlasDefaultHeaderMatcher func used to add all headers used by atlas-app-toolkit
+// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
+// AtlasDefaultHeaderMatcher can be used as a Incoming/Outgoing header matcher.
+func AtlasDefaultHeaderMatcher() func(string) (string, bool) {
+	//Put headers only in lower case
+	allow := map[string]struct{}{
+		//X-Geo-* headers are set of geo metadata from MaxMind DB injected on ingress nginx
+		"x-geo-org":          struct{}{},
+		"x-geo-country-code": struct{}{},
+		"x-geo-country-name": struct{}{},
+		"x-geo-region-code":  struct{}{},
+		"x-geo-region-name":  struct{}{},
+		"x-geo-city-name":    struct{}{},
+		"x-geo-postal-code":  struct{}{},
+		"x-geo-latitude":     struct{}{},
+		"x-geo-longitude":    struct{}{},
+		//request id header contains unique identifier for request
+		"request-id": struct{}{},
+		//Tracing headers
+		"x-b3-traceid":      struct{}{},
+		"x-b3-parentspanid": struct{}{},
+		"x-b3-spanid":       struct{}{},
+		"x-b3-sampled":      struct{}{},
+	}
+
+	return func(h string) (string, bool) {
+		if key, ok := runtime.DefaultHeaderMatcher(h); ok {
+			return key, ok
+		}
+
+		_, ok := allow[strings.ToLower(h)]
+		return h, ok
+	}
+}
+
 // ExtendedDefaultHeaderMatcher func is used to add custom headers to be matched
 // from incoming http requests, If this returns true the header will be added to grpc context.
 // This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
