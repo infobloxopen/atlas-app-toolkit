@@ -114,19 +114,71 @@ func handleForwardResponseTrailer(w http.ResponseWriter, md runtime.ServerMetada
 	}
 }
 
+// AtlasDefaultHeaderMatcher func used to add all headers used by atlas-app-toolkit
+// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
+// AtlasDefaultHeaderMatcher can be used as a Incoming/Outgoing header matcher.
+func AtlasDefaultHeaderMatcher() func(string) (string, bool) {
+	//Put headers only in lower case
+	allow := map[string]struct{}{
+		//X-Geo-* headers are set of geo metadata from MaxMind DB injected on ingress nginx
+		"x-geo-org":          struct{}{},
+		"x-geo-country-code": struct{}{},
+		"x-geo-country-name": struct{}{},
+		"x-geo-region-code":  struct{}{},
+		"x-geo-region-name":  struct{}{},
+		"x-geo-city-name":    struct{}{},
+		"x-geo-postal-code":  struct{}{},
+		"x-geo-latitude":     struct{}{},
+		"x-geo-longitude":    struct{}{},
+		//request id header contains unique identifier for request
+		"request-id": struct{}{},
+		//Tracing headers
+		"x-b3-traceid":      struct{}{},
+		"x-b3-parentspanid": struct{}{},
+		"x-b3-spanid":       struct{}{},
+		"x-b3-sampled":      struct{}{},
+	}
+
+	return func(h string) (string, bool) {
+		if key, ok := runtime.DefaultHeaderMatcher(h); ok {
+			return key, ok
+		}
+
+		_, ok := allow[strings.ToLower(h)]
+		return h, ok
+	}
+}
+
 // ExtendedDefaultHeaderMatcher func is used to add custom headers to be matched
 // from incoming http requests, If this returns true the header will be added to grpc context.
-// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
+// This function also passes through all the headers that AtlasDefaultHeaderMatcher handles.
 func ExtendedDefaultHeaderMatcher(headerNames ...string) func(string) (string, bool) {
 	customHeaders := map[string]bool{}
 	for _, name := range headerNames {
 		customHeaders[strings.ToLower(name)] = true
 	}
+
+	atlasMatcher := AtlasDefaultHeaderMatcher()
 	return func(headerName string) (string, bool) {
-		if key, ok := runtime.DefaultHeaderMatcher(headerName); ok {
+		if key, ok := atlasMatcher(headerName); ok {
 			return key, ok
 		}
 		_, ok := customHeaders[strings.ToLower(headerName)]
 		return headerName, ok
+	}
+}
+
+// ChainHeaderMatcher func is used to build chain on header matcher funcitons
+// this function can be used as incoming or outgoing header matcher
+// keep in mind that gRPC metadata treat as case insensitive strings
+func ChainHeaderMatcher(matchers ...runtime.HeaderMatcherFunc) runtime.HeaderMatcherFunc {
+	return func(h string) (string, bool) {
+		for _, m := range matchers {
+			if k, allow := m(h); allow {
+				return k, allow
+			}
+		}
+
+		return "", false
 	}
 }
