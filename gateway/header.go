@@ -167,3 +167,18 @@ func ExtendedDefaultHeaderMatcher(headerNames ...string) func(string) (string, b
 		return headerName, ok
 	}
 }
+
+// ChainHeaderMatcher func is used to build chain on header matcher funcitons
+// this function can be used as incoming or outgoing header matcher
+// keep in mind that gRPC metadata treat as case insensitive strings
+func ChainHeaderMatcher(matchers ...runtime.HeaderMatcherFunc) runtime.HeaderMatcherFunc {
+	return func(h string) (string, bool) {
+		for _, m := range matchers {
+			if k, allow := m(h); allow {
+				return k, allow
+			}
+		}
+
+		return "", false
+	}
+}

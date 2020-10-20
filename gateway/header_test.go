@@ -209,3 +209,65 @@ func TestAtlasDefaultHeaderMatcher(t *testing.T) {
 		})
 	}
 }
+
+func TestChainHeaderMatcher(t *testing.T) {
+	chain := ChainHeaderMatcher(
+		func(h string) (string, bool) {
+			if h == "first" {
+				return h, true
+			}
+
+			return "", false
+		},
+		func(h string) (string, bool) {
+			if h == "second" {
+				return h, true
+			}
+
+			return "", false
+		},
+		func(h string) (string, bool) {
+			if h == "third" {
+				return h, true
+			}
+
+			return "", false
+		},
+	)
+
+	var customMatcherTests = []struct {
+		name    string
+		in      string
+		isValid bool
+	}{
+		{
+			name:    "first | success",
+			in:      "first",
+			isValid: true,
+		},
+		{
+			name:    "second | success",
+			in:      "second",
+			isValid: true,
+		},
+		{
+			name:    "third | success",
+			in:      "third",
+			isValid: true,
+		},
+		{
+			name:    "fourth | success",
+			in:      "fourth",
+			isValid: false,
+		},
+	}
+
+	for _, tt := range customMatcherTests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, ok := chain(tt.in)
+			if ok != tt.isValid {
+				t.Errorf("got %v, want %v", ok, tt.isValid)
+			}
+		})
+	}
+}
