@@ -114,53 +114,57 @@ func handleForwardResponseTrailer(w http.ResponseWriter, md runtime.ServerMetada
 	}
 }
 
+// GeoIPHeaderMatcher X-Geo-* headers are set of geo metadata from MaxMind DB injected on ingress nginx
+func GeoIPHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher(
+		"x-geo-org",
+		"x-geo-country-code",
+		"x-geo-country-name",
+		"x-geo-region-code",
+		"x-geo-region-name",
+		"x-geo-city-name",
+		"x-geo-postal-code",
+		"x-geo-latitude",
+		"x-geo-longitude",
+	)
+}
+
+// RequestIDHeaderMatcher request id header contains unique identifier for request
+func RequestIDHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher("request-id")
+}
+
+// TracingHeaderMatcher tracing headers
+func TracingHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher(
+		"x-b3-traceid",
+		"x-b3-parentspanid",
+		"x-b3-spanid",
+		"x-b3-sampled",
+	)
+}
+
 // AtlasDefaultHeaderMatcher func used to add all headers used by atlas-app-toolkit
 // This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
 // AtlasDefaultHeaderMatcher can be used as a Incoming/Outgoing header matcher.
 func AtlasDefaultHeaderMatcher() func(string) (string, bool) {
-	//Put headers only in lower case
-	allow := map[string]struct{}{
-		//X-Geo-* headers are set of geo metadata from MaxMind DB injected on ingress nginx
-		"x-geo-org":          struct{}{},
-		"x-geo-country-code": struct{}{},
-		"x-geo-country-name": struct{}{},
-		"x-geo-region-code":  struct{}{},
-		"x-geo-region-name":  struct{}{},
-		"x-geo-city-name":    struct{}{},
-		"x-geo-postal-code":  struct{}{},
-		"x-geo-latitude":     struct{}{},
-		"x-geo-longitude":    struct{}{},
-		//request id header contains unique identifier for request
-		"request-id": struct{}{},
-		//Tracing headers
-		"x-b3-traceid":      struct{}{},
-		"x-b3-parentspanid": struct{}{},
-		"x-b3-spanid":       struct{}{},
-		"x-b3-sampled":      struct{}{},
-	}
-
-	return func(h string) (string, bool) {
-		if key, ok := runtime.DefaultHeaderMatcher(h); ok {
-			return key, ok
-		}
-
-		_, ok := allow[strings.ToLower(h)]
-		return h, ok
-	}
+	return ChainHeaderMatcher(
+		GeoIPHeaderMatcher(),
+		RequestIDHeaderMatcher(),
+		TracingHeaderMatcher(),
+	)
 }
 
 // ExtendedDefaultHeaderMatcher func is used to add custom headers to be matched
 // from incoming http requests, If this returns true the header will be added to grpc context.
-// This function also passes through all the headers that AtlasDefaultHeaderMatcher handles.
+// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
 func ExtendedDefaultHeaderMatcher(headerNames ...string) func(string) (string, bool) {
 	customHeaders := map[string]bool{}
 	for _, name := range headerNames {
 		customHeaders[strings.ToLower(name)] = true
 	}
-
-	atlasMatcher := AtlasDefaultHeaderMatcher()
 	return func(headerName string) (string, bool) {
-		if key, ok := atlasMatcher(headerName); ok {
+		if key, ok := runtime.DefaultHeaderMatcher(headerName); ok {
 			return key, ok
 		}
 		_, ok := customHeaders[strings.ToLower(headerName)]
