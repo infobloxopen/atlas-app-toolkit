@@ -17,7 +17,7 @@ const (
 var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 //SpanContextAnnotator retrieve information about current span from context or HTTP headers
-//and propogate in binary format to gRPC service
+//and propagate in binary format to gRPC service
 func SpanContextAnnotator(ctx context.Context, req *http.Request) metadata.MD {
 	md := make(metadata.MD)
 
