@@ -15,6 +15,7 @@ import (
 )
 
 var testHTTPOpts = &httpOptions{}
+var expectedStr = "test"
 
 func Test_truncatePayload(t *testing.T) {
 	tests := []struct {
@@ -90,8 +91,8 @@ func TestDefaultHTTPOptions(t *testing.T) {
 	}
 
 	result := defaultHTTPOptions()
-	expectedHeader, expectedBool := expected.headerMatcher("test")
-	resultHeader, resultBool := result.headerMatcher("test")
+	expectedHeader, expectedBool := expected.headerMatcher(expectedStr)
+	resultHeader, resultBool := result.headerMatcher(expectedStr)
 	assert.True(t, expectedBool)
 	assert.Equal(t, expectedBool, resultBool)
 	assert.Equal(t, expectedHeader, resultHeader)
@@ -109,9 +110,9 @@ func TestWithHeadersAnnotation(t *testing.T) {
 func TestWithHeaderMatcher(t *testing.T) {
 	option := WithHeaderMatcher(defaultHeaderMatcher)
 	option(testHTTPOpts)
-	resultStr, ok := testHTTPOpts.headerMatcher("test")
+	resultStr, ok := testHTTPOpts.headerMatcher(expectedStr)
 	assert.True(t, ok)
-	assert.Equal(t, "test", resultStr)
+	assert.Equal(t, expectedStr, resultStr)
 }
 
 func TestWithPayloadAnnotation(t *testing.T) {
@@ -145,20 +146,15 @@ func TestNewMiddleware(t *testing.T) {
 }
 
 func TestHandler_ServeHTTP(t *testing.T) {
-	handlerFunc := NewMiddleware(
-		func(options *httpOptions) {
-			options.spanWithHeaders = func(r *http.Request) bool {
-				return true
-			}
-		},
-		func(options *httpOptions) {
-			options.spanWithPayload = func(r *http.Request) bool {
-				return true
-			}
-		})
+	handlerFunc := NewMiddleware(func(options *httpOptions) {
+		options.spanWithHeaders = func(r *http.Request) bool {
+			return true
+		}
 
-	result := &httpHandlerMock{}
-	handler := handlerFunc(result)
+		options.spanWithPayload = func(r *http.Request) bool {
+			return true
+		}
+	})
 
 	ctx, _ := trace.StartSpan(context.Background(), "test span", trace.WithSampler(trace.AlwaysSample()))
 
@@ -172,6 +168,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	w := httptest.NewRecorder()
 	w.Header().Add("test3", "")
 
+	result := &httpHandlerMock{}
+	handler := handlerFunc(result)
 	handler.ServeHTTP(w, r)
 	resp := w.Result()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -247,9 +245,8 @@ func TestResponseBodyWrapper_Write(t *testing.T) {
 }
 
 func TestDefaultHeaderMatcher(t *testing.T) {
-	expected := "test"
-	result, ok := defaultHeaderMatcher("test")
-	assert.Equal(t, expected, result)
+	result, ok := defaultHeaderMatcher(expectedStr)
+	assert.Equal(t, expectedStr, result)
 	assert.True(t, ok)
 }
 

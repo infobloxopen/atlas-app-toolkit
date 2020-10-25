@@ -22,7 +22,7 @@ const (
 	ResponseHeaderAnnotationPrefix = "response.header."
 
 	//ResponseTrailerAnnotationPrefix is a prefix which is added to each response header attribute
-	ResponseTrailerAnnotationPrefix = "request.trailer."
+	ResponseTrailerAnnotationPrefix = "response.trailer."
 
 	//RequestPayloadAnnotationKey is a key under which request payload stored in span
 	RequestPayloadAnnotationKey = "request.payload"
