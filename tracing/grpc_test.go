@@ -3,12 +3,13 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
-	"reflect"
-	"testing"
 )
 
 var testGRPCOptions = &gRPCOptions{}
@@ -16,7 +17,7 @@ var testGRPCOptions = &gRPCOptions{}
 func TestDefaultGRPCOptions(t *testing.T) {
 	expected := &gRPCOptions{
 		metadataMatcher: defaultMetadataMatcher,
-		maxPayloadSize: 1048576,
+		maxPayloadSize:  1048576,
 	}
 
 	result := defaultGRPCOptions()
@@ -123,11 +124,11 @@ func TestServerHandler_HandleRPC(t *testing.T) {
 		handler.HandleRPC(ctx, v)
 	}
 
-	expectedMap := map[string]string {
-		"request.header.header1":"true",
-		"request.trailer.trailer1":"true",
-		"response.header.outHeader1":"true",
-		"response.trailer.outTrailer1":"true",
+	expectedMap := map[string]string{
+		"request.header.header1":       "true",
+		"request.trailer.trailer1":     "true",
+		"response.header.outHeader1":   "true",
+		"response.trailer.outTrailer1": "true",
 	}
 
 	resultMap := make(map[string]string, 4)
@@ -141,7 +142,7 @@ func TestServerHandler_HandleRPC(t *testing.T) {
 
 	assert.Equal(t, expectedMap, resultMap)
 
-	expectedAnnotations := []string {
+	expectedAnnotations := []string{
 		"Response error", "Request payload", "Response payload",
 	}
 

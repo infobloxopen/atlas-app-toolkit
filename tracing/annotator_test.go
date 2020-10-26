@@ -2,11 +2,12 @@ package tracing
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
-	"net/http"
-	"testing"
 )
 
 func TestSpanContextAnnotator_FromContext(t *testing.T) {
