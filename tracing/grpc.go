@@ -123,7 +123,7 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 			attrs := metadataToAttributes(rs.Trailer, RequestTrailerAnnotationPrefix, s.options.metadataMatcher)
 			span.AddAttributes(attrs...)
 		case *stats.OutHeader:
-			attrs := metadataToAttributes(rs.Header, ResponsePayloadAnnotationKey, s.options.metadataMatcher)
+			attrs := metadataToAttributes(rs.Header, ResponseHeaderAnnotationPrefix, s.options.metadataMatcher)
 			span.AddAttributes(attrs...)
 		case *stats.OutTrailer:
 			attrs := metadataToAttributes(rs.Trailer, ResponseTrailerAnnotationPrefix, s.options.metadataMatcher)
@@ -162,10 +162,10 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 
 }
 
-func metadataToAttributes(md metadata.MD, prefix string, marcher metadataMatcher) []trace.Attribute {
+func metadataToAttributes(md metadata.MD, prefix string, matcher metadataMatcher) []trace.Attribute {
 	attrs := make([]trace.Attribute, 0, len(md))
 	for k, vals := range md {
-		key, ok := marcher(k)
+		key, ok := matcher(k)
 		if !ok {
 			continue
 		}

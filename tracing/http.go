@@ -22,7 +22,7 @@ const (
 	ResponseHeaderAnnotationPrefix = "response.header."
 
 	//ResponseTrailerAnnotationPrefix is a prefix which is added to each response header attribute
-	ResponseTrailerAnnotationPrefix = "request.trailer."
+	ResponseTrailerAnnotationPrefix = "response.trailer."
 
 	//RequestPayloadAnnotationKey is a key under which request payload stored in span
 	RequestPayloadAnnotationKey = "request.payload"
@@ -94,7 +94,7 @@ func WithPayloadAnnotation(f func(*http.Request) bool) HTTPOption {
 	}
 }
 
-//WithHTTPPayloadSize limit payload size propogated to span
+//WithHTTPPayloadSize limit payload size propagated to span
 //in case payload exceeds limit, payload truncated and
 //annotation payload.truncated=true added into span
 func WithHTTPPayloadSize(maxSize int) HTTPOption {
@@ -125,7 +125,7 @@ func NewMiddleware(ops ...HTTPOption) func(http.Handler) http.Handler {
 //Check that &Handler comply with http.Handler interface
 var _ http.Handler = &Handler{}
 
-//Handler is a opencensus http plugin wrapper which do some usefull things to reach traces
+//Handler is a opencensus http plugin wrapper which do some useful things to reach traces
 type Handler struct {
 	child http.Handler
 
@@ -219,7 +219,7 @@ type responseBodyWrapper struct {
 }
 
 func (w *responseBodyWrapper) Write(b []byte) (int, error) {
-	//In case we recieve an error from Writing into buffer we just skip it
+	//In case we receive an error from Writing into buffer we just skip it
 	//because adding payload to span is not so critical as provide response
 	_, _ = w.buffer.Write(b)
 	return w.ResponseWriter.Write(b)
