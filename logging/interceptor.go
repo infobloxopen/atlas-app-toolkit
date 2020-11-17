@@ -170,9 +170,8 @@ func setClientInterceptorFields(ctx context.Context, fields logrus.Fields, logge
 
 	err = addAccountIDField(ctx, fields)
 	if err != nil {
-		logger.Warn(err)
+		logger.Info(err)
 	}
-
 	setInterceptorFields(ctx, fields, logger, options)
 }
 
@@ -206,14 +205,14 @@ func addRequestIDField(ctx context.Context, fields logrus.Fields) error {
 }
 
 func addAccountIDField(ctx context.Context, fields logrus.Fields) error {
-	accountID, err := auth.GetAccountID(ctx, nil)
-	if err != nil {
+	if accountID, err := auth.GetAccountID(ctx, nil); err == nil {
+		fields[DefaultAccountIDKey] = accountID
+	} else {
+		fields[DefaultAccountIDKey] = valueUndefined
 		return fmt.Errorf("Unable to get %q from context", DefaultAccountIDKey)
 	}
 
-	fields[DefaultAccountIDKey] = accountID
-
-	return err
+	return nil
 }
 
 func addCustomField(ctx context.Context, fields logrus.Fields, customField string) error {
