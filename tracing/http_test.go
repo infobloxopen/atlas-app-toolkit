@@ -211,8 +211,20 @@ func TestHeadersToAttributes(t *testing.T) {
 	}
 
 	result := headersToAttributes(testHeaders, "prefix-", defaultHeaderMatcher)
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, expected, result)
+	for _, attribute := range result {
+		found := false
+		for _, expAttribute := range expected {
+			if reflect.DeepEqual(expAttribute, attribute) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Attribute %+v not found in result", attribute)
+		}
+	}
 }
 
 func TestMarkSpanTruncated(t *testing.T) {

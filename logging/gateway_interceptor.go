@@ -19,6 +19,10 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 )
 
+const (
+	valueUndefined = "undefined"
+)
+
 type gwLogCfg struct {
 	dynamicLogLvl bool
 	noRequestID   bool
@@ -139,7 +143,8 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 			if accountID, err := auth.GetAccountID(metadata.NewIncomingContext(ctx, md), cfg.acctIDKeyfunc); err == nil {
 				fields[auth.MultiTenancyField] = accountID
 			} else {
-				logger.Error(err)
+				logger.Info(err)
+				fields[auth.MultiTenancyField] = valueUndefined
 			}
 		}
 

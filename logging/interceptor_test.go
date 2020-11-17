@@ -396,9 +396,11 @@ func TestAddAccountIDField(t *testing.T) {
 func TestAddAccountID_Failed(t *testing.T) {
 	ctx := context.Background()
 
-	err := addAccountIDField(ctx, logrus.Fields{})
+	result := logrus.Fields{}
+	err := addAccountIDField(ctx, result)
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf("Unable to get %q from context", DefaultAccountIDKey), err.Error())
+	assert.Equal(t, valueUndefined, result[DefaultAccountIDKey])
 }
 
 func TestAddCustomField(t *testing.T) {
