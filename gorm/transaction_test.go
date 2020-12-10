@@ -369,6 +369,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 	tests := []struct {
 		desc     string
 		withOpts bool
+		contextCanceled bool
 	}{
 		{
 			desc:     "begin without options",
@@ -378,11 +379,26 @@ func TestBeginFromContext_Bad(t *testing.T) {
 			desc:     "begin with options",
 			withOpts: true,
 		},
+		{
+			desc:     "canceled context without context",
+			withOpts: true,
+			contextCanceled: true,
+		},
+		{
+			desc:     "canceled context with options",
+			withOpts: false,
+			contextCanceled: true,
+		},
 	}
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
+			if test.contextCanceled {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithCancel(ctx)
+				cancel()
+			}
 
 			// Case: Transaction missing from context
 			txn1, err := beginFromContext(ctx, test.withOpts)
