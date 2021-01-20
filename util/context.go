@@ -9,8 +9,8 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 )
 
-// ForwardContext set to outgoing context request_id, auth_token and X-Forwarded-For header value
-func ForwardContext(ctx context.Context) context.Context {
+// OutgoingContext set to outgoing context request_id, auth_token, X-Forwarded-For, x-geo- and x-b3- headers value
+func OutgoingContext(ctx context.Context) context.Context {
 	keys := []string{
 		auth.AuthorizationHeader,
 		requestid.DefaultRequestIDKey,
@@ -20,11 +20,11 @@ func ForwardContext(ctx context.Context) context.Context {
 	keys = append(keys, gateway.GetGeoHeaders()...)
 	keys = append(keys, gateway.GetXB3Headers()...)
 
-	return ForwardContextWithCustomParams(ctx, keys...)
+	return OutgoingContextWithCustomParams(ctx, keys...)
 }
 
-// ForwardContextWithCustomParams set to outgoing context specified parameters from incoming context by keys
-func ForwardContextWithCustomParams(ctx context.Context, keys ...string) context.Context {
+// OutgoingContextWithCustomParams set to outgoing context specified parameters from incoming context by keys
+func OutgoingContextWithCustomParams(ctx context.Context, keys ...string) context.Context {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ctx
