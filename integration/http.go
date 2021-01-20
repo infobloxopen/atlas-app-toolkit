@@ -24,6 +24,6 @@ func MakeStandardRequest(method, url string, payload interface{}) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("%s %s", auth.DefaultTokenType, token))
+	req.Header.Set(auth.AuthorizationHeader, fmt.Sprintf("%s %s", auth.DefaultTokenType, token))
 	return req, nil
 }

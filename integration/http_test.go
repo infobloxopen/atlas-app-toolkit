@@ -26,7 +26,7 @@ func TestMakeStandardRequest(t *testing.T) {
 			payload: nil,
 			handler: http.HandlerFunc(
 				func(w http.ResponseWriter, r *http.Request) {
-					authHeader := r.Header.Get("Authorization")
+					authHeader := r.Header.Get(auth.AuthorizationHeader)
 					if expected := fmt.Sprintf(
 						"%s %s", auth.DefaultTokenType, standardToken,
 					); expected != authHeader {
