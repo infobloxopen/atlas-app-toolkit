@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
 )
 
 // AppendTokenToOutgoingContext adds an authorization token to the gRPC
@@ -14,7 +15,7 @@ import (
 // or "bearer" to this function. It is intended specifically for gRPC testing.
 func AppendTokenToOutgoingContext(ctx context.Context, fieldName, token string) context.Context {
 	c := metadata.AppendToOutgoingContext(
-		ctx, "Authorization", fmt.Sprintf("%s %s", fieldName, token),
+		ctx, auth.AuthorizationHeader, fmt.Sprintf("%s %s", fieldName, token),
 	)
 	return c
 }
