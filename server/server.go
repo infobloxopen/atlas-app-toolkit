@@ -39,6 +39,8 @@ type Server struct {
 
 	// HTTPServer will be started whenever this is served
 	HTTPServer *http.Server
+
+	isAutomaticStop bool
 }
 
 //Middleware wrapper
@@ -56,6 +58,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		initializeTimeout: DefaultInitializerTimeout,
 		HTTPServer:        &http.Server{},
 		registrars:        []func(mux *http.ServeMux) error{},
+		isAutomaticStop:   true,
 	}
 
 	for _, opt := range opts {
@@ -155,6 +158,13 @@ func WithMiddlewares(middleware ...Middleware) Option {
 	}
 }
 
+func WithAutomaticStop(isAutomaticStop bool) Option {
+	return func(s *Server) error {
+		s.isAutomaticStop = isAutomaticStop
+		return nil
+	}
+}
+
 // Serve invokes all initializers then serves on the given listeners.
 //
 // If a listener is left blank, then that particular part will not be served.
@@ -191,12 +201,24 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 	} else {
 		s.GRPCServer = nil
 	}
-	defer s.Stop()
+	defer func() {
+		if s.isAutomaticStop {
+			s.Stop()
+		}
+	}()
 	return <-errC
 }
 
 // Stop immediately terminates the grpc and http servers, immediately closing their active listeners
 func (s *Server) Stop() error {
+	return s.shutdown(context.Background(), false)
+}
+
+func (s *Server) GracefulShutdown(ctx context.Context) error {
+	return s.shutdown(ctx, true)
+}
+
+func (s Server) shutdown(ctx context.Context, isGraceful bool) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	doneC := make(chan bool)
@@ -204,14 +226,24 @@ func (s *Server) Stop() error {
 	go func() {
 		defer wg.Done()
 		if s.GRPCServer != nil {
-			s.GRPCServer.Stop()
+			if isGraceful {
+				s.GRPCServer.GracefulStop()
+			} else {
+				s.GRPCServer.Stop()
+			}
 		}
 	}()
 	go func() {
 		defer wg.Done()
 		if s.HTTPServer != nil {
-			if err := s.HTTPServer.Close(); err != nil {
-				errC <- err
+			if isGraceful {
+				if err := s.HTTPServer.Shutdown(ctx); err != nil {
+					errC <- err
+				}
+			} else {
+				if err := s.HTTPServer.Close(); err != nil {
+					errC <- err
+				}
 			}
 		}
 	}()
