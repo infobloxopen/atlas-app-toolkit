@@ -12,9 +12,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/jinzhu/gorm v1.9.12
 	github.com/jinzhu/inflection v1.0.0
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.3.1-0.20200116171513-9eb3fc897d6f
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.5.1
 	go.opencensus.io v0.22.3
 	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
