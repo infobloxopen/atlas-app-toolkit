@@ -7,7 +7,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible
 	github.com/golang/protobuf v1.4.2
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/jinzhu/gorm v1.9.12
@@ -20,7 +20,7 @@ require (
 	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
 	google.golang.org/api v0.26.0 // indirect
 	google.golang.org/genproto v0.0.0-20200527145253-8367513e4ece
-	google.golang.org/grpc v1.29.1
+	google.golang.org/grpc v1.35.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
