@@ -6,7 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
