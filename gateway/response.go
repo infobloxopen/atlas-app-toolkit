@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
 
-	runtime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	runtime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
 type (

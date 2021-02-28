@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

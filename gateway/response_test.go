@@ -14,7 +14,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
 type user struct {

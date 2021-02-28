@@ -1,10 +1,11 @@
 package requestinfo
 
 import (
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 	"net/http"
 	"strings"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 const (

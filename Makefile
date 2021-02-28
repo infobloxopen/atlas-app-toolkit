@@ -6,7 +6,14 @@ PROJECT_ROOT = $(CURDIR)
 
 # Utility docker image to generate Go files from .proto definition.
 # https://github.com/infobloxopen/atlas-gentool
-GENTOOL_IMAGE := infoblox/atlas-gentool:latest
+GENTOOL_IMAGE   := infoblox/docker-protobuf:latest
+GENTOOL_OPTIONS := --rm -w /go/$(REPO) -v $(shell pwd):/go/$(REPO)
+GENTOOL_FLAGS   := -I. -Ivendor \
+	-Ivendor/github.com/grpc-ecosystem/grpc-gateway/v2 \
+	--go_out=Mgoogle/protobuf/descriptor.proto=github.com/protocolbuffers/protobuf-go/types/descriptorpb,Mprotoc-gen-openapiv2/options/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options:/go
+
+GENERATOR := docker run $(GENTOOL_OPTIONS) $(GENTOOL_IMAGE) $(GENTOOL_FLAGS)
+
 
 .PHONY: default
 default: test
@@ -22,24 +29,28 @@ vendor:
 check-fmt:
 	test -z `go fmt ./...`
 
-.gen-query:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=:. $(REPO)/query/collection_operators.proto
+query/collection_operators.pb.go: query/collection_operators.proto
+	$(GENERATOR) \
+		query/collection_operators.proto
 
-.gen-errdetails:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=:. $(REPO)/rpc/errdetails/error_details.proto
+rpc/errdetails/error_details.pb.go: rpc/errdetails/error_details.proto
+	$(GENERATOR) \
+		rpc/errdetails/error_details.proto
 
-.gen-errfields:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=:. $(REPO)/rpc/errfields/error_fields.proto
+rpc/errfields/error_fields.pb.go: rpc/errfields/error_fields.proto
+	$(GENERATOR) \
+		rpc/errfields/error_fields.proto
 
-.gen-servertestdata:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
+rpc/resource/resource.pb.go: rpc/resource/resource.proto
+	$(GENERATOR) \
+		rpc/resource/resource.proto
+
+server/testdata/test.pb.go: server/testdata/test.proto
+	$(GENERATOR) \
+		server/testdata/test.proto
 
 .PHONY: gen
-gen: .gen-query .gen-errdetails .gen-errfields
+gen: query/collection_operators.pb.go rpc/errdetails/error_details.pb.go rpc/errfields/error_fields.pb.go server/testdata/test.pb.go
 
 .PHONY: mocks
 mocks:

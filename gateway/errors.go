@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
