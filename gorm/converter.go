@@ -53,10 +53,14 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 	var lres string
 	var largs []interface{}
 	var lAssocToJoin map[string]struct{}
+
 	var err error
 	switch l := lop.Left.(type) {
 	case *query.LogicalOperator_LeftOperator:
-		lres, largs, lAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, l.LeftOperator, obj)
+		var lop *query.LogicalOperator
+		lop, err = l.LeftOperator.ToLogicalOperator()
+
+		lres, largs, lAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, lop, obj)
 	case *query.LogicalOperator_LeftStringCondition:
 		lres, largs, lAssocToJoin, err = converter.StringConditionToGorm(ctx, l.LeftStringCondition, obj)
 	case *query.LogicalOperator_LeftNumberCondition:
@@ -68,6 +72,7 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 	case *query.LogicalOperator_LeftStringArrayCondition:
 		lres, largs, lAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj)
 	default:
+		panic("boom")
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
 	if err != nil {
@@ -79,7 +84,9 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 	var rAssocToJoin map[string]struct{}
 	switch r := lop.Right.(type) {
 	case *query.LogicalOperator_RightOperator:
-		rres, rargs, rAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, r.RightOperator, obj)
+		var lop *query.LogicalOperator
+		lop, err = r.RightOperator.ToLogicalOperator()
+		rres, rargs, rAssocToJoin, err = converter.LogicalOperatorToGorm(ctx, lop, obj)
 	case *query.LogicalOperator_RightStringCondition:
 		rres, rargs, rAssocToJoin, err = converter.StringConditionToGorm(ctx, r.RightStringCondition, obj)
 	case *query.LogicalOperator_RightNumberCondition:

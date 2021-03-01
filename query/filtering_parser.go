@@ -71,6 +71,8 @@ func (p *filteringParser) Parse(text string) (*Filtering, error) {
 
 func (p *filteringParser) negateNode(node FilteringExpression) {
 	switch v := node.(type) {
+	case *NestedLogicalOperator:
+		v.IsNegative = !v.IsNegative
 	case *LogicalOperator:
 		v.IsNegative = !v.IsNegative
 	case *StringCondition:

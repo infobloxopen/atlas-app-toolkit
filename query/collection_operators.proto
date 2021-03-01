@@ -71,15 +71,14 @@ message Filtering {
         NullCondition null_condition = 4;
         StringArrayCondition string_array_condition = 5;
         NumberArrayCondition number_array_condition = 6;
+        NestedLogicalOperator nestedoperator = 7;
     }
 }
 
-// LogicalOperator represents binary logical operator, either AND or OR depending on type.
-// left and right are respectively left and right operands of the operator, could be
-// either LogicalOperator or one of the supported conditions.
-// is_negative is set to true if the operator is negated.
-message LogicalOperator {
+message NestedLogicalOperator {
     oneof left {
+        // cyclic type definitions are no longer available in grpc-gateway
+        // https://github.com/grpc-ecosystem/grpc-gateway/pull/1266
         LogicalOperator left_operator = 1;
         StringCondition left_string_condition = 2;
         NumberCondition left_number_condition = 3;
@@ -89,6 +88,38 @@ message LogicalOperator {
     }
     oneof right {
         LogicalOperator right_operator = 5;
+        StringCondition right_string_condition = 6;
+        NumberCondition right_number_condition = 7;
+        NullCondition right_null_condition = 8;
+        StringArrayCondition right_string_array_condition = 13;
+        NumberArrayCondition right_number_array_condition = 14;
+    }
+    enum Type {
+        AND = 0;
+        OR = 1;
+    }
+    Type type = 9;
+    bool is_negative = 10;
+}
+
+// LogicalOperator represents binary logical operator, either AND or OR depending on type.
+// left and right are respectively left and right operands of the operator, could be
+// either LogicalOperator or one of the supported conditions.
+// is_negative is set to true if the operator is negated.
+message LogicalOperator {
+    oneof left {
+        // cyclic type definitions are no longer available in grpc-gateway
+        // https://github.com/grpc-ecosystem/grpc-gateway/pull/1266
+        // TODO: add a nested LogicalOperator if deeper nesting of query parameters is necessary
+        NestedLogicalOperator left_operator = 1;
+        StringCondition left_string_condition = 2;
+        NumberCondition left_number_condition = 3;
+        NullCondition left_null_condition = 4;
+        StringArrayCondition left_string_array_condition = 11;
+        NumberArrayCondition left_number_array_condition = 12;
+    }
+    oneof right {
+        NestedLogicalOperator right_operator = 5;
         StringCondition right_string_condition = 6;
         NumberCondition right_number_condition = 7;
         NullCondition right_null_condition = 8;

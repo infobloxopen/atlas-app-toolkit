@@ -66,6 +66,20 @@ func (e *UnsupportedOperatorError) Error() string {
 	return fmt.Sprintf("%s is not supported for %s type", e.Op, e.Type)
 }
 
+// Filter implements Filter as if it was a LogicalOperator
+func (nlop *NestedLogicalOperator) Filter(obj interface{}) (bool, error) {
+
+	bs, err := proto.Marshal(nlop)
+	if err != nil {
+		return false, err
+	}
+	lop := LogicalOperator{}
+	if err := proto.Unmarshal(bs, &lop); err != nil {
+		return false, err
+	}
+	return lop.Filter(obj)
+}
+
 // Filter evaluates filtering expression against obj.
 func (lop *LogicalOperator) Filter(obj interface{}) (bool, error) {
 	var res bool
@@ -387,8 +401,13 @@ func (m *Filtering) SetRoot(r interface{}) error {
 
 // SetLeft automatically wraps l into appropriate oneof structure and sets it to Root.
 func (m *LogicalOperator) SetLeft(l interface{}) error {
+	var err error
 	switch x := l.(type) {
 	case *LogicalOperator:
+		var nlop *NestedLogicalOperator
+		nlop, err = x.ToNestedLogicalOperator()
+		m.Left = &LogicalOperator_LeftOperator{LeftOperator: nlop}
+	case *NestedLogicalOperator:
 		m.Left = &LogicalOperator_LeftOperator{x}
 	case *StringCondition:
 		m.Left = &LogicalOperator_LeftStringCondition{x}
@@ -405,13 +424,46 @@ func (m *LogicalOperator) SetLeft(l interface{}) error {
 	default:
 		return fmt.Errorf("Filtering.Left cannot be assigned to type %T", x)
 	}
-	return nil
+	return err
+}
+
+// SetLeft automatically wraps l into appropriate oneof structure and sets it to Root.
+func (m *NestedLogicalOperator) SetLeft(l interface{}) error {
+	var err error
+	switch x := l.(type) {
+	case *LogicalOperator:
+		m.Left = &NestedLogicalOperator_LeftOperator{x}
+	case *NestedLogicalOperator:
+		var lop *LogicalOperator
+		lop, err = x.ToLogicalOperator()
+		m.Left = &NestedLogicalOperator_LeftOperator{LeftOperator: lop}
+	case *StringCondition:
+		m.Left = &NestedLogicalOperator_LeftStringCondition{x}
+	case *NumberCondition:
+		m.Left = &NestedLogicalOperator_LeftNumberCondition{x}
+	case *NullCondition:
+		m.Left = &NestedLogicalOperator_LeftNullCondition{x}
+	case *StringArrayCondition:
+		m.Left = &NestedLogicalOperator_LeftStringArrayCondition{x}
+	case *NumberArrayCondition:
+		m.Left = &NestedLogicalOperator_LeftNumberArrayCondition{x}
+	case nil:
+		m.Left = nil
+	default:
+		return fmt.Errorf("Filtering.Left cannot be assigned to type %T", x)
+	}
+	return err
 }
 
 // SetRight automatically wraps r into appropriate oneof structure and sets it to Root.
 func (m *LogicalOperator) SetRight(r interface{}) error {
+	var err error
 	switch x := r.(type) {
 	case *LogicalOperator:
+		var nlop *NestedLogicalOperator
+		nlop, err = x.ToNestedLogicalOperator()
+		m.Right = &LogicalOperator_RightOperator{RightOperator: nlop}
+	case *NestedLogicalOperator:
 		m.Right = &LogicalOperator_RightOperator{x}
 	case *StringCondition:
 		m.Right = &LogicalOperator_RightStringCondition{x}
@@ -428,5 +480,33 @@ func (m *LogicalOperator) SetRight(r interface{}) error {
 	default:
 		return fmt.Errorf("Filtering.Right cannot be assigned to type %T", x)
 	}
-	return nil
+	return err
+}
+
+// SetRight automatically wraps r into appropriate oneof structure and sets it to Root.
+func (m *NestedLogicalOperator) SetRight(r interface{}) error {
+	var err error
+	switch x := r.(type) {
+	case *LogicalOperator:
+		m.Right = &NestedLogicalOperator_RightOperator{x}
+	case *NestedLogicalOperator:
+		var lop *LogicalOperator
+		lop, err = x.ToLogicalOperator()
+		m.Right = &NestedLogicalOperator_RightOperator{RightOperator: lop}
+	case *StringCondition:
+		m.Right = &NestedLogicalOperator_RightStringCondition{x}
+	case *NumberCondition:
+		m.Right = &NestedLogicalOperator_RightNumberCondition{x}
+	case *NullCondition:
+		m.Right = &NestedLogicalOperator_RightNullCondition{x}
+	case *StringArrayCondition:
+		m.Right = &NestedLogicalOperator_RightStringArrayCondition{x}
+	case *NumberArrayCondition:
+		m.Right = &NestedLogicalOperator_RightNumberArrayCondition{x}
+	case nil:
+		m.Right = nil
+	default:
+		return fmt.Errorf("Filtering.Right cannot be assigned to type %T", x)
+	}
+	return err
 }

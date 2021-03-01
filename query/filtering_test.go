@@ -1,6 +1,9 @@
 package query
 
 import (
+	"encoding/json"
+	fmt "fmt"
+	"reflect"
 	"regexp/syntax"
 	"testing"
 
@@ -13,6 +16,11 @@ type TestObject struct {
 	Float float64 `json:"float"`
 	Uint  uint    `json:"uint"`
 	Ptr   *struct{}
+}
+
+func (t *TestObject) String() string {
+	bs, _ := json.Marshal(t)
+	return string(bs)
 }
 
 type TestProtoMessage struct {
@@ -33,7 +41,7 @@ func (m *NestedMessage) Reset()         { *m = NestedMessage{} }
 func (m *NestedMessage) String() string { return proto.CompactTextString(m) }
 func (*NestedMessage) ProtoMessage()    {}
 
-func TestFiltering(t *testing.T) {
+func TestFilteringStd(t *testing.T) {
 
 	tests := []struct {
 		obj    interface{}
@@ -41,8 +49,8 @@ func TestFiltering(t *testing.T) {
 		res    bool
 	}{
 		{
-			obj:    &TestObject{Str: "111", Float: 11.11, Uint: 11},
-			filter: "str == '111' and float == 11.11 and uint == 11 and Ptr == null",
+			obj:    &TestObject{Str: "111", Float: 22.22, Uint: 11},
+			filter: "str == '111' and float == 22.22 and uint == 11 and Ptr == null",
 			res:    true,
 		},
 		{
@@ -178,9 +186,17 @@ func TestFiltering(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		res, err := Filter(test.obj, test.filter)
-		assert.Equal(t, res, test.res)
-		assert.Nil(t, err)
+		t.Run(test.obj.(fmt.Stringer).String(), func(t *testing.T) {
+			res, err := Filter(test.obj, test.filter)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(res, test.res) {
+				t.Errorf("got: %#v wanted: %#v", res, test.res)
+			}
+			assert.Equal(t, res, test.res)
+			assert.Nil(t, err)
+		})
 	}
 }
 
@@ -192,8 +208,8 @@ func TestFilteringNegative(t *testing.T) {
 		err    error
 	}{
 		{
-			obj:    &TestObject{Str: "111"},
-			filter: "str == 111",
+			obj:    &TestObject{Str: "222"},
+			filter: "str == 222",
 			err:    &TypeMismatchError{},
 		},
 		{
@@ -217,16 +233,18 @@ func TestFilteringNegative(t *testing.T) {
 			err:    &TypeMismatchError{},
 		},
 		{
-			obj:    &TestObject{Str: "111"},
-			filter: "str ~ '11[1'",
+			obj:    &TestObject{Str: "333"},
+			filter: "str ~ '33[3'",
 			err:    &syntax.Error{},
 		},
 	}
 
 	for _, test := range tests {
-		res, err := Filter(test.obj, test.filter)
-		assert.False(t, res)
-		assert.IsType(t, test.err, err)
+		t.Run(test.obj.(fmt.Stringer).String(), func(t *testing.T) {
+			res, err := Filter(test.obj, test.filter)
+			assert.False(t, res)
+			assert.IsType(t, test.err, err)
+		})
 	}
 
 }
