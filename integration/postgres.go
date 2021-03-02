@@ -87,7 +87,7 @@ func (db PostgresDB) Reset() error {
 func (db PostgresDB) RunAsDockerContainer() (func() error, error) {
 	cleanup, err := RunContainer(
 		// define the postgres image version
-		fmt.Sprintf("postgres:%s", db.dbVersion),
+		fmt.Sprintf("quay.io/coreos/postgres:%s", db.dbVersion),
 		// define the arguments to docker
 		[]string{
 			fmt.Sprintf("--publish=%d:5432", db.port),
