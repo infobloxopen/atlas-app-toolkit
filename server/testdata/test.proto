@@ -3,9 +3,14 @@ package server;
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/server/testdata;server_test";
 
 import "google/api/annotations.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
 
 message HelloRequest {
     string name = 1;
+    infoblox.api.Filtering filter = 2;
+    infoblox.api.Sorting order_by = 3;
+    infoblox.api.FieldSelection fields = 4;
+    infoblox.api.Pagination paging = 5;
 }
 
 message HelloResponse {

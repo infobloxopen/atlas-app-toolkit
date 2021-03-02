@@ -72,7 +72,6 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 	case *query.LogicalOperator_LeftStringArrayCondition:
 		lres, largs, lAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj)
 	default:
-		panic("boom")
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
 	if err != nil {
