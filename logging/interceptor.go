@@ -218,6 +218,11 @@ func addAccountIDField(ctx context.Context, fields logrus.Fields) error {
 func addCustomField(ctx context.Context, fields logrus.Fields, customField string) error {
 	field, err := auth.GetJWTField(ctx, customField, nil)
 	if err != nil {
+		if customField == DefaultSubjectKey {
+			// non client token does not have subject ingore
+			return nil
+		}
+
 		return fmt.Errorf("Unable to get custom %q field from context", customField)
 	}
 

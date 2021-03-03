@@ -431,6 +431,22 @@ func TestAddCustomField_Failed(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("Unable to get custom %q field from context", "test"), err.Error())
 }
 
+func TestAddCustomField_WithS2SToken(t *testing.T) {
+	withSingleSubject := `Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYWxsIiwic3ViamVjdCI6eyJpZCI6InNlcnZpY2UuYWxsLjEwMDAwMDAwIiwic3ViamVjdF90eXBlIjoiIiwiYXV0aGVudGljYXRpb25fdHlwZSI6IiJ9LCJhdWQiOiJpYi1zdGsiLCJleHAiOjE2MzQ3MDAwMDAwLCJqdGkiOiJzZXJ2aWNlLmFsbC4xMDAwMDAwMCIsImlhdCI6MTYwMzEwMDAwMDAsImlzcyI6Inh4eHh4LWF1dGhuLXN2YyIsIm5iZiI6MTYwMzE2NjUwN30.e2BI0x6EFONKT7Kqcsro9BHFtu0QA1BOcWB0SjiDl5D3UDg5WOd--xk6liwubVk-aZGYQLpnqqaM87pVIhS5tQ`
+
+	md := metautils.NiceMD{}.Set(testAuthorizationHeader, withSingleSubject)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(md))
+
+	result := logrus.Fields{}
+	// should ignore svc token if DefaultSubjectKey is requested
+	err := addCustomField(ctx, result, DefaultSubjectKey)
+	assert.NoError(t, err)
+
+	// should return an error if other key is requested
+	err = addCustomField(ctx, result, "other_key")
+	assert.Error(t, err)
+}
+
 func TestAddHeaderField(t *testing.T) {
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD(testMD))
 
