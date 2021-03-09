@@ -1,4 +1,4 @@
-import Makefile.buf
+include Makefile.buf
 
 # Absolute github repository name.
 REPO := github.com/infobloxopen/atlas-app-toolkit
