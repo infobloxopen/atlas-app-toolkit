@@ -8,7 +8,8 @@ PROJECT_ROOT = $(CURDIR)
 # https://github.com/infobloxopen/atlas-gentool
 GENTOOL_IMAGE   := infoblox/docker-protobuf:latest
 GENTOOL_OPTIONS := --rm -w /go/$(REPO) -v $(shell pwd):/go/$(REPO)
-GENTOOL_FLAGS   := -I. -Ivendor \
+GENTOOL_FLAGS   := -I. \
+	-Ithird-party \
 	-Ivendor/github.com/grpc-ecosystem/grpc-gateway/v2 \
 	--go_out=Mgoogle/protobuf/descriptor.proto=github.com/protocolbuffers/protobuf-go/types/descriptorpb,Mprotoc-gen-openapiv2/options/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options:/go
 GATEWAY_FLAGS := --grpc-gateway_out=logtostderr=true:/go
