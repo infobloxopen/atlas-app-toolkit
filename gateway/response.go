@@ -69,7 +69,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	handleForwardResponseServerMetadata(fw.OutgoingHeaderMatcher, rw, md)
 	handleForwardResponseTrailerHeader(rw, md)
 
-	rw.Header().Set("Content-Type", marshaler.ContentType())
+	rw.Header().Set("Content-Type", marshaler.ContentType(resp))
 
 	if err := handleForwardResponseOptions(ctx, rw, resp, opts); err != nil {
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
@@ -158,7 +158,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	handleForwardResponseServerMetadata(fw.OutgoingHeaderMatcher, rw, md)
 
 	rw.Header().Set("Transfer-Encoding", "chunked")
-	rw.Header().Set("Content-Type", marshaler.ContentType())
+	rw.Header().Set("Content-Type", marshaler.ContentType(nil))
 
 	if err := handleForwardResponseOptions(ctx, rw, nil, opts); err != nil {
 		fw.StreamErrHandler(ctx, false, mux, marshaler, rw, req, err)

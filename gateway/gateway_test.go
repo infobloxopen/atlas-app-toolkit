@@ -92,10 +92,10 @@ func TestSorting(t *testing.T) {
 			t.Fatalf("invalid number of sort criterias: %d - expected: 2", len(s.GetCriterias()))
 		}
 		if c := s.GetCriterias(); c[0].GoString() != "name ASC" || c[0].Tag != "name" || c[0].Order != query.SortCriteria_ASC {
-			t.Errorf("invalid sort criteria: %v - expected: %v", c[0], query.SortCriteria{"name", query.SortCriteria_ASC})
+			t.Errorf("invalid sort criteria: %v - expected: %v", c[0], query.SortCriteria{Tag: "name", Order: query.SortCriteria_ASC})
 		}
 		if c := s.GetCriterias(); c[1].GoString() != "age DESC" || c[1].Tag != "age" || c[1].Order != query.SortCriteria_DESC {
-			t.Errorf("invalid sort criteria: %v - expected: %v", c[1], query.SortCriteria{"age", query.SortCriteria_DESC})
+			t.Errorf("invalid sort criteria: %v - expected: %v", c[1], query.SortCriteria{Tag: "age", Order: query.SortCriteria_DESC})
 		}
 		return nil
 	}

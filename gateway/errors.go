@@ -139,7 +139,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	}
 	if !headerWritten {
 		rw.Header().Del("Trailer")
-		rw.Header().Set("Content-Type", marshaler.ContentType())
+		rw.Header().Set("Content-Type", marshaler.ContentType(restResp))
 		rw.WriteHeader(statusCode)
 	}
 
