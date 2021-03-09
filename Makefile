@@ -11,6 +11,7 @@ GENTOOL_OPTIONS := --rm -w /go/$(REPO) -v $(shell pwd):/go/$(REPO)
 GENTOOL_FLAGS   := -I. -Ivendor \
 	-Ivendor/github.com/grpc-ecosystem/grpc-gateway/v2 \
 	--go_out=Mgoogle/protobuf/descriptor.proto=github.com/protocolbuffers/protobuf-go/types/descriptorpb,Mprotoc-gen-openapiv2/options/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options:/go
+GATEWAY_FLAGS := --grpc-gateway_out=logtostderr=true:/go
 
 GENERATOR := docker run $(GENTOOL_OPTIONS) $(GENTOOL_IMAGE) $(GENTOOL_FLAGS)
 
@@ -46,7 +47,7 @@ rpc/resource/resource.pb.go: rpc/resource/resource.proto
 		rpc/resource/resource.proto
 
 server/testdata/test.pb.go: server/testdata/test.proto
-	$(GENERATOR) \
+	$(GENERATOR) $(GATEWAY_FLAGS) \
 		server/testdata/test.proto
 
 .PHONY: gen
