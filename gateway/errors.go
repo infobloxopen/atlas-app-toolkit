@@ -20,9 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.
@@ -104,9 +102,9 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 
 	for _, d := range st.Details() {
 		switch d.(type) {
-		case *errdetails.TargetInfo:
+		case *atlasrpc.TargetInfo:
 			details = append(details, d)
-		case *errfields.FieldInfo:
+		case *atlasrpc.FieldInfo:
 			fields = d
 		default:
 			grpclog.Infof("error handler: failed to recognize error message")
