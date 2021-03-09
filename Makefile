@@ -35,13 +35,11 @@ query/collection_operators.pb.go: query/collection_operators.proto
 	$(GENERATOR) \
 		query/collection_operators.proto
 
-rpc/errdetails/error_details.pb.go: rpc/errdetails/error_details.proto
-	$(GENERATOR) \
-		rpc/errdetails/error_details.proto
+atlas/atlasrpc/error_details.pb.go: atlas/atlasrpc/error_details.proto
+	$(GENERATOR) $<
 
-rpc/errfields/error_fields.pb.go: rpc/errfields/error_fields.proto
-	$(GENERATOR) \
-		rpc/errfields/error_fields.proto
+atlas/atlasrpc/error_fields.pb.go: atlas/atlasrpc/error_fields.proto
+	$(GENERATOR) $<
 
 rpc/resource/resource.pb.go: rpc/resource/resource.proto
 	$(GENERATOR) \

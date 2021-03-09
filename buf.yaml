@@ -2,10 +2,8 @@
 version: v1beta1
 build:
   roots:
-    - query
-    - rpc
+    - atlas
     - third-party
-    - server
     - vendor/github.com/grpc-ecosystem/grpc-gateway/v2
 lint:
   use:

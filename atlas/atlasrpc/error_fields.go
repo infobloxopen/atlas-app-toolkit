@@ -1,4 +1,4 @@
-package errfields
+package atlasrpc
 
 import (
 	"encoding/json"
