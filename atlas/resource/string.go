@@ -1,6 +1,8 @@
 package resource
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	// Delimiter of Resource Reference according to Atlas Reference format

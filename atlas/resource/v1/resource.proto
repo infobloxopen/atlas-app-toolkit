@@ -15,7 +15,8 @@ message Identifier {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {
             type: STRING;
-            description: "atlas.api.identifier";
+            // TODO: update to correct name atlas.resource.v1.Identifier
+            description: "atlas.rpc.Identifier";
         };
     };
 

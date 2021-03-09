@@ -1,6 +1,11 @@
 package resource
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/golang/protobuf/proto"
+)
 
 func TestParseString(t *testing.T) {
 	tcases := []struct {
@@ -125,9 +130,11 @@ func TestMarshalText(t *testing.T) {
 		},
 	}
 
-	for n, tc := range tcases {
-		if v := tc.Identifier.String(); v != tc.ExpectedText {
-			t.Errorf("tc %d: invalid text value %s, expected %s", n, v, tc.ExpectedText)
-		}
+	for _, tc := range tcases {
+		t.Run(fmt.Sprintf("%+v", tc.Identifier), func(t *testing.T) {
+			if v := proto.MarshalTextString(tc.Identifier); v != tc.ExpectedText {
+				t.Errorf("got: %s wanted: %s", v, tc.ExpectedText)
+			}
+		})
 	}
 }
