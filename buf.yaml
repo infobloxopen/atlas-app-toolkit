@@ -5,9 +5,13 @@ build:
     - atlas
     - third-party
     - vendor/github.com/grpc-ecosystem/grpc-gateway/v2
+    - server
 lint:
   use:
     - DEFAULT
   ignore:
     - protoc-gen-openapiv2
     - google
+  ignore_only:
+    PACKAGE_VERSION_SUFFIX:
+      - testdata

@@ -1,4 +1,4 @@
-package server_test
+package testdata
 
 import (
 	"fmt"
@@ -8,6 +8,6 @@ import (
 
 type HelloServerImpl struct{}
 
-func (HelloServerImpl) SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {
-	return &HelloResponse{Greeting: fmt.Sprintf("hello, %s!", req.GetName())}, nil
+func (HelloServerImpl) SayHello(ctx context.Context, req *SayHelloRequest) (*SayHelloResponse, error) {
+	return &SayHelloResponse{Greeting: fmt.Sprintf("hello, %s!", req.GetName())}, nil
 }

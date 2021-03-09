@@ -40,13 +40,13 @@ query/collection_operators.pb.go: query/collection_operators.proto
 	$(GENERATOR) \
 		query/collection_operators.proto
 
-atlas/atlasrpc/error_details.pb.go: atlas/atlasrpc/v1/error_details.proto
+atlas/atlasrpc/error_details.pb.go: proto/atlas/atlasrpc/v1/error_details.proto
 	$(GENERATOR) $<
 
-atlas/atlasrpc/error_fields.pb.go: atlas/atlasrpc/v1/error_fields.proto
+atlas/atlasrpc/error_fields.pb.go: proto/atlas/atlasrpc/v1/error_fields.proto
 	$(GENERATOR) $<
 
-atlas/resource/resource.pb.go: atlas/resource/v1/resource.proto
+atlas/resource/resource.pb.go: proto/atlas/resource/v1/resource.proto
 	$(GENERATOR) $<
 
 server/testdata/test.pb.go: server/testdata/test.proto
