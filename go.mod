@@ -32,5 +32,3 @@ require (
 	google.golang.org/protobuf v1.25.1-0.20201208041424-160c7477e0e8
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200225123651-fc8f55426688

@@ -10,8 +10,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 // DefaultFilteringConditionProcessor processes filter operator conversion

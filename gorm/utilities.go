@@ -6,16 +6,14 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/resource"
 	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jinzhu/inflection"
-
-	"time"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
 )
 
 // HandleFieldPath converts fieldPath to appropriate db string for use in where/order by clauses
