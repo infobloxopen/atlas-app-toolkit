@@ -46,9 +46,8 @@ atlas/atlasrpc/error_details.pb.go: atlas/atlasrpc/v1/error_details.proto
 atlas/atlasrpc/error_fields.pb.go: atlas/atlasrpc/v1/error_fields.proto
 	$(GENERATOR) $<
 
-rpc/resource/resource.pb.go: rpc/resource/resource.proto
-	$(GENERATOR) \
-		rpc/resource/resource.proto
+atlas/resource/resource.pb.go: atlas/resource/v1/resource.proto
+	$(GENERATOR) $<
 
 server/testdata/test.pb.go: server/testdata/test.proto
 	$(GENERATOR) $(GATEWAY_FLAGS) \
