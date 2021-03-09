@@ -6,10 +6,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 	"google.golang.org/grpc/codes"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
 )
 
 func initCtx() context.Context {
@@ -38,8 +36,8 @@ func TestContextDetail(t *testing.T) {
 
 	checkContainer(t, Detail(ctx, codes.InvalidArgument, "target", "<detail %d>", 1),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<detail 1>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<detail 1>")},
 			fields:     nil,
 			errCode:    codes.Unknown,
 			errMessage: "Unknown",
@@ -51,9 +49,9 @@ func TestContextDetail(t *testing.T) {
 
 	checkContainer(t, Detail(ctx, codes.AlreadyExists, "target", "<detail 2>"),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<detail 1>"),
-				errdetails.Newf(codes.AlreadyExists, "target", "<detail 2>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<detail 1>"),
+				atlasrpc.Newf(codes.AlreadyExists, "target", "<detail 2>")},
 			fields:     nil,
 			errCode:    codes.Unknown,
 			errMessage: "Unknown",
@@ -68,13 +66,13 @@ func TestContextDetails(t *testing.T) {
 	checkContainer(t,
 		Details(
 			ctx,
-			errdetails.Newf(codes.InvalidArgument, "target", "<detail 1>"),
-			errdetails.Newf(codes.AlreadyExists, "target", "<detail 2>"),
+			atlasrpc.Newf(codes.InvalidArgument, "target", "<detail 1>"),
+			atlasrpc.Newf(codes.AlreadyExists, "target", "<detail 2>"),
 		),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<detail 1>"),
-				errdetails.Newf(codes.AlreadyExists, "target", "<detail 2>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<detail 1>"),
+				atlasrpc.Newf(codes.AlreadyExists, "target", "<detail 2>")},
 			fields:     nil,
 			errCode:    codes.Unknown,
 			errMessage: "Unknown",
@@ -92,9 +90,9 @@ func TestContextField(t *testing.T) {
 		Field(ctx, "target", "<field %d>", 1),
 		&Container{
 			details: nil,
-			fields: &errfields.FieldInfo{
-				Fields: map[string]*errfields.StringListValue{
-					"target": &errfields.StringListValue{
+			fields: &atlasrpc.FieldInfo{
+				Fields: map[string]*atlasrpc.StringListValue{
+					"target": &atlasrpc.StringListValue{
 						Values: []string{"<field 1>"},
 					},
 				},
@@ -111,9 +109,9 @@ func TestContextField(t *testing.T) {
 		Field(ctx, "target", "<field 2>"),
 		&Container{
 			details: nil,
-			fields: &errfields.FieldInfo{
-				Fields: map[string]*errfields.StringListValue{
-					"target": &errfields.StringListValue{
+			fields: &atlasrpc.FieldInfo{
+				Fields: map[string]*atlasrpc.StringListValue{
+					"target": &atlasrpc.StringListValue{
 						Values: []string{"<field 1>", "<field 2>"},
 					},
 				},
@@ -135,9 +133,9 @@ func TestContextFields(t *testing.T) {
 		Fields(ctx, map[string][]string{"target": []string{"<field 1>"}}),
 		&Container{
 			details: nil,
-			fields: &errfields.FieldInfo{
-				Fields: map[string]*errfields.StringListValue{
-					"target": &errfields.StringListValue{
+			fields: &atlasrpc.FieldInfo{
+				Fields: map[string]*atlasrpc.StringListValue{
+					"target": &atlasrpc.StringListValue{
 						Values: []string{"<field 1>"},
 					},
 				},
@@ -154,12 +152,12 @@ func TestContextFields(t *testing.T) {
 		Fields(ctx, map[string][]string{"target": []string{"<field 2>"}, "target2": []string{"<field 3>"}}),
 		&Container{
 			details: nil,
-			fields: &errfields.FieldInfo{
-				Fields: map[string]*errfields.StringListValue{
-					"target": &errfields.StringListValue{
+			fields: &atlasrpc.FieldInfo{
+				Fields: map[string]*atlasrpc.StringListValue{
+					"target": &atlasrpc.StringListValue{
 						Values: []string{"<field 1>", "<field 2>"},
 					},
-					"target2": &errfields.StringListValue{
+					"target2": &atlasrpc.StringListValue{
 						Values: []string{"<field 3>"},
 					},
 				},
@@ -185,8 +183,8 @@ func TestContextSet(t *testing.T) {
 	checkContainer(t,
 		Set(ctx, "target", codes.InvalidArgument, "<error %d>", 1),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<error 1>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<error 1>")},
 			fields:     nil,
 			errCode:    codes.InvalidArgument,
 			errMessage: "<error 1>",
@@ -199,8 +197,8 @@ func TestContextSet(t *testing.T) {
 	checkContainer(t,
 		IfSet(ctx, codes.InvalidArgument, "<general error %d>", 1).(*Container),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<error 1>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<error 1>")},
 			fields:     nil,
 			errCode:    codes.InvalidArgument,
 			errMessage: "<general error 1>",
@@ -222,8 +220,8 @@ func TestContextError(t *testing.T) {
 		t,
 		Error(ctx).(*Container),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<error 1>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<error 1>")},
 			fields:     nil,
 			errCode:    codes.Unknown,
 			errMessage: "Unknown",
@@ -246,8 +244,8 @@ func TestContextNew(t *testing.T) {
 	checkContainer(t,
 		Set(ctx, "target", codes.InvalidArgument, "<error %d>", 1),
 		&Container{
-			details: []*errdetails.TargetInfo{
-				errdetails.Newf(codes.InvalidArgument, "target", "<error 1>")},
+			details: []*atlasrpc.TargetInfo{
+				atlasrpc.Newf(codes.InvalidArgument, "target", "<error 1>")},
 			fields:     nil,
 			errCode:    codes.InvalidArgument,
 			errMessage: "<error 1>",

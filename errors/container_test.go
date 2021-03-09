@@ -4,10 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 	"google.golang.org/grpc/codes"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
 )
 
 var UnexpectedValue = "Unexpected %q value: expected %v, got %v"
@@ -75,8 +73,8 @@ func TestSet(t *testing.T) {
 	c = c.Set("test:object", codes.InvalidArgument, "<invalid arg error %d>", 1)
 
 	checkContainer(t, c, &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1)},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1)},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<invalid arg error 1>",
@@ -95,9 +93,9 @@ func TestSet(t *testing.T) {
 	c = c.Set("test:object2", codes.AlreadyExists, "<already exists error>")
 
 	checkContainer(t, c, &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
-			errdetails.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
+			atlasrpc.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
 		fields:     nil,
 		errCode:    codes.AlreadyExists,
 		errMessage: "<already exists error>",
@@ -107,9 +105,9 @@ func TestSet(t *testing.T) {
 	// Check that ifset overwrites errCode and errMessage.
 
 	checkContainer(t, c.IfSet(codes.InvalidArgument, "<general error>").(*Container), &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
-			errdetails.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "test:object", "<invalid arg error %d>", 1),
+			atlasrpc.Newf(codes.AlreadyExists, "test:object2", "<already exists error>")},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<general error>",
@@ -185,8 +183,8 @@ func TestWithDetail(t *testing.T) {
 		WithDetail(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)
 
 	checkContainer(t, c, &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1)},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
@@ -198,9 +196,9 @@ func TestWithDetail(t *testing.T) {
 	c.WithDetail(codes.InvalidArgument, "target2", "<specific invalid arg err %d>", 2)
 
 	checkContainer(t, c, &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1),
-			errdetails.Newf(codes.InvalidArgument, "target2", "<specific invalid arg err %d>", 2)},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "target", "<specific invalid arg err %d>", 1),
+			atlasrpc.Newf(codes.InvalidArgument, "target2", "<specific invalid arg err %d>", 2)},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
@@ -233,14 +231,14 @@ func TestWithDetails(t *testing.T) {
 	// Append multiple details.
 
 	c.WithDetails(
-		errdetails.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
-		errdetails.Newf(codes.AlreadyExists, "target4", "<already exists err 2>"),
+		atlasrpc.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
+		atlasrpc.Newf(codes.AlreadyExists, "target4", "<already exists err 2>"),
 	)
 
 	checkContainer(t, c, &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
-			errdetails.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
+			atlasrpc.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<general arg err 1>",
@@ -250,9 +248,9 @@ func TestWithDetails(t *testing.T) {
 	// Check that ifset overwrites errCode and errMessage.
 
 	checkContainer(t, c.IfSet(codes.InvalidArgument, "<general error>").(*Container), &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
-			errdetails.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.AlreadyExists, "target3", "<already exists err>"),
+			atlasrpc.Newf(codes.AlreadyExists, "target4", "<already exists err 2>")},
 		fields:     nil,
 		errCode:    codes.InvalidArgument,
 		errMessage: "<general error>",
@@ -270,9 +268,9 @@ func TestWithField(t *testing.T) {
 
 	checkContainer(t, c, &Container{
 		details: nil,
-		fields: &errfields.FieldInfo{
-			Fields: map[string]*errfields.StringListValue{
-				"field_x": &errfields.StringListValue{
+		fields: &atlasrpc.FieldInfo{
+			Fields: map[string]*atlasrpc.StringListValue{
+				"field_x": &atlasrpc.StringListValue{
 					Values: []string{"field error description"},
 				},
 			},
@@ -295,15 +293,15 @@ func TestWithField(t *testing.T) {
 
 	checkContainer(t, c, &Container{
 		details: nil,
-		fields: &errfields.FieldInfo{
-			Fields: map[string]*errfields.StringListValue{
-				"field_x": &errfields.StringListValue{
+		fields: &atlasrpc.FieldInfo{
+			Fields: map[string]*atlasrpc.StringListValue{
+				"field_x": &atlasrpc.StringListValue{
 					Values: []string{
 						"field error description",
 						"field error description 2",
 					},
 				},
-				"field_y": &errfields.StringListValue{
+				"field_y": &atlasrpc.StringListValue{
 					Values: []string{
 						"field error 2",
 					},
@@ -356,9 +354,9 @@ func TestWithFields(t *testing.T) {
 
 	checkContainer(t, c, &Container{
 		details: nil,
-		fields: &errfields.FieldInfo{
-			Fields: map[string]*errfields.StringListValue{
-				"field_x": &errfields.StringListValue{
+		fields: &atlasrpc.FieldInfo{
+			Fields: map[string]*atlasrpc.StringListValue{
+				"field_x": &atlasrpc.StringListValue{
 					Values: []string{"field error description"},
 				},
 			},
@@ -377,15 +375,15 @@ func TestWithFields(t *testing.T) {
 
 	checkContainer(t, c, &Container{
 		details: nil,
-		fields: &errfields.FieldInfo{
-			Fields: map[string]*errfields.StringListValue{
-				"field_x": &errfields.StringListValue{
+		fields: &atlasrpc.FieldInfo{
+			Fields: map[string]*atlasrpc.StringListValue{
+				"field_x": &atlasrpc.StringListValue{
 					Values: []string{
 						"field error description",
 						"field error description 2",
 					},
 				},
-				"field_y": &errfields.StringListValue{
+				"field_y": &atlasrpc.StringListValue{
 					Values: []string{
 						"field error 2",
 					},
@@ -404,11 +402,11 @@ func TestWithFields(t *testing.T) {
 
 func TestErrorReturn(t *testing.T) {
 	checkContainer(t, testErrFunc().(*Container), &Container{
-		details: []*errdetails.TargetInfo{
-			errdetails.Newf(codes.InvalidArgument, "target", "<specific invalid arg err 1>")},
-		fields: &errfields.FieldInfo{
-			Fields: map[string]*errfields.StringListValue{
-				"foo": &errfields.StringListValue{
+		details: []*atlasrpc.TargetInfo{
+			atlasrpc.Newf(codes.InvalidArgument, "target", "<specific invalid arg err 1>")},
+		fields: &atlasrpc.FieldInfo{
+			Fields: map[string]*atlasrpc.StringListValue{
+				"foo": &atlasrpc.StringListValue{
 					Values: []string{"bar"},
 				},
 			},
