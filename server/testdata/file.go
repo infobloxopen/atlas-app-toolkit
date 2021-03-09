@@ -1,5 +1,5 @@
 // Adapted from https://github.com/coredns/coredns
-package server_test
+package testdata
 
 import (
 	"io/ioutil"

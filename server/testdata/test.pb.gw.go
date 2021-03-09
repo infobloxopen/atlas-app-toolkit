@@ -2,11 +2,11 @@
 // source: server/testdata/test.proto
 
 /*
-Package server_test is a reverse proxy.
+Package testdata is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package server_test
+package testdata
 
 import (
 	"context"
@@ -32,17 +32,17 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_Hello_SayHello_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_HelloService_SayHello_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Hello_SayHello_0(ctx context.Context, marshaler runtime.Marshaler, client HelloClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq HelloRequest
+func request_HelloService_SayHello_0(ctx context.Context, marshaler runtime.Marshaler, client HelloServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq SayHelloRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Hello_SayHello_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelloService_SayHello_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -51,14 +51,14 @@ func request_Hello_SayHello_0(ctx context.Context, marshaler runtime.Marshaler, 
 
 }
 
-func local_request_Hello_SayHello_0(ctx context.Context, marshaler runtime.Marshaler, server HelloServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq HelloRequest
+func local_request_HelloService_SayHello_0(ctx context.Context, marshaler runtime.Marshaler, server HelloServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq SayHelloRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Hello_SayHello_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelloService_SayHello_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -67,24 +67,24 @@ func local_request_Hello_SayHello_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-// RegisterHelloHandlerServer registers the http handlers for service Hello to "mux".
-// UnaryRPC     :call HelloServer directly.
+// RegisterHelloServiceHandlerServer registers the http handlers for service HelloService to "mux".
+// UnaryRPC     :call HelloServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterHelloHandlerFromEndpoint instead.
-func RegisterHelloHandlerServer(ctx context.Context, mux *runtime.ServeMux, server HelloServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterHelloServiceHandlerFromEndpoint instead.
+func RegisterHelloServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server HelloServiceServer) error {
 
-	mux.Handle("GET", pattern_Hello_SayHello_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_HelloService_SayHello_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/server.Hello/SayHello")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/testdata.HelloService/SayHello")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Hello_SayHello_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelloService_SayHello_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -92,16 +92,16 @@ func RegisterHelloHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Hello_SayHello_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HelloService_SayHello_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterHelloHandlerFromEndpoint is same as RegisterHelloHandler but
+// RegisterHelloServiceHandlerFromEndpoint is same as RegisterHelloServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterHelloHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterHelloServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -121,39 +121,39 @@ func RegisterHelloHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux
 		}()
 	}()
 
-	return RegisterHelloHandler(ctx, mux, conn)
+	return RegisterHelloServiceHandler(ctx, mux, conn)
 }
 
-// RegisterHelloHandler registers the http handlers for service Hello to "mux".
+// RegisterHelloServiceHandler registers the http handlers for service HelloService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterHelloHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterHelloHandlerClient(ctx, mux, NewHelloClient(conn))
+func RegisterHelloServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterHelloServiceHandlerClient(ctx, mux, NewHelloServiceClient(conn))
 }
 
-// RegisterHelloHandlerClient registers the http handlers for service Hello
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "HelloClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "HelloClient"
+// RegisterHelloServiceHandlerClient registers the http handlers for service HelloService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "HelloServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "HelloServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "HelloClient" to call the correct interceptors.
-func RegisterHelloHandlerClient(ctx context.Context, mux *runtime.ServeMux, client HelloClient) error {
+// "HelloServiceClient" to call the correct interceptors.
+func RegisterHelloServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client HelloServiceClient) error {
 
-	mux.Handle("GET", pattern_Hello_SayHello_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_HelloService_SayHello_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/server.Hello/SayHello")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/testdata.HelloService/SayHello")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Hello_SayHello_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelloService_SayHello_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Hello_SayHello_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HelloService_SayHello_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -161,9 +161,9 @@ func RegisterHelloHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Hello_SayHello_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"hello"}, ""))
+	pattern_HelloService_SayHello_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"hello"}, ""))
 )
 
 var (
-	forward_Hello_SayHello_0 = runtime.ForwardResponseMessage
+	forward_HelloService_SayHello_0 = runtime.ForwardResponseMessage
 )
