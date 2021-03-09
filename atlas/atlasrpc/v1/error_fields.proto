@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package atlasrpc;
+package atlasrpc.v1;
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc;atlasrpc";
 

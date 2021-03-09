@@ -1,3 +1,5 @@
+import Makefile.buf
+
 # Absolute github repository name.
 REPO := github.com/infobloxopen/atlas-app-toolkit
 
@@ -20,8 +22,11 @@ GENERATOR := docker run $(GENTOOL_OPTIONS) $(GENTOOL_IMAGE) $(GENTOOL_FLAGS)
 .PHONY: default
 default: test
 
-test: check-fmt vendor
+test: check-fmt lint vendor
 	go test -cover ./...
+
+lint: $(BUF)
+	buf lint
 
 .PHONY: vendor
 vendor:
@@ -35,10 +40,10 @@ query/collection_operators.pb.go: query/collection_operators.proto
 	$(GENERATOR) \
 		query/collection_operators.proto
 
-atlas/atlasrpc/error_details.pb.go: atlas/atlasrpc/error_details.proto
+atlas/atlasrpc/error_details.pb.go: atlas/atlasrpc/v1/error_details.proto
 	$(GENERATOR) $<
 
-atlas/atlasrpc/error_fields.pb.go: atlas/atlasrpc/error_fields.proto
+atlas/atlasrpc/error_fields.pb.go: atlas/atlasrpc/v1/error_fields.proto
 	$(GENERATOR) $<
 
 rpc/resource/resource.pb.go: rpc/resource/resource.proto
