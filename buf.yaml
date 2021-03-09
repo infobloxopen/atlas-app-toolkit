@@ -1,0 +1,15 @@
+# https://docs.buf.build/lint-usage/
+version: v1beta1
+build:
+  roots:
+    - query
+    - rpc
+    - third-party
+    - server
+    - vendor/github.com/grpc-ecosystem/grpc-gateway/v2
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - protoc-gen-openapiv2
+    - google
