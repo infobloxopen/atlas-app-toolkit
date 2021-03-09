@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/golang/protobuf/protoc-gen-go/generator"
 	"github.com/jinzhu/gorm"
 
+	"github.com/infobloxopen/atlas-app-toolkit/internal/casing"
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 )
 
@@ -76,14 +76,14 @@ fields:
 }
 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
-	sf, ok := objType.FieldByName(generator.CamelCase(f.GetName()))
+	sf, ok := objType.FieldByName(casing.CamelCase(f.GetName()))
 	if !ok {
 		return nil, nil
 	}
 	fType := indirectType(sf.Type)
 	if f.GetSubs() == nil {
 		if isModel(fType) {
-			return []string{generator.CamelCase(f.GetName())}, nil
+			return []string{casing.CamelCase(f.GetName())}, nil
 		} else {
 			return nil, nil
 		}
@@ -100,11 +100,11 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 			return nil, err
 		}
 		for i, e := range subPreload {
-			subPreload[i] = generator.CamelCase(f.GetName()) + "." + e
+			subPreload[i] = casing.CamelCase(f.GetName()) + "." + e
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	return append(toPreload, generator.CamelCase(f.GetName())), nil
+	return append(toPreload, casing.CamelCase(f.GetName())), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {

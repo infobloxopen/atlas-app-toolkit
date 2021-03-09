@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	resourcepb "github.com/infobloxopen/atlas-app-toolkit/atlasrpc/resource"
+	resourcepb "github.com/infobloxopen/atlas-app-toolkit/atlas/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
