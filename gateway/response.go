@@ -27,7 +27,7 @@ type (
 // for format of JSON response.
 type ResponseForwarder struct {
 	OutgoingHeaderMatcher runtime.HeaderMatcherFunc
-	MessageErrHandler     runtime.ProtoErrorHandlerFunc
+	MessageErrHandler     runtime.ErrorHandlerFunc
 	StreamErrHandler      ProtoStreamErrorHandlerFunc
 }
 
@@ -47,13 +47,13 @@ func IncludeStatusDetails(withDetails bool) {
 }
 
 // NewForwardResponseMessage returns ForwardResponseMessageFunc
-func NewForwardResponseMessage(out runtime.HeaderMatcherFunc, meh runtime.ProtoErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseMessageFunc {
+func NewForwardResponseMessage(out runtime.HeaderMatcherFunc, meh runtime.ErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseMessageFunc {
 	fw := &ResponseForwarder{out, meh, seh}
 	return fw.ForwardMessage
 }
 
 // NewForwardResponseStream returns ForwardResponseStreamFunc
-func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ProtoErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseStreamFunc {
+func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseStreamFunc {
 	fw := &ResponseForwarder{out, meh, seh}
 	return fw.ForwardStream
 }

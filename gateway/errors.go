@@ -41,7 +41,7 @@ var (
 )
 
 // NewProtoMessageErrorHandler returns runtime.ProtoErrorHandlerFunc
-func NewProtoMessageErrorHandler(out runtime.HeaderMatcherFunc) runtime.ProtoErrorHandlerFunc {
+func NewProtoMessageErrorHandler(out runtime.HeaderMatcherFunc) runtime.ErrorHandlerFunc {
 	h := &ProtoErrorHandler{out}
 	return h.MessageHandler
 }
