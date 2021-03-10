@@ -38,9 +38,9 @@ jobs:
       - name: Build
         timeout-minutes: 2
         run: |
+          make vendor
           make gen
           make check-fmt
-          make vendor
           git diff --exit-code
       - name: Test
         timeout-minutes: 2

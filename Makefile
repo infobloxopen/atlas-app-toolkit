@@ -53,7 +53,7 @@ server/testdata/test.pb.go: server/testdata/test.proto
 	$(GENERATOR) $(GATEWAY_FLAGS) $<
 
 .PHONY: gen
-gen: query/collection_operators.pb.go rpc/errdetails/error_details.pb.go rpc/errfields/error_fields.pb.go server/testdata/test.pb.go
+gen: atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_fields.pb.go atlas/resource/resource.pb.go server/testdata/test.pb.go
 
 bufgen: $(BUF)
 	buf generate
