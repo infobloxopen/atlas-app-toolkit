@@ -39,7 +39,7 @@ jobs:
         timeout-minutes: 2
         run: |
           make vendor
-          make gen
+          make tools bufgen
           make check-fmt
           git diff --exit-code
       - name: Test

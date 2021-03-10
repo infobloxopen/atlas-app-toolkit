@@ -55,6 +55,15 @@ server/testdata/test.pb.go: server/testdata/test.proto
 .PHONY: gen
 gen: atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_fields.pb.go atlas/resource/resource.pb.go server/testdata/test.pb.go
 
+# https://github.com/grpc-ecosystem/grpc-gateway/blob/1e4416e32e0f26aacc40397d17215772478c093e/README.md#installation
+.PHONY: tools
+tools:
+	go install \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+	    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+	    google.golang.org/protobuf/cmd/protoc-gen-go \
+	    google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
 bufgen: $(BUF)
 	buf generate
 
