@@ -183,12 +183,12 @@ func TestWithGateway(t *testing.T) {
 	}
 
 	gs := grpc.NewServer()
-	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
+	server_test.RegisterGreeterServiceServer(gs, &server_test.HelloServerImpl{})
 
 	s, err := NewServer(
 		WithGrpcServer(gs),
 		WithGateway(
-			gateway.WithEndpointRegistration("/v1/", server_test.RegisterHelloHandlerFromEndpoint),
+			gateway.WithEndpointRegistration("/v1/", server_test.RegisterGreeterServiceHandlerFromEndpoint),
 			gateway.WithServerAddress(grpcL.Addr().String()),
 		),
 	)
@@ -249,7 +249,7 @@ func TestWithInitializer(t *testing.T) {
 
 func TestWithGrpcServer(t *testing.T) {
 	gs := grpc.NewServer()
-	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
+	server_test.RegisterGreeterServiceServer(gs, &server_test.HelloServerImpl{})
 
 	gURL, _, cleanup := buildTestServer(t, WithGrpcServer(gs))
 	defer cleanup()
@@ -260,8 +260,8 @@ func TestWithGrpcServer(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := server_test.NewHelloClient(conn)
-	resp, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"})
+	client := server_test.NewGreeterServiceClient(conn)
+	resp, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func TestOnlyGrpcServer(t *testing.T) {
 	}
 
 	gs := grpc.NewServer()
-	server_test.RegisterHelloServer(gs, &server_test.HelloServerImpl{})
+	server_test.RegisterGreeterServiceServer(gs, &server_test.HelloServerImpl{})
 
 	s, err := NewServer(WithGrpcServer(gs))
 
@@ -289,8 +289,8 @@ func TestOnlyGrpcServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer conn.Close()
-	client := server_test.NewHelloClient(conn)
-	resp, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"})
+	client := server_test.NewGreeterServiceClient(conn)
+	resp, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -379,7 +379,7 @@ func TestServe(t *testing.T) {
 			t.Fatal(err)
 		}
 		grpcServer := grpc.NewServer()
-		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		server_test.RegisterGreeterServiceServer(grpcServer, &server_test.HelloServerImpl{})
 		s, err := NewServer(WithGrpcServer(grpcServer))
 		if err != nil {
 			t.Fatal(err)
@@ -392,13 +392,13 @@ func TestServe(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		client := server_test.NewHelloClient(conn)
-		if _, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"}); err != nil {
+		client := server_test.NewGreeterServiceClient(conn)
+		if _, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"}); err != nil {
 			t.Fatalf("expected no error, but got %v", err)
 		}
 		// now if we kill the HTTP server, the gRPC server should close, too
 		s.HTTPServer.Close()
-		if _, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"}); err == nil {
+		if _, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"}); err == nil {
 			t.Fatal("expected grpc server to be closed, but request was successfully sent")
 		}
 	})
@@ -413,7 +413,7 @@ func TestServe(t *testing.T) {
 			t.Fatal(err)
 		}
 		grpcServer := grpc.NewServer()
-		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		server_test.RegisterGreeterServiceServer(grpcServer, &server_test.HelloServerImpl{})
 		h := http.NewServeMux()
 		h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(204)
@@ -462,7 +462,7 @@ func TestServe(t *testing.T) {
 			t.Fatal(err)
 		}
 		grpcServer := grpc.NewServer()
-		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		server_test.RegisterGreeterServiceServer(grpcServer, &server_test.HelloServerImpl{})
 		s, err := NewServer(WithGrpcServer(grpcServer), WithAutomaticStop(false))
 		if err != nil {
 			t.Fatal(err)
@@ -477,8 +477,8 @@ func TestServe(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		client := server_test.NewHelloClient(conn)
-		if _, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"}); err != nil {
+		client := server_test.NewGreeterServiceClient(conn)
+		if _, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"}); err != nil {
 			t.Fatalf("expected no error, but got %v", err)
 		}
 	})
@@ -493,7 +493,7 @@ func TestServe(t *testing.T) {
 			t.Fatal(err)
 		}
 		grpcServer := grpc.NewServer()
-		server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+		server_test.RegisterGreeterServiceServer(grpcServer, &server_test.HelloServerImpl{})
 		h := http.NewServeMux()
 		h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(204)
