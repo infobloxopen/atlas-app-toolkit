@@ -1,4 +1,4 @@
-package server_test
+package testdata
 
 import (
 	"fmt"
@@ -6,8 +6,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-type HelloServerImpl struct{}
+var _ GreeterServiceServer = HelloServerImpl{}
 
-func (HelloServerImpl) SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {
-	return &HelloResponse{Greeting: fmt.Sprintf("hello, %s!", req.GetName())}, nil
+type HelloServerImpl struct {
+	UnimplementedGreeterServiceServer
+}
+
+func (HelloServerImpl) SayHello(ctx context.Context, req *SayHelloRequest) (*SayHelloResponse, error) {
+	return &SayHelloResponse{Greeting: fmt.Sprintf("hello, %s!", req.GetName())}, nil
 }

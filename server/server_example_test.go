@@ -11,7 +11,7 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
 	"github.com/infobloxopen/atlas-app-toolkit/server"
-	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
+	server_test "github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 	"github.com/infobloxopen/atlas-app-toolkit/servertest"
 	"golang.org/x/net/context"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -30,7 +30,7 @@ func Example() {
 	}
 
 	grpcServer := grpc.NewServer()
-	server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
+	server_test.RegisterGreeterServiceServer(grpcServer, &server_test.HelloServerImpl{})
 
 	healthChecks := health.NewChecksHandler("healthz", "ready")
 	healthChecks.AddLiveness("grpc", func() error {
@@ -42,7 +42,7 @@ func Example() {
 		server.WithGrpcServer(grpcServer),
 		server.WithHealthChecks(healthChecks),
 		server.WithGateway(
-			gateway.WithEndpointRegistration("/v1/", server_test.RegisterHelloHandlerFromEndpoint),
+			gateway.WithEndpointRegistration("/v1/", server_test.RegisterGreeterServiceHandlerFromEndpoint),
 			gateway.WithServerAddress(grpcL.Addr().String()),
 		),
 	)
@@ -61,8 +61,8 @@ func Example() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	client := server_test.NewHelloClient(conn)
-	gResp, err := client.SayHello(context.Background(), &server_test.HelloRequest{Name: "exampleClient"})
+	client := server_test.NewGreeterServiceClient(conn)
+	gResp, err := client.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "exampleClient"})
 	if err != nil {
 		log.Fatal(err)
 	}

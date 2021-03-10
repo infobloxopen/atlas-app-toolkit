@@ -27,7 +27,7 @@ type (
 // for format of JSON response.
 type ResponseForwarder struct {
 	OutgoingHeaderMatcher runtime.HeaderMatcherFunc
-	MessageErrHandler     runtime.ProtoErrorHandlerFunc
+	MessageErrHandler     runtime.ErrorHandlerFunc
 	StreamErrHandler      ProtoStreamErrorHandlerFunc
 }
 
@@ -47,13 +47,13 @@ func IncludeStatusDetails(withDetails bool) {
 }
 
 // NewForwardResponseMessage returns ForwardResponseMessageFunc
-func NewForwardResponseMessage(out runtime.HeaderMatcherFunc, meh runtime.ProtoErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseMessageFunc {
+func NewForwardResponseMessage(out runtime.HeaderMatcherFunc, meh runtime.ErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseMessageFunc {
 	fw := &ResponseForwarder{out, meh, seh}
 	return fw.ForwardMessage
 }
 
 // NewForwardResponseStream returns ForwardResponseStreamFunc
-func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ProtoErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseStreamFunc {
+func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ErrorHandlerFunc, seh ProtoStreamErrorHandlerFunc) ForwardResponseStreamFunc {
 	fw := &ResponseForwarder{out, meh, seh}
 	return fw.ForwardStream
 }
@@ -69,7 +69,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	handleForwardResponseServerMetadata(fw.OutgoingHeaderMatcher, rw, md)
 	handleForwardResponseTrailerHeader(rw, md)
 
-	rw.Header().Set("Content-Type", marshaler.ContentType())
+	rw.Header().Set("Content-Type", marshaler.ContentType(resp))
 
 	if err := handleForwardResponseOptions(ctx, rw, resp, opts); err != nil {
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
@@ -158,7 +158,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	handleForwardResponseServerMetadata(fw.OutgoingHeaderMatcher, rw, md)
 
 	rw.Header().Set("Transfer-Encoding", "chunked")
-	rw.Header().Set("Content-Type", marshaler.ContentType())
+	rw.Header().Set("Content-Type", marshaler.ContentType(nil))
 
 	if err := handleForwardResponseOptions(ctx, rw, nil, opts); err != nil {
 		fw.StreamErrHandler(ctx, false, mux, marshaler, rw, req, err)

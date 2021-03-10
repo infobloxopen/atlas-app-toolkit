@@ -114,7 +114,7 @@ func NewGateway(options ...Option) (*http.ServeMux, error) {
 func (g gateway) registerEndpoints() (*http.ServeMux, error) {
 	for prefix, registers := range g.endpoints {
 		gwmux := runtime.NewServeMux(
-			append([]runtime.ServeMuxOption{runtime.WithProtoErrorHandler(ProtoMessageErrorHandler),
+			append([]runtime.ServeMuxOption{runtime.WithErrorHandler(ProtoMessageErrorHandler),
 				runtime.WithMetadata(MetadataAnnotator)}, g.gatewayMuxOptions...)...,
 		)
 		for _, register := range registers {

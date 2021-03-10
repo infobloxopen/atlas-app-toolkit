@@ -31,12 +31,16 @@ jobs:
       #   with:
       #     username: ${{ secrets.DOCKER_USERNAME }}
       #     password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Lint
+        timeout-minutes: 1
+        run: |
+          make lint
       - name: Build
         timeout-minutes: 2
         run: |
-          make gen
-          make check-fmt
           make vendor
+          make tools bufgen
+          make check-fmt
           git diff --exit-code
       - name: Test
         timeout-minutes: 2

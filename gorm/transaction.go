@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -207,7 +207,7 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 			}
 
 			st := status.Convert(err)
-			st, serr := st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
+			st, serr := st.WithDetails(atlasrpc.New(codes.Internal, "gorm", terr.Error()))
 			// do not override error if failed to attach details
 			if serr == nil {
 				err = st.Err()

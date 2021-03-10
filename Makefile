@@ -1,3 +1,5 @@
+include Makefile.buf
+
 # Absolute github repository name.
 REPO := github.com/infobloxopen/atlas-app-toolkit
 
@@ -20,8 +22,11 @@ GENERATOR := docker run $(GENTOOL_OPTIONS) $(GENTOOL_IMAGE) $(GENTOOL_FLAGS)
 .PHONY: default
 default: test
 
-test: check-fmt vendor
+test: check-fmt lint vendor
 	go test -cover ./...
+
+lint: $(BUF)
+	buf lint
 
 .PHONY: vendor
 vendor:
@@ -35,24 +40,32 @@ query/collection_operators.pb.go: query/collection_operators.proto
 	$(GENERATOR) \
 		query/collection_operators.proto
 
-rpc/errdetails/error_details.pb.go: rpc/errdetails/error_details.proto
-	$(GENERATOR) \
-		rpc/errdetails/error_details.proto
+atlas/atlasrpc/error_details.pb.go: proto/atlas/atlasrpc/v1/error_details.proto
+	$(GENERATOR) $<
 
-rpc/errfields/error_fields.pb.go: rpc/errfields/error_fields.proto
-	$(GENERATOR) \
-		rpc/errfields/error_fields.proto
+atlas/atlasrpc/error_fields.pb.go: proto/atlas/atlasrpc/v1/error_fields.proto
+	$(GENERATOR) $<
 
-rpc/resource/resource.pb.go: rpc/resource/resource.proto
-	$(GENERATOR) \
-		rpc/resource/resource.proto
+atlas/resource/resource.pb.go: proto/atlas/resource/v1/resource.proto
+	$(GENERATOR) $<
 
 server/testdata/test.pb.go: server/testdata/test.proto
-	$(GENERATOR) $(GATEWAY_FLAGS) \
-		server/testdata/test.proto
+	$(GENERATOR) $(GATEWAY_FLAGS) $<
 
 .PHONY: gen
-gen: query/collection_operators.pb.go rpc/errdetails/error_details.pb.go rpc/errfields/error_fields.pb.go server/testdata/test.pb.go
+gen: atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_details.pb.go atlas/atlasrpc/error_fields.pb.go atlas/resource/resource.pb.go server/testdata/test.pb.go
+
+# https://github.com/grpc-ecosystem/grpc-gateway/blob/1e4416e32e0f26aacc40397d17215772478c093e/README.md#installation
+.PHONY: tools
+tools:
+	go install \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+	    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+	    google.golang.org/protobuf/cmd/protoc-gen-go \
+	    google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+bufgen: $(BUF)
+	buf generate
 
 .PHONY: mocks
 mocks:

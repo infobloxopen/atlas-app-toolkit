@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -111,7 +111,7 @@ func TestUnaryServerInterceptor_details(t *testing.T) {
 		t.Fatalf("empty details")
 	}
 
-	d, ok := details[0].(*errdetails.TargetInfo)
+	d, ok := details[0].(*atlasrpc.TargetInfo)
 	if !ok {
 		t.Fatal("unknown type of details")
 	}

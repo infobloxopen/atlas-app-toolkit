@@ -1,4 +1,4 @@
-package errdetails
+package atlasrpc
 
 import (
 	"encoding/json"

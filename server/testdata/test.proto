@@ -1,21 +1,23 @@
 syntax = "proto3";
-package server;
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/server/testdata;server_test";
+
+package testdata;
+
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/server/testdata;testdata";
 
 import "google/api/annotations.proto";
 
-message HelloRequest {
-    string name = 1;
-}
-
-message HelloResponse {
-    string greeting = 1;
-}
-
-service Hello {
-    rpc SayHello (HelloRequest) returns (HelloResponse) {
+service GreeterService {
+    rpc SayHello (SayHelloRequest) returns (SayHelloResponse) {
         option (google.api.http) = {
             get: "/hello"
         };
     }
+}
+
+message SayHelloRequest {
+    string name = 1;
+}
+
+message SayHelloResponse {
+    string greeting = 1;
 }

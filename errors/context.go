@@ -3,8 +3,7 @@ package errors
 import (
 	"context"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 	"google.golang.org/grpc/codes"
 )
 
@@ -35,7 +34,7 @@ func Detail(ctx context.Context, code codes.Code, target string, format string, 
 
 // Details function appends a list of details to a context stored error container's
 // 'details' section.
-func Details(ctx context.Context, details ...*errdetails.TargetInfo) *Container {
+func Details(ctx context.Context, details ...*atlasrpc.TargetInfo) *Container {
 	return FromContext(ctx).WithDetails(details...)
 }
 

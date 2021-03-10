@@ -15,12 +15,12 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not(not(not field1 == 'abc' or not field2 == 'bcd') and (field3 != 'cde'))",
 			exp: &Filtering{
-				&Filtering_Operator{
-					&LogicalOperator{
+				Root: &Filtering_Operator{
+					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftOperator{
-							&LogicalOperator{
+							LeftOperator: &LogicalOperator{
 								Left: &LogicalOperator_LeftStringCondition{
-									&StringCondition{
+									LeftStringCondition: &StringCondition{
 										FieldPath:  []string{"field1"},
 										Value:      "abc",
 										Type:       StringCondition_EQ,
@@ -28,7 +28,7 @@ func TestFilteringParser(t *testing.T) {
 									},
 								},
 								Right: &LogicalOperator_RightStringCondition{
-									&StringCondition{
+									RightStringCondition: &StringCondition{
 										FieldPath:  []string{"field2"},
 										Value:      "bcd",
 										Type:       StringCondition_EQ,
@@ -40,7 +40,7 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 						Right: &LogicalOperator_RightStringCondition{
-							&StringCondition{
+							RightStringCondition: &StringCondition{
 								FieldPath:  []string{"field3"},
 								Value:      "cde",
 								Type:       StringCondition_EQ,
@@ -56,10 +56,10 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field1 == 'abc' or field2 == 'cde' and not field3 == 'cdf'",
 			exp: &Filtering{
-				&Filtering_Operator{
-					&LogicalOperator{
+				Root: &Filtering_Operator{
+					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftStringCondition{
-							&StringCondition{
+							LeftStringCondition: &StringCondition{
 								FieldPath:  []string{"field1"},
 								Value:      "abc",
 								Type:       StringCondition_EQ,
@@ -67,9 +67,9 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 						Right: &LogicalOperator_RightOperator{
-							&LogicalOperator{
+							RightOperator: &LogicalOperator{
 								Left: &LogicalOperator_LeftStringCondition{
-									&StringCondition{
+									LeftStringCondition: &StringCondition{
 										FieldPath:  []string{"field2"},
 										Value:      "cde",
 										Type:       StringCondition_EQ,
@@ -77,7 +77,7 @@ func TestFilteringParser(t *testing.T) {
 									},
 								},
 								Right: &LogicalOperator_RightStringCondition{
-									&StringCondition{
+									RightStringCondition: &StringCondition{
 										FieldPath:  []string{"field3"},
 										Value:      "cdf",
 										Type:       StringCondition_EQ,
@@ -97,8 +97,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "(field1 == 'abc' or field2 == 'cde') and (field3 == 'fbg' or field4 == 'zux')",
 			exp: &Filtering{
-				&Filtering_Operator{
-					&LogicalOperator{
+				Root: &Filtering_Operator{
+					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftOperator{
 							&LogicalOperator{
 								Left: &LogicalOperator_LeftStringCondition{
@@ -152,8 +152,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field == 'abc'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "abc",
 						Type:       StringCondition_EQ,
@@ -165,8 +165,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field := 'AbC'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "AbC",
 						Type:       StringCondition_IEQ,
@@ -178,8 +178,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not field := 'AbC'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "AbC",
 						Type:       StringCondition_IEQ,
@@ -191,10 +191,10 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "(field := 'AbC') and (field1 := 'BcD')",
 			exp: &Filtering{
-				&Filtering_Operator{
+				Root: &Filtering_Operator{
 					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftStringCondition{
-							&StringCondition{
+							LeftStringCondition: &StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "AbC",
 								Type:       StringCondition_IEQ,
@@ -202,7 +202,7 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 						Right: &LogicalOperator_RightStringCondition{
-							&StringCondition{
+							RightStringCondition: &StringCondition{
 								FieldPath:  []string{"field1"},
 								Value:      "BcD",
 								Type:       StringCondition_IEQ,
@@ -216,10 +216,10 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "(field := 'AbC') and not(field1 := 'BcD')",
 			exp: &Filtering{
-				&Filtering_Operator{
+				Root: &Filtering_Operator{
 					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftStringCondition{
-							&StringCondition{
+							LeftStringCondition: &StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "AbC",
 								Type:       StringCondition_IEQ,
@@ -227,7 +227,7 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 						Right: &LogicalOperator_RightStringCondition{
-							&StringCondition{
+							RightStringCondition: &StringCondition{
 								FieldPath:  []string{"field1"},
 								Value:      "BcD",
 								Type:       StringCondition_IEQ,
@@ -241,8 +241,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field != \"abc cde\"",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "abc cde",
 						Type:       StringCondition_EQ,
@@ -254,8 +254,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field == 123",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_EQ,
@@ -267,8 +267,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field != 0.2343",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      0.2343,
 						Type:       NumberCondition_EQ,
@@ -280,8 +280,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field == null",
 			exp: &Filtering{
-				&Filtering_NullCondition{
-					&NullCondition{
+				Root: &Filtering_NullCondition{
+					NullCondition: &NullCondition{
 						FieldPath:  []string{"field"},
 						IsNegative: false,
 					},
@@ -291,8 +291,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field != null",
 			exp: &Filtering{
-				&Filtering_NullCondition{
-					&NullCondition{
+				Root: &Filtering_NullCondition{
+					NullCondition: &NullCondition{
 						FieldPath:  []string{"field"},
 						IsNegative: true,
 					},
@@ -302,8 +302,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not field != null",
 			exp: &Filtering{
-				&Filtering_NullCondition{
-					&NullCondition{
+				Root: &Filtering_NullCondition{
+					NullCondition: &NullCondition{
 						FieldPath:  []string{"field"},
 						IsNegative: false,
 					},
@@ -313,8 +313,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field ~ 'regex'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "regex",
 						Type:       StringCondition_MATCH,
@@ -326,8 +326,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field !~ 'regex'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "regex",
 						Type:       StringCondition_MATCH,
@@ -339,8 +339,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field < 123",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_LT,
@@ -352,8 +352,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not field <= 123",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_LE,
@@ -365,8 +365,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field > 123",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_GT,
@@ -378,8 +378,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field >= 123",
 			exp: &Filtering{
-				&Filtering_NumberCondition{
-					&NumberCondition{
+				Root: &Filtering_NumberCondition{
+					NumberCondition: &NumberCondition{
 						FieldPath:  []string{"field"},
 						Value:      123,
 						Type:       NumberCondition_GE,
@@ -391,8 +391,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field in [1 , 9 ,21]",
 			exp: &Filtering{
-				&Filtering_NumberArrayCondition{
-					&NumberArrayCondition{
+				Root: &Filtering_NumberArrayCondition{
+					NumberArrayCondition: &NumberArrayCondition{
 						FieldPath:  []string{"field"},
 						Values:     []float64{1, 9, 21},
 						Type:       NumberArrayCondition_IN,
@@ -404,8 +404,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not (field in [1 , 9 ,21])",
 			exp: &Filtering{
-				&Filtering_NumberArrayCondition{
-					&NumberArrayCondition{
+				Root: &Filtering_NumberArrayCondition{
+					NumberArrayCondition: &NumberArrayCondition{
 						FieldPath:  []string{"field"},
 						Values:     []float64{1, 9, 21},
 						Type:       NumberArrayCondition_IN,
@@ -417,8 +417,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field in ['Hello' , 'World']",
 			exp: &Filtering{
-				&Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_StringArrayCondition{
+					StringArrayCondition: &StringArrayCondition{
 						FieldPath:  []string{"field"},
 						Values:     []string{"Hello", "World"},
 						Type:       StringArrayCondition_IN,
@@ -430,8 +430,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "not (field in ['Hello' , 'World'])",
 			exp: &Filtering{
-				&Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_StringArrayCondition{
+					StringArrayCondition: &StringArrayCondition{
 						FieldPath:  []string{"field"},
 						Values:     []string{"Hello", "World"},
 						Type:       StringArrayCondition_IN,
@@ -443,10 +443,10 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "(not (field in ['Hello' , 'World']) and (field := 'Mike'))",
 			exp: &Filtering{
-				&Filtering_Operator{
-					&LogicalOperator{
+				Root: &Filtering_Operator{
+					Operator: &LogicalOperator{
 						Left: &LogicalOperator_LeftStringArrayCondition{
-							&StringArrayCondition{
+							LeftStringArrayCondition: &StringArrayCondition{
 								FieldPath:  []string{"field"},
 								Values:     []string{"Hello", "World"},
 								Type:       StringArrayCondition_IN,
@@ -454,7 +454,7 @@ func TestFilteringParser(t *testing.T) {
 							},
 						},
 						Right: &LogicalOperator_RightStringCondition{
-							&StringCondition{
+							RightStringCondition: &StringCondition{
 								FieldPath:  []string{"field"},
 								Value:      "Mike",
 								Type:       StringCondition_IEQ,
@@ -470,8 +470,8 @@ func TestFilteringParser(t *testing.T) {
 		{
 			text: "field ieq 'HeLLo'",
 			exp: &Filtering{
-				&Filtering_StringCondition{
-					&StringCondition{
+				Root: &Filtering_StringCondition{
+					StringCondition: &StringCondition{
 						FieldPath:  []string{"field"},
 						Value:      "HeLLo",
 						Type:       StringCondition_IEQ,

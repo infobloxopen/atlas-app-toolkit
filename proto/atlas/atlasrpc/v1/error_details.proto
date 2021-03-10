@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package atlas.rpc;
+package atlasrpc.v1;
 
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails;errdetails";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc;atlasrpc";
 
 // TargetInfo is a default representation of error details that conforms
 // REST API Syntax Specification

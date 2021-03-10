@@ -12,9 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
+	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
 )
 
 // Container struct is an entity that servers a purpose of error container and
@@ -22,10 +20,10 @@ import (
 // error code/message.
 type Container struct {
 	// details field contains an array of error details.
-	details []*errdetails.TargetInfo
+	details []*atlasrpc.TargetInfo
 
 	// fields field contains per-field error map.
-	fields *errfields.FieldInfo
+	fields *atlasrpc.FieldInfo
 
 	// errCode, errMessage field contain the general error message.
 	errCode    codes.Code
@@ -121,17 +119,17 @@ func (c *Container) WithDetail(code codes.Code, target string, format string, ar
 	c.errSet = true
 
 	if c.details == nil {
-		c.details = []*errdetails.TargetInfo{}
+		c.details = []*atlasrpc.TargetInfo{}
 	}
 
-	c.details = append(c.details, errdetails.Newf(code, target, format, args...))
+	c.details = append(c.details, atlasrpc.Newf(code, target, format, args...))
 
 	return c
 }
 
 // WithDetails function appends a list of error details to an error
 // container's 'details' section.
-func (c *Container) WithDetails(details ...*errdetails.TargetInfo) *Container {
+func (c *Container) WithDetails(details ...*atlasrpc.TargetInfo) *Container {
 	if len(details) == 0 {
 		return c
 	}
@@ -139,7 +137,7 @@ func (c *Container) WithDetails(details ...*errdetails.TargetInfo) *Container {
 	c.errSet = true
 
 	if c.details == nil {
-		c.details = []*errdetails.TargetInfo{}
+		c.details = []*atlasrpc.TargetInfo{}
 	}
 
 	c.details = append(c.details, details...)
@@ -152,7 +150,7 @@ func (c *Container) WithField(target string, format string, args ...interface{})
 	c.errSet = true
 
 	if c.fields == nil {
-		c.fields = &errfields.FieldInfo{}
+		c.fields = &atlasrpc.FieldInfo{}
 	}
 
 	c.fields.AddField(target, fmt.Sprintf(format, args...))

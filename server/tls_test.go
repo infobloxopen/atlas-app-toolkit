@@ -11,7 +11,7 @@ import (
 
 	"context"
 
-	"github.com/infobloxopen/atlas-app-toolkit/server/testdata"
+	server_test "github.com/infobloxopen/atlas-app-toolkit/server/testdata"
 	"github.com/infobloxopen/atlas-app-toolkit/servertest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -81,7 +81,7 @@ func TestCanIssueRequest(t *testing.T) {
 
 	// use our test grpc server with this tls
 	gs := grpc.NewServer(grpc.Creds(credentials.NewTLS(serverConfig)))
-	server_test.RegisterHelloServer(gs, server_test.HelloServerImpl{})
+	server_test.RegisterGreeterServiceServer(gs, server_test.HelloServerImpl{})
 	gsl, err := servertest.NewLocalListener()
 	if err != nil {
 		t.Fatal(err)
@@ -97,8 +97,8 @@ func TestCanIssueRequest(t *testing.T) {
 	conn, err := grpc.Dial(gsl.Addr().String(), grpc.WithTransportCredentials(credentials.NewTLS(clientConfig)))
 	defer conn.Close()
 
-	gc := server_test.NewHelloClient(conn)
-	res, err := gc.SayHello(context.Background(), &server_test.HelloRequest{Name: "test"})
+	gc := server_test.NewGreeterServiceClient(conn)
+	res, err := gc.SayHello(context.Background(), &server_test.SayHelloRequest{Name: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
