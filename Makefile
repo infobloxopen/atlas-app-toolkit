@@ -56,7 +56,7 @@ server/testdata/test.pb.go: server/testdata/test.proto
 gen: query/collection_operators.pb.go rpc/errdetails/error_details.pb.go rpc/errfields/error_fields.pb.go server/testdata/test.pb.go
 
 bufgen: $(BUF)
-	buf generate -o $(shell go env GOPATH)/src
+	buf generate
 
 .PHONY: mocks
 mocks:

@@ -4,14 +4,15 @@ build:
   roots:
     - atlas
     - third-party
-    - vendor/github.com/grpc-ecosystem/grpc-gateway/v2
     - server
+    #- vendor/github.com/grpc-ecosystem/grpc-gateway/v2
 lint:
   use:
     - DEFAULT
   ignore:
     - protoc-gen-openapiv2
     - google
+    - vendor/github.com
   ignore_only:
     PACKAGE_VERSION_SUFFIX:
       - testdata
