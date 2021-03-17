@@ -5,7 +5,6 @@ build:
     - atlas
     - third-party
     - server
-    #- vendor/github.com/grpc-ecosystem/grpc-gateway/v2
 lint:
   use:
     - DEFAULT

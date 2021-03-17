@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package infoblox.api;
 
-import "protoc-gen-openapiv2/options/annotations.proto";
+import "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/query;query";
 
