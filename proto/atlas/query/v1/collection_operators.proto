@@ -6,20 +6,22 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/query;query";
 
+// SortCriteriaOrder specifies the sort order.
+enum SortCriteriaOrder {
+  // Order not specified
+  SORT_CRITERIA_ORDER_UNSPECIFIED = 0;
+  // ascending sort order
+  SORT_CRITERIA_ORDER_ASC = 1;
+  // descending sort order
+  SORT_CRITERIA_ORDER_DESC = 2;
+}
+
 // SortCriteria represents sort criteria
 message SortCriteria {
     // Tag is a JSON tag.
     string tag = 1;
     // Order is a sort order.
-    enum Order {
-        // Order not specified
-        ORDER_UNSPECIFIED = 0;
-        // ascending sort order
-        ORDER_ASC = 1;
-        // descending sort order
-        ORDER_DESC = 2;
-    }
-    Order order = 2;
+    SortCriteriaOrder order = 2;
 }
 
 // Sorting represents list of sort criterias.
