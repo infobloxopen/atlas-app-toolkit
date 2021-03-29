@@ -1,0 +1,13 @@
+syntax = "proto3";
+option go_package = "examplepb";
+
+package examples;
+
+import "atlas/query/v1/collection_operators.proto";
+
+message ExampleRequest {
+    atlas.query.v1.Filtering filter = 1;
+  //infoblox.api.Sorting order_by = 2;
+  //infoblox.api.FieldSelection fields = 3;
+  //infoblox.api.Pagination paging = 4;
+}

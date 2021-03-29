@@ -3,8 +3,10 @@ version: v1beta1
 build:
   roots:
     - atlas
-    - third-party
+    - examples
+    - proto
     - server
+    - third-party
 lint:
   use:
     - DEFAULT

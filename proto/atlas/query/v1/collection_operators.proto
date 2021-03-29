@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package infoblox.api;
+package atlas.query.v1;
 
-import "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/query;query";
 
@@ -12,10 +12,12 @@ message SortCriteria {
     string tag = 1;
     // Order is a sort order.
     enum Order {
+        // Order not specified
+        ORDER_UNSPECIFIED = 0;
         // ascending sort order
-        ASC = 0;
+        ORDER_ASC = 1;
         // descending sort order
-        DESC = 1;
+        ORDER_DESC = 2;
     }
     Order order = 2;
 }
