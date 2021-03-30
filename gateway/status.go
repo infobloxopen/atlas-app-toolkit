@@ -25,6 +25,7 @@ const (
 	Deleted
 	LongRunning
 	PartialContent
+	PaymentRequired
 )
 
 // SetStatus sets gRPC status as gRPC metadata
@@ -63,6 +64,11 @@ func SetDeleted(ctx context.Context, msg string) error {
 func SetRunning(ctx context.Context, message, resource string) error {
 	grpc.SetHeader(ctx, metadata.Pairs("Location", resource))
 	return SetStatus(ctx, status.New(LongRunning, message))
+}
+
+// SetPayment is a shortcut for SetStatus(ctx, status.New(PaymentRequired, url))
+func SetPayment(ctx context.Context, message string) error {
+	return SetStatus(ctx, status.New(PaymentRequired, message))
 }
 
 // Status returns REST representation of gRPC status.
@@ -105,6 +111,8 @@ func CodeName(c codes.Code) string {
 		return "LONG_RUNNING_OP"
 	case PartialContent:
 		return "PARTIAL_CONTENT"
+	case PaymentRequired:
+		return "PAYMENT_REQUIRED"
 	default:
 		var cname string
 		if cn, ok := code.Code_name[int32(c)]; !ok {
@@ -134,6 +142,8 @@ func Code(cname string) codes.Code {
 		return LongRunning
 	case "PARTIAL_CONTENT":
 		return PartialContent
+	case "PAYMENT_REQUIRED":
+		return PaymentRequired
 	default:
 		var c codes.Code
 		if cc, ok := code.Code_value[cname]; !ok {
@@ -158,6 +168,8 @@ func HTTPStatusFromCode(code codes.Code) int {
 		return http.StatusAccepted
 	case PartialContent:
 		return http.StatusPartialContent
+	case PaymentRequired:
+		return http.StatusPaymentRequired
 	case codes.OK:
 		return http.StatusOK
 	case codes.Canceled:
