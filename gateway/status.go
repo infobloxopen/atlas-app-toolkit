@@ -14,6 +14,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
+// OldStatesCreatedOnUpdate if true will return http.StatusCreated from HTTPStatusFromCode
+// function if gRPC code is equal to Updated
+var OldStatusCreatedOnUpdate = false
+
 const (
 	// These custom codes defined here to conform REST API Syntax
 	// It is supposed that you do not send them over the wire as part of gRPC Status,
@@ -151,6 +155,9 @@ func HTTPStatusFromCode(code codes.Code) int {
 	case Created:
 		return http.StatusCreated
 	case Updated:
+		if OldStatusCreatedOnUpdate {
+			return http.StatusCreated
+		}
 		return http.StatusOK
 	case Deleted:
 		return http.StatusNoContent
