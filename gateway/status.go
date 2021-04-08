@@ -15,7 +15,8 @@ import (
 )
 
 // OldStatesCreatedOnUpdate if true will return http.StatusCreated from HTTPStatusFromCode
-// function if gRPC code is equal to Updated
+// function if gRPC code is equal to Updated. This variable should only be set in an init()
+// function by code that vendors this library. 
 var OldStatusCreatedOnUpdate = false
 
 const (
