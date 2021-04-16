@@ -101,8 +101,8 @@ message LogicalOperator {
         NumberArrayCondition right_number_array_condition = 14;
     }
     enum Type {
-        AND = 0;
-        OR = 1;
+        TYPE_AND_UNSPECIFIED = 0;
+        TYPE_OR = 1;
     }
     Type type = 9;
     bool is_negative = 10;
@@ -117,13 +117,13 @@ message StringCondition {
     repeated string field_path = 1;
     string value = 2;
     enum Type {
-        EQ = 0;
-        MATCH = 1;
-        GT = 2;
-        GE = 3;
-        LT = 4;
-        LE = 5;
-        IEQ = 6;
+        TYPE_EQ_UNSPECIFIED = 0;
+        TYPE_MATCH = 1;
+        TYPE_GT = 2;
+        TYPE_GE = 3;
+        TYPE_LT = 4;
+        TYPE_LE = 5;
+        TYPE_IEQ = 6;
     }
     Type type = 3;
     bool is_negative = 4;
@@ -138,11 +138,11 @@ message NumberCondition {
     repeated string field_path = 1;
     double value = 2;
     enum Type {
-        EQ = 0;
-        GT = 1;
-        GE = 2;
-        LT = 3;
-        LE = 4;
+        TYPE_EQ_UNSPECIFIED = 0;
+        TYPE_GT = 1;
+        TYPE_GE = 2;
+        TYPE_LT = 3;
+        TYPE_LE = 4;
     }
     Type type = 3;
     bool is_negative = 4;
@@ -163,7 +163,7 @@ message StringArrayCondition {
     repeated string field_path = 1;
     repeated string values = 2;
     enum Type {
-        IN = 0;
+        TYPE_IN_UNSPECIFIED = 0;
     }
     Type type = 3;
     bool is_negative = 4;
@@ -177,7 +177,7 @@ message NumberArrayCondition {
     repeated string field_path = 1;
     repeated double values = 2;
     enum Type {
-        IN = 0;
+        TYPE_IN_UNSPECIFIED = 0;
     }
     Type type = 3;
     bool is_negative = 4;
