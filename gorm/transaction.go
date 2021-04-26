@@ -174,9 +174,13 @@ func (t *Transaction) Commit(ctx context.Context) error {
 // If call of grpc.UnaryHandler returns with an error the transaction
 // is aborted, otherwise committed.
 func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
+	txn := &Transaction{parent: db}
+	return UnaryServerInterceptorTxn(txn)
+}
+
+func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// prepare new *Transaction instance
-		txn := &Transaction{parent: db}
 
 		defer func() {
 			// simple panic handler
