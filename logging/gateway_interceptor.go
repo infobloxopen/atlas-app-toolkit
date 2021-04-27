@@ -7,14 +7,20 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+
+	"github.com/infobloxopen/atlas-app-toolkit/auth"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/requestid"
+)
+
+const (
+	valueUndefined = "undefined"
 )
 
 type gwLogCfg struct {
@@ -137,7 +143,8 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 			if accountID, err := auth.GetAccountID(metadata.NewIncomingContext(ctx, md), cfg.acctIDKeyfunc); err == nil {
 				fields[auth.MultiTenancyField] = accountID
 			} else {
-				logger.Error(err)
+				logger.Info(err)
+				fields[auth.MultiTenancyField] = valueUndefined
 			}
 		}
 
@@ -160,7 +167,7 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 		durField, durVal := grpc_logrus.DurationToTimeMillisField(time.Now().Sub(startTime))
 		fields = logrus.Fields{
 			durField:    durVal,
-			"grpc.code": grpc.Code(err).String(),
+			"grpc.code": status.Code(err).String(),
 		}
 		// set error message field
 		if err != nil {
@@ -169,7 +176,7 @@ func GatewayLoggingInterceptor(logger *logrus.Logger, opts ...GWLogOption) grpc.
 
 		// print log message with all fields
 		resLogger = resLogger.WithFields(fields)
-		levelLogf(resLogger, cfg.codeToLevel(grpc.Code(err)), "finished client unary call with code "+grpc.Code(err).String())
+		levelLogf(resLogger, cfg.codeToLevel(status.Code(err)), "finished client unary call with code "+status.Code(err).String())
 
 		return
 	}
@@ -190,23 +197,5 @@ func GatewayLoggingSentinelInterceptor() grpc.UnaryClientInterceptor {
 			*succeeded = true
 		}
 		return invoker(ctx, method, req, reply, cc, opts...)
-	}
-}
-
-// From https://github.com/grpc-ecosystem/go-grpc-middleware/blob/cfaf5686ec79ff8344257723b6f5ba1ae0ffeb4d/logging/logrus/server_interceptors.go#L91
-func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {
-	switch level {
-	case logrus.DebugLevel:
-		entry.Debugf(format, args...)
-	case logrus.InfoLevel:
-		entry.Infof(format, args...)
-	case logrus.WarnLevel:
-		entry.Warningf(format, args...)
-	case logrus.ErrorLevel:
-		entry.Errorf(format, args...)
-	case logrus.FatalLevel:
-		entry.Fatalf(format, args...)
-	case logrus.PanicLevel:
-		entry.Panicf(format, args...)
 	}
 }

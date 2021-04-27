@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"reflect"
 	"sync"
@@ -56,6 +57,10 @@ func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
+// BeginFromContext will extract transaction wrapper from context and start new transaction.
+// As result new instance of `*gorm.DB` will be returned.
+// Error will be returned in case either transaction or db connection info is missing in context.
+// Gorm specific error can be checked by `*gorm.DB.Error`.
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	txn, ok := FromContext(ctx)
 	if !ok {
@@ -64,7 +69,27 @@ func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 	if txn.parent == nil {
 		return nil, ErrCtxTxnNoDB
 	}
-	db := txn.Begin()
+	db := txn.beginWithContext(ctx)
+	if db.Error != nil {
+		return nil, db.Error
+	}
+	return db, nil
+}
+
+// BeginWithOptionsFromContext will extract transaction wrapper from context and start new transaction,
+// options can be specified to control isolation level for transaction.
+// As result new instance of `*gorm.DB` will be returned.
+// Error will be returned in case either transaction or db connection info is missing in context.
+// Gorm specific error can be checked by `*gorm.DB.Error`.
+func BeginWithOptionsFromContext(ctx context.Context, opts *sql.TxOptions) (*gorm.DB, error) {
+	txn, ok := FromContext(ctx)
+	if !ok {
+		return nil, ErrCtxTxnMissing
+	}
+	if txn.parent == nil {
+		return nil, ErrCtxTxnNoDB
+	}
+	db := txn.beginWithContextAndOptions(ctx, opts)
 	if db.Error != nil {
 		return nil, db.Error
 	}
@@ -74,11 +99,32 @@ func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
 // Begin starts new transaction by calling `*gorm.DB.Begin()`
 // Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
 func (t *Transaction) Begin() *gorm.DB {
+	return t.beginWithContext(context.Background())
+}
+
+func (t *Transaction) beginWithContext(ctx context.Context) *gorm.DB {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	if t.current == nil {
-		t.current = t.parent.Begin()
+		t.current = t.parent.BeginTx(ctx, nil)
+	}
+
+	return t.current
+}
+
+// BeginWithOptions starts new transaction by calling `*gorm.DB.BeginTx()`
+// Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
+func (t *Transaction) BeginWithOptions(opts *sql.TxOptions) *gorm.DB {
+	return t.beginWithContextAndOptions(context.Background(), opts)
+}
+
+func (t *Transaction) beginWithContextAndOptions(ctx context.Context, opts *sql.TxOptions) *gorm.DB {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.current == nil {
+		t.current = t.parent.BeginTx(ctx, opts)
 	}
 
 	return t.current
@@ -128,9 +174,13 @@ func (t *Transaction) Commit(ctx context.Context) error {
 // If call of grpc.UnaryHandler returns with an error the transaction
 // is aborted, otherwise committed.
 func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
+	txn := &Transaction{parent: db}
+	return UnaryServerInterceptorTxn(txn)
+}
+
+func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// prepare new *Transaction instance
-		txn := &Transaction{parent: db}
 
 		defer func() {
 			// simple panic handler

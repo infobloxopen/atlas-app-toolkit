@@ -85,3 +85,16 @@ func TestHTTPStatusFromCode(t *testing.T) {
 		t.Errorf("invalid http status: %d - expected: %d", sc, http.StatusNotFound)
 	}
 }
+
+func TestOldStatusCreated(t *testing.T) {
+	OldStatusCreatedOnUpdate = true
+	s := HTTPStatusFromCode(Updated)
+	if s != http.StatusCreated {
+		t.Error("if OldStatusCreatedOnUpdate is false true should be StatusCreated")
+	}
+	OldStatusCreatedOnUpdate = false
+	s = HTTPStatusFromCode(Updated)
+	if s != http.StatusOK {
+		t.Error("if OldStatusCreatedOnUpdate is false status should be StatusOk")
+	}
+}

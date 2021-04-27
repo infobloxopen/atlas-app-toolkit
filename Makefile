@@ -16,7 +16,8 @@ test: check-fmt vendor
 
 .PHONY: vendor
 vendor:
-	dep ensure
+	go mod tidy
+	go mod vendor
 
 check-fmt:
 	test -z `go fmt ./...`
@@ -39,3 +40,8 @@ check-fmt:
 
 .PHONY: gen
 gen: .gen-query .gen-errdetails .gen-errfields
+
+.PHONY: mocks
+mocks:
+	GO111MODULE=off go get -u github.com/maxbrunsfeld/counterfeiter
+	counterfeiter --fake-name ServerStreamMock -o ./logging/mocks/server_stream.go $(GOPATH)/src/github.com/infobloxopen/atlas-app-toolkit/vendor/google.golang.org/grpc/stream.go ServerStream

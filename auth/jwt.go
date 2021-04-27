@@ -13,6 +13,9 @@ const (
 	// MultiTenancyField the field name for a specific tenant
 	MultiTenancyField = "account_id"
 
+	// AuthorizationHeader contains information about the header value for the token
+	AuthorizationHeader = "Authorization"
+
 	// DefaultTokenType is the name of the authorization token (e.g. "Bearer"
 	// or "token")
 	DefaultTokenType = "Bearer"

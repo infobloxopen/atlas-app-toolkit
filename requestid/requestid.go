@@ -5,26 +5,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 )
 
 // DefaultRequestIDKey is the metadata key name for request ID
-const DefaultRequestIDKey = "Request-Id"
+const (
+	DeprecatedRequestIDKey = "Request-Id"
+	DefaultRequestIDKey    = "X-Request-ID"
+	RequestIDLogKey        = "request_id"
+)
 
-func handleRequestID(ctx context.Context) (reqID string) {
+// HandleRequestID either extracts a existing and valid request ID from the context or generates a new one
+func HandleRequestID(ctx context.Context) (reqID string) {
 	reqID, exists := FromContext(ctx)
-	if !exists {
+	if !exists || reqID == "" {
 		reqID := newRequestID()
 		return reqID
 	}
-
-	if reqID == "" {
-		reqID := newRequestID()
-		return reqID
-	}
-
 	return reqID
 }
 
@@ -33,9 +33,16 @@ func newRequestID() string {
 }
 
 // FromContext returns the Request-Id information from ctx if it exists.
-func FromContext(ctx context.Context) (reqID string, exists bool) {
-	reqID, exists = gateway.Header(ctx, DefaultRequestIDKey)
-	return
+func FromContext(ctx context.Context) (string, bool) {
+	if reqID, ok := gateway.Header(ctx, DefaultRequestIDKey); ok {
+		return reqID, ok
+	}
+
+	if reqID, ok := gateway.Header(ctx, DeprecatedRequestIDKey); ok {
+		return reqID, ok
+	}
+
+	return "", false
 }
 
 // NewContext creates a new context with Request-Id attached if not exists.
@@ -45,5 +52,5 @@ func NewContext(ctx context.Context, reqID string) context.Context {
 }
 
 func addRequestIDToLogger(ctx context.Context, reqID string) {
-	ctxlogrus.AddFields(ctx, logrus.Fields{DefaultRequestIDKey: reqID})
+	ctxlogrus.AddFields(ctx, logrus.Fields{RequestIDLogKey: reqID})
 }

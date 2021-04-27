@@ -12,6 +12,33 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
+const XForwardedFor = "X-Forwarded-For"
+
+// GetGeoHeaders returns a slice of x-geo- headers.
+func GetGeoHeaders() []string {
+	return []string{
+		"x-geo-org",
+		"x-geo-country-code",
+		"x-geo-country-name",
+		"x-geo-region-code",
+		"x-geo-region-name",
+		"x-geo-city-name",
+		"x-geo-postal-code",
+		"x-geo-latitude",
+		"x-geo-longitude",
+	}
+}
+
+// GetXB3Headers returns a slice of x-b3- headers.
+func GetXB3Headers() []string {
+	return []string{
+		"x-b3-traceid",
+		"x-b3-parentspanid",
+		"x-b3-spanid",
+		"x-b3-sampled",
+	}
+}
+
 // Header returns first value for a given key if it exists in gRPC metadata
 // from incoming or outcoming context, otherwise returns (nil, false)
 //
@@ -114,6 +141,32 @@ func handleForwardResponseTrailer(w http.ResponseWriter, md runtime.ServerMetada
 	}
 }
 
+// GeoIPHeaderMatcher X-Geo-* headers are set of geo metadata from MaxMind DB injected on ingress nginx
+func GeoIPHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher(GetGeoHeaders()...)
+}
+
+// RequestIDHeaderMatcher request id header contains unique identifier for request
+func RequestIDHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher("request-id")
+}
+
+// TracingHeaderMatcher tracing headers
+func TracingHeaderMatcher() runtime.HeaderMatcherFunc {
+	return ExtendedDefaultHeaderMatcher(GetXB3Headers()...)
+}
+
+// AtlasDefaultHeaderMatcher func used to add all headers used by atlas-app-toolkit
+// This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
+// AtlasDefaultHeaderMatcher can be used as a Incoming/Outgoing header matcher.
+func AtlasDefaultHeaderMatcher() func(string) (string, bool) {
+	return ChainHeaderMatcher(
+		GeoIPHeaderMatcher(),
+		RequestIDHeaderMatcher(),
+		TracingHeaderMatcher(),
+	)
+}
+
 // ExtendedDefaultHeaderMatcher func is used to add custom headers to be matched
 // from incoming http requests, If this returns true the header will be added to grpc context.
 // This function also passes through all the headers that runtime.DefaultHeaderMatcher handles.
@@ -128,5 +181,20 @@ func ExtendedDefaultHeaderMatcher(headerNames ...string) func(string) (string, b
 		}
 		_, ok := customHeaders[strings.ToLower(headerName)]
 		return headerName, ok
+	}
+}
+
+// ChainHeaderMatcher func is used to build chain on header matcher funcitons
+// this function can be used as incoming or outgoing header matcher
+// keep in mind that gRPC metadata treat as case insensitive strings
+func ChainHeaderMatcher(matchers ...runtime.HeaderMatcherFunc) runtime.HeaderMatcherFunc {
+	return func(h string) (string, bool) {
+		for _, m := range matchers {
+			if k, allow := m(h); allow {
+				return k, allow
+			}
+		}
+
+		return "", false
 	}
 }

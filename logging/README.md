@@ -97,3 +97,10 @@ For example:
 ## Other functions
 
 The helper function `CopyLoggerWithLevel` can be used to make a deep copy of a logger at a new level, or using `CopyLoggerWithLevel(entry.Logger, level).WithFields(entry.Data)` can copy a logrus.Entry.
+
+## Generate mocks
+
+Mocks generated with this [tool](https://github.com/maxbrunsfeld/counterfeiter). Generate mocks for logging tests via:
+```makefile
+    make mocks
+```

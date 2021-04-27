@@ -12,6 +12,7 @@ import (
 
 	"errors"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/health"
 	"google.golang.org/grpc"
@@ -38,6 +39,8 @@ type Server struct {
 
 	// HTTPServer will be started whenever this is served
 	HTTPServer *http.Server
+
+	isAutomaticStop bool
 }
 
 //Middleware wrapper
@@ -55,6 +58,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		initializeTimeout: DefaultInitializerTimeout,
 		HTTPServer:        &http.Server{},
 		registrars:        []func(mux *http.ServeMux) error{},
+		isAutomaticStop:   true,
 	}
 
 	for _, opt := range opts {
@@ -135,17 +139,28 @@ func WithHealthChecks(checker health.Checker) Option {
 func WithGateway(options ...gateway.Option) Option {
 	return func(s *Server) error {
 		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
-			_, err := gateway.NewGateway(append(options, gateway.WithMux(mux))...)
+			_, err := gateway.NewGateway(append(options,
+				gateway.WithGatewayOptions(
+					runtime.WithIncomingHeaderMatcher(
+						gateway.AtlasDefaultHeaderMatcher())),
+				gateway.WithMux(mux))...)
 			return err
 		})
 		return nil
 	}
 }
 
-// WithMiddlewaries add opportunity to add different middleware
+// WithMiddlewares add opportunity to add different middleware
 func WithMiddlewares(middleware ...Middleware) Option {
 	return func(s *Server) error {
 		s.middlewares = append(s.middlewares, middleware...)
+		return nil
+	}
+}
+
+func WithAutomaticStop(isAutomaticStop bool) Option {
+	return func(s *Server) error {
+		s.isAutomaticStop = isAutomaticStop
 		return nil
 	}
 }
@@ -186,12 +201,24 @@ func (s *Server) Serve(grpcL, httpL net.Listener) error {
 	} else {
 		s.GRPCServer = nil
 	}
-	defer s.Stop()
+	defer func() {
+		if s.isAutomaticStop {
+			s.Stop()
+		}
+	}()
 	return <-errC
 }
 
 // Stop immediately terminates the grpc and http servers, immediately closing their active listeners
 func (s *Server) Stop() error {
+	return s.shutdown(context.Background(), false)
+}
+
+func (s *Server) GracefulShutdown(ctx context.Context) error {
+	return s.shutdown(ctx, true)
+}
+
+func (s Server) shutdown(ctx context.Context, isGraceful bool) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	doneC := make(chan bool)
@@ -199,14 +226,24 @@ func (s *Server) Stop() error {
 	go func() {
 		defer wg.Done()
 		if s.GRPCServer != nil {
-			s.GRPCServer.Stop()
+			if isGraceful {
+				s.GRPCServer.GracefulStop()
+			} else {
+				s.GRPCServer.Stop()
+			}
 		}
 	}()
 	go func() {
 		defer wg.Done()
 		if s.HTTPServer != nil {
-			if err := s.HTTPServer.Close(); err != nil {
-				errC <- err
+			if isGraceful {
+				if err := s.HTTPServer.Shutdown(ctx); err != nil {
+					errC <- err
+				}
+			} else {
+				if err := s.HTTPServer.Close(); err != nil {
+					errC <- err
+				}
 			}
 		}
 	}()
