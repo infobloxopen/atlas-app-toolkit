@@ -83,11 +83,11 @@ func TestIdentifier_UnmarhsalJSONPB(t *testing.T) {
 		id := &Identifier{}
 
 		if err := unmarshaler.Unmarshal(buffer, id); err != nil {
-			t.Errorf("failded to unmarshal identifier %s", err)
+			t.Errorf("failed to unmarshal identifier %s", err)
 		}
 
 		if id.String() != tc.ExpectedIdentifier.String() {
-			t.Errorf("ivalid identifier %s, expected %s", id, tc.ExpectedIdentifier)
+			t.Errorf("invalid identifier %s, expected %s", id, tc.ExpectedIdentifier)
 		}
 	}
 }
