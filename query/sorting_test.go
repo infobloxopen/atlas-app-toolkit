@@ -51,11 +51,24 @@ func TestParseSorting(t *testing.T) {
 		t.Errorf("invalid sorting: %v - expected: %s", s, "name DESC, age ASC")
 	}
 
+	_, err = ParseSorting("user-age, sub_person.name, parent.name desc")
+	if err != nil {
+		t.Fatalf("failed to parse sort parameters: %s", err)
+	}
+
 	_, err = ParseSorting("name dask")
 	if err == nil {
 		t.Fatal("expected error - got nil")
 	}
 	if err.Error() != "invalid sort order - \"dask\" in \"name dask\"" {
 		t.Errorf("invalid error message: %s - expected: %s", err, "invalid sort order - \"dask\" in \"name dask\"")
+	}
+
+	_, err = ParseSorting("<name desc, age>")
+	if err == nil {
+		t.Fatal("expected error - got nil")
+	}
+	if err.Error() != "invalid character in the sort criteria" {
+		t.Errorf("invalid error message: %s - expected: %s", err, "invalid character in the sort criteria")
 	}
 }

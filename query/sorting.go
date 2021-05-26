@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -29,7 +30,10 @@ func (c SortCriteria) GoString() string {
 // See: https://github.com/infobloxopen/atlas-app-toolkit#sorting
 func ParseSorting(s string) (*Sorting, error) {
 	var sorting Sorting
-
+	sortingRegexp := regexp.MustCompile(`^[A-Za-z0-9_,.\- ]+$`)
+	if !sortingRegexp.MatchString(s) {
+		return nil, fmt.Errorf("invalid character in the sort criteria")
+	}
 	for _, craw := range strings.Split(s, ",") {
 		v := strings.Fields(craw)
 
