@@ -21,7 +21,7 @@ The following libraries have how-to guides included at the package level.
 
 #### Request Handling Tools
 
-[`requestid`](requestid) - gets the request ID from incoming requests (or creates a unique ID if it doesn't exist) 
+[`requestid`](requestid) - gets the request ID from incoming requests (or creates a unique ID if it doesn't exist)
 
 [`query`](query) - provides query parameter-specific helpers, like sorting, paging, and filtering resources
 
@@ -31,11 +31,11 @@ The following libraries have how-to guides included at the package level.
 
 [`errors`](errors) - helps developers create detailed error messages or return multiple error messages
 
-#### Server Utilities
+#### Server utilities
 
 [`server`](server) - provides a wrapper utility that manages a gRPC server and its REST gateway as a single unit
 
-[`gateway`](gateway) - creates a gRPC gateway with built-in REST syntax compliancy 
+[`gateway`](gateway) - creates a gRPC gateway with built-in REST syntax compliancy
 
 [`health`](health) -  helps developers add health and readiness checks to their gRPC services
 
