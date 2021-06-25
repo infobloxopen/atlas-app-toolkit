@@ -2,6 +2,7 @@ package bloxid
 
 import (
 	"encoding/base32"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -44,16 +45,16 @@ var (
 // NewV0 parse a string into a typed guid, return an error
 // if the string fails validation.
 func NewV0(bloxid string) (*V0, error) {
-	if len(bloxid) == 0 {
-		return nil, ErrIDEmpty
-	}
-
 	return parseV0(bloxid)
 }
 
 const V0Delimiter = "."
 
 func parseV0(bloxid string) (*V0, error) {
+	if len(bloxid) == 0 {
+		return nil, ErrIDEmpty
+	}
+
 	if err := validateV0(bloxid); err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func parseV0(bloxid string) (*V0, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode id: %s", err)
 	}
-	v0.decoded = fmt.Sprintf("%x", decoded)
+	v0.decoded = hex.EncodeToString(decoded)
 
 	return v0, nil
 }
@@ -90,7 +91,7 @@ func validateV0(bloxid string) error {
 		return ErrInvalidEntityType
 	}
 
-	if len(parts[3]) < DefaultEntropySize/2 {
+	if len(parts[3]) < DefaultUniqueIDEncodedCharSize {
 		return ErrInvalidUniqueIDLen
 	}
 
@@ -118,7 +119,7 @@ func (v *V0) String() string {
 		v.region,
 		v.encoded,
 	}
-	return strings.Join(s, ".")
+	return strings.Join(s, V0Delimiter)
 }
 
 // Region implements ID.Region
@@ -186,8 +187,8 @@ func GenerateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 }
 
 func uniqueID(opts *V0Options) (encoded string, decoded string) {
-	entropy := randDefault()
-	decoded = fmt.Sprintf("%x", entropy)
-	encoded = strings.ToLower(base32.StdEncoding.EncodeToString(entropy))
+	rndm := randDefault()
+	decoded = hex.EncodeToString(rndm)
+	encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
 	return
 }
