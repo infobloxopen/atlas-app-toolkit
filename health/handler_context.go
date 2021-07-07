@@ -105,8 +105,6 @@ func (ch *checksContextHandler) handle(rw http.ResponseWriter, r *http.Request, 
 	}
 	rw.WriteHeader(status)
 
-	return
-
 	// Uncomment to write errors and get non-empty response
 	// rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	// if status == http.StatusOK {
