@@ -135,6 +135,18 @@ func WithHealthChecks(checker health.Checker) Option {
 	}
 }
 
+// WithHealthChecksContext registers the given health checker with this server by registering its endpoints at the root of the
+// http server.
+func WithHealthChecksContext(checker health.CheckerContext) Option {
+	return func(s *Server) error {
+		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
+			checker.RegisterHandler(mux)
+			return nil
+		})
+		return nil
+	}
+}
+
 // WithGateway registers the given gateway options with this server
 func WithGateway(options ...gateway.Option) Option {
 	return func(s *Server) error {

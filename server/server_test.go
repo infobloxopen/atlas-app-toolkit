@@ -112,6 +112,37 @@ func TestWithHealthChecks(t *testing.T) {
 	}
 }
 
+func TestWithHealthChecksContext(t *testing.T) {
+	tests := []struct {
+		name     string
+		checkErr error
+		testPath string
+		expected int
+	}{
+		{"liveness-pass", nil, "healthz", 200},
+		{"liveness-pass", nil, "/healthz", 200},
+		{"liveness-fail", errors.New(""), "/healthz", 503},
+		{"readiness-does-not-impact-liveness", nil, "ready", 200},
+		{"readiness-does-not-impact-liveness", nil, "/ready", 200},
+		{"readiness-does-not-impact-liveness", errors.New(""), "ready", 200},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			checks := health.NewChecksContextHandler("healthz", "ready")
+			checks.AddLiveness("liveness-test", func(_ context.Context) error { return test.checkErr })
+			_, url, cleanup := buildTestServer(t, WithHealthChecksContext(checks))
+			defer cleanup()
+			resp, err := http.Get(fmt.Sprintf("%s/%s", url, test.testPath))
+			if err != nil {
+				t.Errorf("not expecting error, but got %v", err)
+			}
+			if resp.StatusCode != test.expected {
+				t.Errorf("expected status code %d, but got %d", test.expected, resp.StatusCode)
+			}
+		})
+	}
+}
+
 func TestWithHandler(t *testing.T) {
 	h := http.NewServeMux()
 	h.HandleFunc("/test/204", func(writer http.ResponseWriter, request *http.Request) {
