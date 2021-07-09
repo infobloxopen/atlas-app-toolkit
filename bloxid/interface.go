@@ -11,7 +11,7 @@ type ID interface {
 	Version() string // V0
 	// Type returns entity type ie. `host`
 	Type() string
-	// Region is optional and returns the cloud region that
-	// the resource is found in ie. `us-east-1`
-	Region() string
+	// Realm is optional and returns the cloud realm that
+	// the resource is found in ie. `us-com-1`, `eu-com-1`, ...
+	Realm() string
 }

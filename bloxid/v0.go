@@ -63,7 +63,7 @@ func parseV0(bloxid string) (*V0, error) {
 	v0 := &V0{
 		version:    name_version[parts[0]],
 		entityType: parts[1],
-		region:     parts[2],
+		realm:      parts[2],
 		encoded:    parts[3],
 	}
 
@@ -103,7 +103,7 @@ var _ ID = &V0{}
 // V0 represents a typed guid
 type V0 struct {
 	version      Version
-	region       string
+	realm        string
 	customSuffix string
 	decoded      string
 	encoded      string
@@ -116,18 +116,18 @@ func (v *V0) String() string {
 	s := []string{
 		v.Version(),
 		v.entityType,
-		v.region,
+		v.realm,
 		v.encoded,
 	}
 	return strings.Join(s, V0Delimiter)
 }
 
-// Region implements ID.Region
-func (v *V0) Region() string {
+// Realm implements ID.Realm
+func (v *V0) Realm() string {
 	if v == nil {
 		return ""
 	}
-	return v.region
+	return v.realm
 }
 
 // ShortID implements ID.ShortID
@@ -156,7 +156,7 @@ func (v *V0) Version() string {
 
 // V0Options required options to create a typed guid
 type V0Options struct {
-	Region     string
+	Realm      string
 	EntityType string
 	shortid    string
 }
@@ -179,7 +179,7 @@ func GenerateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 
 	return &V0{
 		version:    Version0,
-		region:     opts.Region,
+		realm:      opts.Realm,
 		decoded:    decoded,
 		encoded:    encoded,
 		entityType: opts.EntityType,
