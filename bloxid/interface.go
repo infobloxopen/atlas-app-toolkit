@@ -9,6 +9,8 @@ type ID interface {
 	// Version returns a serialized representation of the ID version
 	// ie. `V0`
 	Version() string // V0
+	// Domain returns entity domain ie. `infra`
+	Domain() string
 	// Type returns entity type ie. `host`
 	Type() string
 	// Realm is optional and returns the cloud realm that
