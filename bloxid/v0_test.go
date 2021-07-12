@@ -20,14 +20,14 @@ func TestNewV0(t *testing.T) {
 			ErrIDEmpty,
 		},
 		{
-			"blox0.pkg..zdud52youveke5sovyoc66cjxw3l55jc",
-			"blox0.pkg..zdud52youveke5sovyoc66cjxw3l55jc",
-			"pkg",
+			"blox0.infra_host..zdud52youveke5sovyoc66cjxw3l55jc",
+			"blox0.infra_host..zdud52youveke5sovyoc66cjxw3l55jc",
+			"infra_host",
 			"c8e83eeb0ea548a2764eae1c2f7849bdb6bef522",
 			nil,
 		},
 		{
-			input: "bloxv0.pkg..asdfasdfasdfasdfasdfasdf",
+			input: "bloxv0.infra_host..asdfasdfasdfasdfasdfasdf",
 			err:   ErrInvalidVersion,
 		},
 		{
@@ -72,7 +72,7 @@ func TestGenerateV0(t *testing.T) {
 	}{
 		{
 			shortid:    "",
-			entityType: "pkg",
+			entityType: "infra_host",
 		},
 	}
 

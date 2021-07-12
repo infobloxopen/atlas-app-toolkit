@@ -9,7 +9,7 @@ type ID interface {
 	// Version returns a serialized representation of the ID version
 	// ie. `V0`
 	Version() string // V0
-	// Type returns entity type ie. `host`
+	// Type returns entity type ie. `infra_host`
 	Type() string
 	// Realm is optional and returns the cloud realm that
 	// the resource is found in ie. `us-com-1`, `eu-com-1`, ...
