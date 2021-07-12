@@ -34,9 +34,10 @@ var name_version = map[string]Version{
 }
 
 var (
-	ErrInvalidVersion     error = errors.New("invalid bloxid version")
-	ErrInvalidEntityType  error = errors.New("entity type must be non-empty")
-	ErrInvalidUniqueIDLen error = errors.New("unique ID did not meet minimum length requirements")
+	ErrInvalidVersion      error = errors.New("invalid bloxid version")
+	ErrInvalidEntityDomain error = errors.New("entity domain must be non-empty")
+	ErrInvalidEntityType   error = errors.New("entity type must be non-empty")
+	ErrInvalidUniqueIDLen  error = errors.New("unique ID did not meet minimum length requirements")
 
 	ErrIDEmpty error = errors.New("empty bloxid")
 	ErrV0Parts error = errors.New("invalid number of parts found")
@@ -61,13 +62,14 @@ func parseV0(bloxid string) (*V0, error) {
 
 	parts := strings.Split(bloxid, V0Delimiter)
 	v0 := &V0{
-		version:    name_version[parts[0]],
-		entityType: parts[1],
-		realm:      parts[2],
-		encoded:    parts[3],
+		version:      name_version[parts[0]],
+		entityDomain: parts[1],
+		entityType:   parts[2],
+		realm:        parts[3],
+		encoded:      parts[4],
 	}
 
-	decodedTall := strings.ToUpper(parts[3])
+	decodedTall := strings.ToUpper(parts[4])
 	decoded, err := base32.StdEncoding.DecodeString(decodedTall)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode id: %s", err)
@@ -79,7 +81,7 @@ func parseV0(bloxid string) (*V0, error) {
 
 func validateV0(bloxid string) error {
 	parts := strings.Split(bloxid, V0Delimiter)
-	if len(parts) != 4 {
+	if len(parts) != 5 {
 		return ErrV0Parts
 	}
 
@@ -87,11 +89,15 @@ func validateV0(bloxid string) error {
 		return ErrInvalidVersion
 	}
 
-	if entityType := parts[1]; len(entityType) == 0 {
+	if entityDomain := parts[1]; len(entityDomain) == 0 {
+		return ErrInvalidEntityDomain
+	}
+
+	if entityType := parts[2]; len(entityType) == 0 {
 		return ErrInvalidEntityType
 	}
 
-	if len(parts[3]) < DefaultUniqueIDEncodedCharSize {
+	if len(parts[4]) < DefaultUniqueIDEncodedCharSize {
 		return ErrInvalidUniqueIDLen
 	}
 
@@ -107,6 +113,7 @@ type V0 struct {
 	customSuffix string
 	decoded      string
 	encoded      string
+	entityDomain string
 	entityType   string
 	shortID      string
 }
@@ -115,6 +122,7 @@ type V0 struct {
 func (v *V0) String() string {
 	s := []string{
 		v.Version(),
+		v.entityDomain,
 		v.entityType,
 		v.realm,
 		v.encoded,
@@ -138,6 +146,14 @@ func (v *V0) ShortID() string {
 	return v.shortID
 }
 
+// Domain implements ID.Domain
+func (v *V0) Domain() string {
+	if v == nil {
+		return ""
+	}
+	return v.entityDomain
+}
+
 // Type implements ID.Type
 func (v *V0) Type() string {
 	if v == nil {
@@ -156,9 +172,10 @@ func (v *V0) Version() string {
 
 // V0Options required options to create a typed guid
 type V0Options struct {
-	Realm      string
-	EntityType string
-	shortid    string
+	Realm        string
+	EntityDomain string
+	EntityType   string
+	shortid      string
 }
 
 type GenerateV0Opts func(o *V0Options)
@@ -178,11 +195,12 @@ func GenerateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 	encoded, decoded := uniqueID(opts)
 
 	return &V0{
-		version:    Version0,
-		realm:      opts.Realm,
-		decoded:    decoded,
-		encoded:    encoded,
-		entityType: opts.EntityType,
+		version:      Version0,
+		realm:        opts.Realm,
+		decoded:      decoded,
+		encoded:      encoded,
+		entityDomain: opts.EntityDomain,
+		entityType:   opts.EntityType,
 	}, nil
 }
 
