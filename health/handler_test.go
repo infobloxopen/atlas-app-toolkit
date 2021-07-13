@@ -80,7 +80,7 @@ func TestNewHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			h := NewChecksHandler("/healthz", "/ready")
+			h := NewChecksHandler("/healthz", "/ready", false)
 
 			if test.failHealth {
 				h.AddLiveness("Liveness check test", func() error {

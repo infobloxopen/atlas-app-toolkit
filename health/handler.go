@@ -13,6 +13,9 @@ type checksHandler struct {
 
 	readinessPath   string
 	readinessChecks map[string]Check
+
+	// if true first found error will fail the check stage
+	failFast bool
 }
 
 // Checker ...
@@ -25,7 +28,7 @@ type Checker interface {
 
 // NewChecksHandler accepts two strings: health and ready paths.
 // These paths will be used for liveness and readiness checks.
-func NewChecksHandler(healthPath, readyPath string) Checker {
+func NewChecksHandler(healthPath, readyPath string, failFast bool) Checker {
 	if healthPath[0] != '/' {
 		healthPath = "/" + healthPath
 	}
@@ -37,6 +40,7 @@ func NewChecksHandler(healthPath, readyPath string) Checker {
 		livenessChecks:  map[string]Check{},
 		readinessPath:   readyPath,
 		readinessChecks: map[string]Check{},
+		failFast:        failFast,
 	}
 
 	return ch
@@ -100,6 +104,10 @@ func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checksS
 			if err := check(); err != nil {
 				status = http.StatusServiceUnavailable
 				errors[name] = err
+				if ch.failFast {
+					rw.WriteHeader(status)
+					return
+				}
 			}
 		}
 	}
