@@ -26,9 +26,8 @@ type Checker interface {
 	RegisterHandler(mux *http.ServeMux)
 }
 
-// NewChecksHandler accepts two strings: health and ready paths.
-// These paths will be used for liveness and readiness checks.
-func NewChecksHandler(healthPath, readyPath string, failFast bool) Checker {
+// helper method
+func newChecksHandler(healthPath, readyPath string, fastFail bool) Checker {
 	if healthPath[0] != '/' {
 		healthPath = "/" + healthPath
 	}
@@ -40,10 +39,23 @@ func NewChecksHandler(healthPath, readyPath string, failFast bool) Checker {
 		livenessChecks:  map[string]Check{},
 		readinessPath:   readyPath,
 		readinessChecks: map[string]Check{},
-		failFast:        failFast,
+		failFast:        fastFail,
 	}
 
 	return ch
+}
+
+// NewChecksHandler accepts two strings: health and ready paths.
+// These paths will be used for liveness and readiness checks.
+func NewChecksHandler(healthPath, readyPath string) Checker {
+	return newChecksHandler(healthPath, readyPath, false)
+}
+
+// NewChecksHandlerFastFail accepts two strings: health and ready paths.
+// These paths will be used for liveness and readiness checks.
+// This Checker will fail after the first error found
+func NewChecksHandlerFastFail(healthPath, readyPath string) Checker {
+	return newChecksHandler(healthPath, readyPath, true)
 }
 
 func (ch *checksHandler) AddLiveness(name string, check Check) {

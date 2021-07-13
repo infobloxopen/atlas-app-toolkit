@@ -97,7 +97,7 @@ func TestWithHealthChecks(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			checks := health.NewChecksHandler("healthz", "ready", false)
+			checks := health.NewChecksHandler("healthz", "ready")
 			checks.AddLiveness("liveness-test", func() error { return test.checkErr })
 			_, url, cleanup := buildTestServer(t, WithHealthChecks(checks))
 			defer cleanup()

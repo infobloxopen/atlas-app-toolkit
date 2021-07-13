@@ -8,7 +8,7 @@ Package also provides implementation for most typical checks that may be done to
 A handler to serve checks using `/health` and `/ready` endpoints can be added to your service in a following way: 
 
 ```go
-	healthChecker := health.NewChecksHandler("/health", "/ready", false),
+	healthChecker := health.NewChecksHandler("/health", "/ready"),
 	)
 	healthChecker.AddReadiness("Readiness check name", readinessCheck)
 	healthChecker.AddLiveness("Liveness check name", livenessCheck)

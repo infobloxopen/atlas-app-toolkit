@@ -32,7 +32,7 @@ func Example() {
 	grpcServer := grpc.NewServer()
 	server_test.RegisterHelloServer(grpcServer, &server_test.HelloServerImpl{})
 
-	healthChecks := health.NewChecksHandler("healthz", "ready", false)
+	healthChecks := health.NewChecksHandler("healthz", "ready")
 	healthChecks.AddLiveness("grpc", func() error {
 		_, err := grpc.Dial(grpcL.Addr().String(), grpc.WithInsecure())
 		return err
