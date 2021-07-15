@@ -1,6 +1,7 @@
 package bloxid
 
 import (
+	"bytes"
 	"encoding/base32"
 	"encoding/hex"
 	"errors"
@@ -9,6 +10,8 @@ import (
 )
 
 const (
+	UniqueIDEncodedMinCharSize = 16
+
 	VersionUnknown Version = iota
 	Version0       Version = iota
 )
@@ -49,7 +52,10 @@ func NewV0(bloxid string) (*V0, error) {
 	return parseV0(bloxid)
 }
 
-const V0Delimiter = "."
+const (
+	V0Delimiter   = "."
+	bloxidTypeLen = 4
+)
 
 func parseV0(bloxid string) (*V0, error) {
 	if len(bloxid) == 0 {
@@ -74,7 +80,17 @@ func parseV0(bloxid string) (*V0, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode id: %s", err)
 	}
-	v0.decoded = hex.EncodeToString(decoded)
+
+	switch {
+	case bytes.HasPrefix(decoded, extrinsicIDPrefixBytes):
+		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
+	default:
+		if len(v0.encoded) < DefaultUniqueIDEncodedCharSize {
+			return nil, ErrInvalidUniqueIDLen
+		}
+
+		v0.decoded = hex.EncodeToString(decoded)
+	}
 
 	return v0, nil
 }
@@ -97,10 +113,9 @@ func validateV0(bloxid string) error {
 		return ErrInvalidEntityType
 	}
 
-	if len(parts[4]) < DefaultUniqueIDEncodedCharSize {
+	if len(parts[4]) < UniqueIDEncodedMinCharSize {
 		return ErrInvalidUniqueIDLen
 	}
-
 	return nil
 }
 
@@ -110,12 +125,10 @@ var _ ID = &V0{}
 type V0 struct {
 	version      Version
 	realm        string
-	customSuffix string
 	decoded      string
 	encoded      string
 	entityDomain string
 	entityType   string
-	shortID      string
 }
 
 // Serialize the typed guid as a string
@@ -136,14 +149,6 @@ func (v *V0) Realm() string {
 		return ""
 	}
 	return v.realm
-}
-
-// ShortID implements ID.ShortID
-func (v *V0) ShortID() string {
-	if v == nil {
-		return ""
-	}
-	return v.shortID
 }
 
 // Domain implements ID.Domain
@@ -175,14 +180,15 @@ type V0Options struct {
 	Realm        string
 	EntityDomain string
 	EntityType   string
-	shortid      string
+	extrinsicID  string
 }
 
 type GenerateV0Opts func(o *V0Options)
 
-func WithShortID(shortid string) func(o *V0Options) {
+// WithExtrinsicID supplies a locally unique ID that is not randomly generated
+func WithExtrinsicID(eid string) func(o *V0Options) {
 	return func(o *V0Options) {
-		o.shortid = shortid
+		o.extrinsicID = eid
 	}
 }
 
@@ -205,8 +211,22 @@ func GenerateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 }
 
 func uniqueID(opts *V0Options) (encoded string, decoded string) {
-	rndm := randDefault()
-	decoded = hex.EncodeToString(rndm)
-	encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
+	if len(opts.extrinsicID) > 0 {
+		var err error
+		decoded, err = getExtrinsicID(opts.extrinsicID)
+		if err != nil {
+			return
+		}
+
+		const rfc4648NoPaddingChars = 5
+		rem := rfc4648NoPaddingChars - ((len(decoded) + len(extrinsicIDPrefix)) % rfc4648NoPaddingChars)
+		pad := strings.Repeat(" ", rem)
+		padded := extrinsicIDPrefix + decoded + pad
+		encoded = strings.ToLower(base32.StdEncoding.EncodeToString([]byte(padded)))
+	} else {
+		rndm := randDefault()
+		decoded = hex.EncodeToString(rndm)
+		encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
+	}
 	return
 }
