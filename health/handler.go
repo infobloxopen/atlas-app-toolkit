@@ -24,10 +24,13 @@ type Checker interface {
 	AddReadiness(name string, check Check)
 	Handler() http.Handler
 	RegisterHandler(mux *http.ServeMux)
+	SetFailFast(failFast bool)
+	GetFailFast() bool
 }
 
-// helper method
-func newChecksHandler(healthPath, readyPath string, fastFail bool) Checker {
+// NewChecksHandler accepts two strings: health and ready paths.
+// These paths will be used for liveness and readiness checks.
+func NewChecksHandler(healthPath, readyPath string) Checker {
 	if healthPath[0] != '/' {
 		healthPath = "/" + healthPath
 	}
@@ -39,23 +42,18 @@ func newChecksHandler(healthPath, readyPath string, fastFail bool) Checker {
 		livenessChecks:  map[string]Check{},
 		readinessPath:   readyPath,
 		readinessChecks: map[string]Check{},
-		failFast:        fastFail,
 	}
 
 	return ch
 }
 
-// NewChecksHandler accepts two strings: health and ready paths.
-// These paths will be used for liveness and readiness checks.
-func NewChecksHandler(healthPath, readyPath string) Checker {
-	return newChecksHandler(healthPath, readyPath, false)
+// SetFailFast sets failFast flag for failing on the first error found
+func (ch *checksHandler) SetFailFast(failFast bool) {
+	ch.failFast = failFast
 }
 
-// NewChecksHandlerFastFail accepts two strings: health and ready paths.
-// These paths will be used for liveness and readiness checks.
-// This Checker will fail after the first error found
-func NewChecksHandlerFastFail(healthPath, readyPath string) Checker {
-	return newChecksHandler(healthPath, readyPath, true)
+func (ch *checksHandler) GetFailFast() bool {
+	return ch.failFast
 }
 
 func (ch *checksHandler) AddLiveness(name string, check Check) {
