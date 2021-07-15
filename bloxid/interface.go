@@ -4,8 +4,6 @@ package bloxid
 type ID interface {
 	// String returns the complete resource ID
 	String() string
-	// ShortID returns a shortened ID that will be locally unique
-	ShortID() string
 	// Version returns a serialized representation of the ID version
 	// ie. `V0`
 	Version() string // V0
@@ -16,4 +14,8 @@ type ID interface {
 	// Realm is optional and returns the cloud realm that
 	// the resource is found in ie. `us-com-1`, `eu-com-1`, ...
 	Realm() string
+	// EncodedID returns the unique id in encoded format
+	// TODO: EncodedID() string
+	// DecodedID returns the unique id in decoded format
+	// TODO: DecodedID() string
 }
