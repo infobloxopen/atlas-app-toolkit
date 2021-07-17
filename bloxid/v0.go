@@ -14,6 +14,9 @@ const (
 
 	VersionUnknown Version = iota
 	Version0       Version = iota
+
+	idSchemeExtrinsic = "extrinsic"
+	idSchemeRandom    = "random"
 )
 
 type Version uint8
@@ -46,18 +49,36 @@ var (
 	ErrV0Parts error = errors.New("invalid number of parts found")
 )
 
-// NewV0 parse a string into a typed guid, return an error
-// if the string fails validation.
-func NewV0(bloxid string) (*V0, error) {
-	return parseV0(bloxid)
-}
-
 const (
 	V0Delimiter   = "."
 	bloxidTypeLen = 4
 )
 
-func parseV0(bloxid string) (*V0, error) {
+type EncodeDecodeOpts func(o *V0Options)
+
+// NewV0 parse a string into a typed guid, return an error
+// if the string fails validation.
+func NewV0(bloxid string, fnOpts ...EncodeDecodeOpts) (*V0, error) {
+	opts := generateV0Options(fnOpts...)
+
+	if len(strings.TrimSpace(bloxid)) == 0 {
+		return generateV0(opts)
+	}
+
+	return parseV0(bloxid, opts.hashidSalt)
+}
+
+func generateV0Options(fnOpts ...EncodeDecodeOpts) *V0Options {
+	var opts *V0Options = new(V0Options)
+
+	for _, fn := range fnOpts {
+		fn(opts)
+	}
+
+	return opts
+}
+
+func parseV0(bloxid, salt string) (*V0, error) {
 	if len(bloxid) == 0 {
 		return nil, ErrIDEmpty
 	}
@@ -82,14 +103,23 @@ func parseV0(bloxid string) (*V0, error) {
 	}
 
 	switch {
+	case bytes.HasPrefix(decoded, hashIDPrefixBytes):
+		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
+		v0.hashIDInt64, err = getInt64FromHashID(v0.decoded, salt)
+		if err != nil {
+			return nil, err
+		}
+		v0.scheme = idSchemeHashID
 	case bytes.HasPrefix(decoded, extrinsicIDPrefixBytes):
 		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
+		v0.scheme = idSchemeExtrinsic
 	default:
 		if len(v0.encoded) < DefaultUniqueIDEncodedCharSize {
 			return nil, ErrInvalidUniqueIDLen
 		}
 
 		v0.decoded = hex.EncodeToString(decoded)
+		v0.scheme = idSchemeRandom
 	}
 
 	return v0, nil
@@ -129,6 +159,8 @@ type V0 struct {
 	encoded      string
 	entityDomain string
 	entityType   string
+	hashIDInt64  int64
+	scheme       string
 }
 
 // Serialize the typed guid as a string
@@ -143,7 +175,7 @@ func (v *V0) String() string {
 	return strings.Join(s, V0Delimiter)
 }
 
-// Realm implements ID.Realm
+// Realm implements ID.realm
 func (v *V0) Realm() string {
 	if v == nil {
 		return ""
@@ -151,7 +183,7 @@ func (v *V0) Realm() string {
 	return v.realm
 }
 
-// Domain implements ID.Domain
+// Domain implements ID.domain
 func (v *V0) Domain() string {
 	if v == nil {
 		return ""
@@ -159,7 +191,31 @@ func (v *V0) Domain() string {
 	return v.entityDomain
 }
 
-// Type implements ID.Type
+// HashIDInt64 implements ID.hashIDInt64
+func (v *V0) HashIDInt64() int64 {
+	if v == nil || v.scheme != idSchemeHashID {
+		return -1
+	}
+	return v.hashIDInt64
+}
+
+// DecodedID implements ID.decoded
+func (v *V0) DecodedID() string {
+	if v == nil {
+		return ""
+	}
+	return v.decoded
+}
+
+// EncodedID implements ID.encoded
+func (v *V0) EncodedID() string {
+	if v == nil {
+		return ""
+	}
+	return v.encoded
+}
+
+// Type implements ID.entityType
 func (v *V0) Type() string {
 	if v == nil {
 		return ""
@@ -175,58 +231,116 @@ func (v *V0) Version() string {
 	return v.version.String()
 }
 
+// Scheme of the id
+func (v *V0) Scheme() string {
+	if v == nil {
+		return ""
+	}
+	return v.scheme
+}
+
 // V0Options required options to create a typed guid
 type V0Options struct {
-	Realm        string
-	EntityDomain string
-	EntityType   string
+	entityDomain string
+	entityType   string
+	realm        string
 	extrinsicID  string
+	hashIDInt64  int64
+	hashidSalt   string
+	scheme       string
 }
 
 type GenerateV0Opts func(o *V0Options)
+
+func WithEntityDomain(domain string) func(o *V0Options) {
+	return func(o *V0Options) {
+		o.entityDomain = domain
+	}
+}
+
+func WithEntityType(eType string) func(o *V0Options) {
+	return func(o *V0Options) {
+		o.entityType = eType
+	}
+}
+
+func WithRealm(realm string) func(o *V0Options) {
+	return func(o *V0Options) {
+		o.realm = realm
+	}
+}
 
 // WithExtrinsicID supplies a locally unique ID that is not randomly generated
 func WithExtrinsicID(eid string) func(o *V0Options) {
 	return func(o *V0Options) {
 		o.extrinsicID = eid
+		o.scheme = idSchemeExtrinsic
 	}
 }
 
-func GenerateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
-
+func generateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 	for _, fn := range fnOpts {
 		fn(opts)
 	}
 
-	encoded, decoded := uniqueID(opts)
+	encoded, decoded, err := uniqueID(opts)
+	if err != nil {
+		return nil, err
+	}
 
 	return &V0{
 		version:      Version0,
-		realm:        opts.Realm,
+		realm:        opts.realm,
 		decoded:      decoded,
 		encoded:      encoded,
-		entityDomain: opts.EntityDomain,
-		entityType:   opts.EntityType,
+		entityDomain: opts.entityDomain,
+		entityType:   opts.entityType,
+		hashIDInt64:  opts.hashIDInt64,
+		scheme:       opts.scheme,
 	}, nil
 }
 
-func uniqueID(opts *V0Options) (encoded string, decoded string) {
-	if len(opts.extrinsicID) > 0 {
-		var err error
+func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
+
+	switch opts.scheme {
+	case idSchemeHashID:
+
+		if opts.hashIDInt64 < 0 {
+			err = ErrInvalidID
+			return
+		}
+
+		decoded, err = getHashID(opts.hashIDInt64, opts.hashidSalt)
+		if err != nil {
+			return
+		}
+
+		encoded = encodeLowerAlphaNumeric(hashIDPrefix, decoded)
+
+	case idSchemeExtrinsic:
+
 		decoded, err = getExtrinsicID(opts.extrinsicID)
 		if err != nil {
 			return
 		}
 
-		const rfc4648NoPaddingChars = 5
-		rem := rfc4648NoPaddingChars - ((len(decoded) + len(extrinsicIDPrefix)) % rfc4648NoPaddingChars)
-		pad := strings.Repeat(" ", rem)
-		padded := extrinsicIDPrefix + decoded + pad
-		encoded = strings.ToLower(base32.StdEncoding.EncodeToString([]byte(padded)))
-	} else {
+		encoded = encodeLowerAlphaNumeric(extrinsicIDPrefix, decoded)
+
+	default:
 		rndm := randDefault()
 		decoded = hex.EncodeToString(rndm)
 		encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
+		opts.scheme = idSchemeRandom
 	}
+
 	return
+}
+
+func encodeLowerAlphaNumeric(idPrefix, decoded string) string {
+
+	const rfc4648NoPaddingChars = 5
+	rem := rfc4648NoPaddingChars - ((len(decoded) + len(idPrefix)) % rfc4648NoPaddingChars)
+	pad := strings.Repeat(" ", rem)
+	padded := idPrefix + decoded + pad
+	return strings.ToLower(base32.StdEncoding.EncodeToString([]byte(padded)))
 }

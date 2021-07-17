@@ -14,14 +14,16 @@ func TestNewV0(t *testing.T) {
 		decoded      string
 		err          error
 	}{
-		{
-			"",
-			"",
-			"",
-			"",
-			"",
-			ErrIDEmpty,
-		},
+		/*
+			{
+				"",
+				"",
+				"",
+				"",
+				"",
+				ErrIDEmpty,
+			},
+		*/
 		{
 			input: "bloxv0....",
 			err:   ErrInvalidVersion,
@@ -48,27 +50,27 @@ func TestNewV0(t *testing.T) {
 		},
 	}
 
-	for _, tm := range testmap {
+	for index, tm := range testmap {
 		v0, err := NewV0(tm.input)
 		if err != tm.err {
 			t.Log(tm.input)
-			t.Errorf("got: %s wanted: %s", err, tm.err)
+			t.Errorf("index: %d got: %s wanted: %s", index, err, tm.err)
 		}
 		if err != nil {
 			continue
 		}
 		if v0.String() != tm.output {
-			t.Errorf("got: %s wanted: %s", v0.String(), tm.output)
+			t.Errorf("index: %d got: %s wanted: %s", index, v0.String(), tm.output)
 		}
 
 		if v0.entityDomain != tm.entityDomain {
-			t.Errorf("got: %q wanted: %q", v0.entityDomain, tm.entityDomain)
+			t.Errorf("index: %d got: %q wanted: %q", index, v0.entityDomain, tm.entityDomain)
 		}
 		if v0.entityType != tm.entityType {
-			t.Errorf("got: %q wanted: %q", v0.entityType, tm.entityType)
+			t.Errorf("index: %d got: %q wanted: %q", index, v0.entityType, tm.entityType)
 		}
 		if v0.decoded != tm.decoded {
-			t.Errorf("got: %q wanted: %q", v0.decoded, tm.decoded)
+			t.Errorf("index: %d got: %q wanted: %q", index, v0.decoded, tm.decoded)
 		}
 	}
 }
@@ -89,12 +91,14 @@ func TestGenerateV0(t *testing.T) {
 			entityDomain: "infra",
 			entityType:   "host",
 			expected:     "blox0.infra.host.us-com-1.",
+			err:          ErrEmptyExtrinsicID,
 		},
 		{
 			realm:        "us-com-2",
 			entityDomain: "infra",
 			entityType:   "host",
 			expected:     "blox0.infra.host.us-com-2.",
+			err:          ErrEmptyExtrinsicID,
 		},
 
 		// ensure `=` is not part of id when encoded
@@ -163,17 +167,16 @@ func TestGenerateV0(t *testing.T) {
 		},
 	}
 
-	for _, tm := range testmap {
-		v0, err := GenerateV0(&V0Options{
-			EntityDomain: tm.entityDomain,
-			EntityType:   tm.entityType,
-			Realm:        tm.realm,
-		},
+	for index, tm := range testmap {
+		v0, err := NewV0("",
+			WithEntityDomain(tm.entityDomain),
+			WithEntityType(tm.entityType),
+			WithRealm(tm.realm),
 			WithExtrinsicID(tm.extrinsicID),
 		)
 		if err != tm.err {
 			t.Logf("test: %#v", tm)
-			t.Errorf("got: %s wanted error: %s", err, tm.err)
+			t.Errorf("index: %d got: %s wanted error: %s", index, err, tm.err)
 		}
 		if err != nil {
 			continue
@@ -184,8 +187,8 @@ func TestGenerateV0(t *testing.T) {
 			continue
 		}
 
-		t.Log(v0)
-		t.Logf("%#v\n", v0)
+		//		t.Log(v0)
+		//		t.Logf("%#v\n", v0)
 
 		validateGenerateV0(t, tm, v0, err)
 
