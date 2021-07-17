@@ -15,7 +15,9 @@ type ID interface {
 	// the resource is found in ie. `us-com-1`, `eu-com-1`, ...
 	Realm() string
 	// EncodedID returns the unique id in encoded format
-	// TODO: EncodedID() string
+	EncodedID() string
 	// DecodedID returns the unique id in decoded format
-	// TODO: DecodedID() string
+	DecodedID() string
+	// Return the id scheme
+	Scheme() string
 }
