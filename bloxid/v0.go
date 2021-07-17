@@ -15,8 +15,7 @@ const (
 	VersionUnknown Version = iota
 	Version0       Version = iota
 
-	idSchemeExtrinsic = "extrinsic"
-	idSchemeRandom    = "random"
+	IDSchemeRandom = "random"
 )
 
 type Version uint8
@@ -109,17 +108,17 @@ func parseV0(bloxid, salt string) (*V0, error) {
 		if err != nil {
 			return nil, err
 		}
-		v0.scheme = idSchemeHashID
+		v0.scheme = IDSchemeHashID
 	case bytes.HasPrefix(decoded, extrinsicIDPrefixBytes):
 		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
-		v0.scheme = idSchemeExtrinsic
+		v0.scheme = IDSchemeExtrinsic
 	default:
 		if len(v0.encoded) < DefaultUniqueIDEncodedCharSize {
 			return nil, ErrInvalidUniqueIDLen
 		}
 
 		v0.decoded = hex.EncodeToString(decoded)
-		v0.scheme = idSchemeRandom
+		v0.scheme = IDSchemeRandom
 	}
 
 	return v0, nil
@@ -154,11 +153,11 @@ var _ ID = &V0{}
 // V0 represents a typed guid
 type V0 struct {
 	version      Version
+	entityDomain string
+	entityType   string
 	realm        string
 	decoded      string
 	encoded      string
-	entityDomain string
-	entityType   string
 	hashIDInt64  int64
 	scheme       string
 }
@@ -175,12 +174,12 @@ func (v *V0) String() string {
 	return strings.Join(s, V0Delimiter)
 }
 
-// Realm implements ID.realm
-func (v *V0) Realm() string {
+// Version of the string
+func (v *V0) Version() string {
 	if v == nil {
-		return ""
+		return VersionUnknown.String()
 	}
-	return v.realm
+	return v.version.String()
 }
 
 // Domain implements ID.domain
@@ -191,12 +190,20 @@ func (v *V0) Domain() string {
 	return v.entityDomain
 }
 
-// HashIDInt64 implements ID.hashIDInt64
-func (v *V0) HashIDInt64() int64 {
-	if v == nil || v.scheme != idSchemeHashID {
-		return -1
+// Type implements ID.entityType
+func (v *V0) Type() string {
+	if v == nil {
+		return ""
 	}
-	return v.hashIDInt64
+	return v.entityType
+}
+
+// Realm implements ID.realm
+func (v *V0) Realm() string {
+	if v == nil {
+		return ""
+	}
+	return v.realm
 }
 
 // DecodedID implements ID.decoded
@@ -215,20 +222,12 @@ func (v *V0) EncodedID() string {
 	return v.encoded
 }
 
-// Type implements ID.entityType
-func (v *V0) Type() string {
-	if v == nil {
-		return ""
+// HashIDInt64 implements ID.hashIDInt64
+func (v *V0) HashIDInt64() int64 {
+	if v == nil || v.scheme != IDSchemeHashID {
+		return -1
 	}
-	return v.entityType
-}
-
-// Version of the string
-func (v *V0) Version() string {
-	if v == nil {
-		return VersionUnknown.String()
-	}
-	return v.version.String()
+	return v.hashIDInt64
 }
 
 // Scheme of the id
@@ -270,14 +269,6 @@ func WithRealm(realm string) func(o *V0Options) {
 	}
 }
 
-// WithExtrinsicID supplies a locally unique ID that is not randomly generated
-func WithExtrinsicID(eid string) func(o *V0Options) {
-	return func(o *V0Options) {
-		o.extrinsicID = eid
-		o.scheme = idSchemeExtrinsic
-	}
-}
-
 func generateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 	for _, fn := range fnOpts {
 		fn(opts)
@@ -303,7 +294,7 @@ func generateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 
 	switch opts.scheme {
-	case idSchemeHashID:
+	case IDSchemeHashID:
 
 		if opts.hashIDInt64 < 0 {
 			err = ErrInvalidID
@@ -317,7 +308,7 @@ func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 
 		encoded = encodeLowerAlphaNumeric(hashIDPrefix, decoded)
 
-	case idSchemeExtrinsic:
+	case IDSchemeExtrinsic:
 
 		decoded, err = getExtrinsicID(opts.extrinsicID)
 		if err != nil {
@@ -330,7 +321,7 @@ func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 		rndm := randDefault()
 		decoded = hex.EncodeToString(rndm)
 		encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
-		opts.scheme = idSchemeRandom
+		opts.scheme = IDSchemeRandom
 	}
 
 	return

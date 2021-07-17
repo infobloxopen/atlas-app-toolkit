@@ -7,12 +7,12 @@ import (
 )
 
 const (
+	IDSchemeHashID = "hashid"
+
 	hashIDAllowedChar = "0123456789abcdef"
 
 	//the prefix needs to be uppercase so there are no collisions with chars in hashIDAllowedChar
 	hashIDPrefix = "HIDZ"
-
-	idSchemeHashID = "hashid"
 )
 
 var (
@@ -99,7 +99,7 @@ func getInt64FromHashID(id, salt string) (int64, error) {
 func WithHashIDInt64(id int64) func(o *V0Options) {
 	return func(o *V0Options) {
 		o.hashIDInt64 = id
-		o.scheme = idSchemeHashID
+		o.scheme = IDSchemeHashID
 	}
 }
 
