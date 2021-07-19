@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,4 +105,61 @@ func TestNewHandler(t *testing.T) {
 				"Result codes don't match %q. [%s]", reqStr, test.name)
 		})
 	}
+}
+
+func addNiceLiveness(h Checker, number int, counterCall *int) {
+	h.AddLiveness("Liveness"+strconv.Itoa(number), func() error {
+		*counterCall++
+		return nil
+	})
+}
+
+func addFailedLiveness(h Checker, number int, counterCall *int) {
+	h.AddLiveness("Liveness"+strconv.Itoa(number), func() error {
+		*counterCall++
+		return errors.New("Liveness" + strconv.Itoa(number) + " check failed")
+	})
+}
+
+func TestNoFailFastHandler(t *testing.T) {
+	h := NewChecksHandler("/healthz", "/ready")
+
+	counterCall := 0
+	expectedCalls := 3
+
+	addNiceLiveness(h, 1, &counterCall)
+	addFailedLiveness(h, 2, &counterCall)
+	addFailedLiveness(h, 3, &counterCall)
+
+	req, err := http.NewRequest(http.MethodGet, "/healthz", nil)
+	assert.NoError(t, err)
+
+	httpRecorder := httptest.NewRecorder()
+	h.Handler().ServeHTTP(httpRecorder, req)
+
+	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check", expectedCalls)
+	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
+		"Result codes don't match, current is '%s'", http.StatusText(httpRecorder.Code))
+}
+
+func TestFailFastHandler(t *testing.T) {
+	h := NewChecksHandler("/healthz", "/ready")
+	h.SetFailFast(true)
+
+	counterCall := 0
+	expectedCalls := 1
+
+	addNiceLiveness(h, 1, &counterCall)
+	addFailedLiveness(h, 2, &counterCall)
+	addFailedLiveness(h, 3, &counterCall)
+
+	req, err := http.NewRequest(http.MethodGet, "/healthz", nil)
+	assert.NoError(t, err)
+
+	httpRecorder := httptest.NewRecorder()
+	h.Handler().ServeHTTP(httpRecorder, req)
+
+	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check", expectedCalls)
+	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
+		"Result codes don't match, current is '%s'", http.StatusText(httpRecorder.Code))
 }
