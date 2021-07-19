@@ -137,9 +137,9 @@ func TestNoFailFastHandler(t *testing.T) {
 	httpRecorder := httptest.NewRecorder()
 	h.Handler().ServeHTTP(httpRecorder, req)
 
-	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check", expectedCalls)
+	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check.", expectedCalls)
 	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
-		"Result codes don't match, current is '%s'", http.StatusText(httpRecorder.Code))
+		"Result codes don't match, current is '%s'.", http.StatusText(httpRecorder.Code))
 }
 
 func TestFailFastHandler(t *testing.T) {
@@ -147,7 +147,7 @@ func TestFailFastHandler(t *testing.T) {
 	h.SetFailFast(true)
 
 	counterCall := 0
-	expectedCalls := 1
+	expectedCalls := 2
 
 	addNiceLiveness(h, 1, &counterCall)
 	addFailedLiveness(h, 2, &counterCall)
@@ -159,7 +159,10 @@ func TestFailFastHandler(t *testing.T) {
 	httpRecorder := httptest.NewRecorder()
 	h.Handler().ServeHTTP(httpRecorder, req)
 
-	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check", expectedCalls)
+	// we cannot determine the order of elements while iterationg over `checks` map in `handle` function
+	// so we just check that amount is between the range
+	assert.GreaterOrEqual(t, expectedCalls, counterCall, "Excepted less or equal %d calls of check.", expectedCalls)
+	assert.NotEqual(t, 0, counterCall, "Cannot be zero calls of check.")
 	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
-		"Result codes don't match, current is '%s'", http.StatusText(httpRecorder.Code))
+		"Result codes don't match, current is '%s'.", http.StatusText(httpRecorder.Code))
 }
