@@ -6,7 +6,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-type HelloServerImpl struct{}
+type HelloServerImpl struct {
+	HelloServer
+}
 
 func (HelloServerImpl) SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {
 	return &HelloResponse{Greeting: fmt.Sprintf("hello, %s!", req.GetName())}, nil

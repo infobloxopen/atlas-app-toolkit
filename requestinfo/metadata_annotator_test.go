@@ -2,13 +2,14 @@ package requestinfo
 
 import (
 	"context"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"google.golang.org/grpc/metadata"
 	"io"
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"google.golang.org/grpc/metadata"
 )
 
 func generateRequestInfo(op OperationType, resourceId string) RequestInfo {
