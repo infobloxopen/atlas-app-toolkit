@@ -13,6 +13,9 @@ type checksHandler struct {
 
 	readinessPath   string
 	readinessChecks map[string]Check
+
+	// if true first found error will fail the check stage
+	failFast bool
 }
 
 // Checker ...
@@ -21,6 +24,8 @@ type Checker interface {
 	AddReadiness(name string, check Check)
 	Handler() http.Handler
 	RegisterHandler(mux *http.ServeMux)
+	SetFailFast(failFast bool)
+	GetFailFast() bool
 }
 
 // NewChecksHandler accepts two strings: health and ready paths.
@@ -40,6 +45,15 @@ func NewChecksHandler(healthPath, readyPath string) Checker {
 	}
 
 	return ch
+}
+
+// SetFailFast sets failFast flag for failing on the first error found
+func (ch *checksHandler) SetFailFast(failFast bool) {
+	ch.failFast = failFast
+}
+
+func (ch *checksHandler) GetFailFast() bool {
+	return ch.failFast
 }
 
 func (ch *checksHandler) AddLiveness(name string, check Check) {
@@ -100,6 +114,10 @@ func (ch *checksHandler) handle(rw http.ResponseWriter, r *http.Request, checksS
 			if err := check(); err != nil {
 				status = http.StatusServiceUnavailable
 				errors[name] = err
+				if ch.failFast {
+					rw.WriteHeader(status)
+					return
+				}
 			}
 		}
 	}

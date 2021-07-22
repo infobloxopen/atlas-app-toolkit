@@ -151,11 +151,13 @@ func WithHealthChecksContext(checker health.CheckerContext) Option {
 func WithGateway(options ...gateway.Option) Option {
 	return func(s *Server) error {
 		s.registrars = append(s.registrars, func(mux *http.ServeMux) error {
-			_, err := gateway.NewGateway(append(options,
+			_, err := gateway.NewGateway(append([]gateway.Option{
 				gateway.WithGatewayOptions(
 					runtime.WithIncomingHeaderMatcher(
 						gateway.AtlasDefaultHeaderMatcher())),
-				gateway.WithMux(mux))...)
+				gateway.WithMux(mux)},
+				options...)...,
+			)
 			return err
 		})
 		return nil
