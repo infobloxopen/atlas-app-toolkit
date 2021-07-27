@@ -9,12 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type cmode struct {
-	opts  []CmodeOpt
+type CMode struct {
+	opts  []CModeOpt
 	usage []string
 }
 
-type CmodeOpt interface {
+type CModeOpt interface {
 	Name() string
 	Get() string
 	ParseAndSet(val string) error
@@ -22,8 +22,8 @@ type CmodeOpt interface {
 	ValidValues() []string
 }
 
-func NewCmode(opts []CmodeOpt) cmode {
-	cm := cmode{
+func New(opts ...CModeOpt) CMode {
+	cm := CMode{
 		opts:  opts,
 		usage: []string{},
 	}
@@ -32,7 +32,7 @@ func NewCmode(opts []CmodeOpt) cmode {
 	return cm
 }
 
-func Handler(cm cmode) http.Handler {
+func Handler(cm CMode) http.Handler {
 	h := mux.NewRouter()
 	h.HandleFunc("/cmode", cm.help).Methods("GET")
 	h.HandleFunc("/cmode/values", cm.get).Methods("GET")
@@ -40,12 +40,12 @@ func Handler(cm cmode) http.Handler {
 	return h
 }
 
-func (cm *cmode) AddOption(opt CmodeOpt) {
+func (cm *CMode) AddOption(opt CModeOpt) {
 	cm.opts = append(cm.opts, opt)
 	cm.generateUsage()
 }
 
-func (cm *cmode) generateUsage() {
+func (cm *CMode) generateUsage() {
 	maxPathLength := 0
 	for _, opt := range cm.opts {
 		path := fmt.Sprintf("/cmode/values?%s=$%s", opt.Name(), strings.ToUpper(opt.Name()))
@@ -84,11 +84,11 @@ func (cm *cmode) generateUsage() {
 	cm.usage = usage
 }
 
-func (cm *cmode) help(w http.ResponseWriter, _ *http.Request) {
+func (cm *CMode) help(w http.ResponseWriter, _ *http.Request) {
 	writeReply(w, http.StatusOK, cm.usage)
 }
 
-func (cm *cmode) get(w http.ResponseWriter, _ *http.Request) {
+func (cm *CMode) get(w http.ResponseWriter, _ *http.Request) {
 	var reply []string
 	for _, opt := range cm.opts {
 		reply = append(reply, fmt.Sprintf("%s: %s", opt.Name(), opt.Get()))
@@ -96,7 +96,7 @@ func (cm *cmode) get(w http.ResponseWriter, _ *http.Request) {
 	writeReply(w, http.StatusOK, reply)
 }
 
-func (cm *cmode) set(w http.ResponseWriter, r *http.Request) {
+func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 	var reply []string
 	empty := true
 

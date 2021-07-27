@@ -4,23 +4,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CmodeLogger struct {
+type CModeLogger struct {
 	*logrus.Logger
 }
 
-func NewCmodeLogger(logger *logrus.Logger) CmodeLogger {
-	return CmodeLogger{logger}
+func New(logger *logrus.Logger) CModeLogger {
+	return CModeLogger{logger}
 }
 
-func (l *CmodeLogger) Name() string {
+func (l *CModeLogger) Name() string {
 	return "loglevel"
 }
 
-func (l *CmodeLogger) Get() string {
+func (l *CModeLogger) Get() string {
 	return l.Level.String()
 }
 
-func (l *CmodeLogger) ParseAndSet(val string) error {
+func (l *CModeLogger) ParseAndSet(val string) error {
 	level, err := logrus.ParseLevel(val)
 	if err != nil {
 		return err
@@ -30,11 +30,11 @@ func (l *CmodeLogger) ParseAndSet(val string) error {
 	return nil
 }
 
-func (l *CmodeLogger) Description() string {
+func (l *CModeLogger) Description() string {
 	return "set logging level"
 }
 
-func (l *CmodeLogger) ValidValues() []string {
+func (l *CModeLogger) ValidValues() []string {
 	return []string{
 		"panic",
 		"fatal",
