@@ -10,8 +10,9 @@ import (
 )
 
 type CMode struct {
-	opts  []CModeOpt
-	usage []string
+	logger CModeLogger
+	opts   []CModeOpt
+	usage  []string
 }
 
 type CModeOpt interface {
@@ -22,13 +23,19 @@ type CModeOpt interface {
 	ValidValues() []string
 }
 
-func New(opts ...CModeOpt) CMode {
-	cm := CMode{
-		opts:  opts,
-		usage: []string{},
-	}
+type CModeLogger interface {
+	CModeOpt
+	Errorf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+}
 
-	cm.generateUsage()
+func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
+	cm := CMode{
+		opts:   opts,
+		usage:  []string{},
+		logger: cmLogger,
+	}
+	cm.AddOption(cmLogger)
 	return cm
 }
 
@@ -41,7 +48,9 @@ func Handler(cm CMode) http.Handler {
 }
 
 func (cm *CMode) AddOption(opt CModeOpt) {
-	cm.opts = append(cm.opts, opt)
+	if opt != nil {
+		cm.opts = append(cm.opts, opt)
+	}
 	cm.generateUsage()
 }
 
@@ -106,10 +115,17 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 			empty = false
 			err := opt.ParseAndSet(optVal)
 			if err != nil {
-				reply = append(reply, fmt.Sprintf("invalid %s %s", opt.Name(), optVal))
+				replyText := fmt.Sprintf("invalid %s value: %s", opt.Name(), optVal)
+				reply = append(reply, replyText)
 				reply = append(reply, cm.usage...)
 				writeReply(w, http.StatusBadRequest, reply)
+				if cm.logger != nil {
+					cm.logger.Errorf(replyText)
+				}
 				return
+			}
+			if cm.logger != nil {
+				cm.logger.Infof("%s is set to %s", opt.Name(), optVal)
 			}
 		}
 	}
