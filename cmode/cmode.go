@@ -3,10 +3,16 @@ package cmode
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	urlPath       = "/cmode"
+	valuesUrlPath = urlPath + "/values"
 )
 
 type CMode struct {
@@ -31,33 +37,41 @@ type CModeLogger interface {
 
 func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
 	cm := CMode{
-		opts:   opts,
+		opts:   []CModeOpt{},
 		usage:  []string{},
 		logger: cmLogger,
 	}
+
 	cm.AddOption(cmLogger)
+	for _, opt := range opts {
+		if !isOptNil(opt) {
+			cm.opts = append(cm.opts, opt)
+		}
+	}
+
+	cm.generateUsage()
 	return cm
 }
 
 func Handler(cm CMode) http.Handler {
 	h := mux.NewRouter()
-	h.HandleFunc("/cmode", cm.help).Methods("GET")
-	h.HandleFunc("/cmode/values", cm.get).Methods("GET")
-	h.HandleFunc("/cmode/values", cm.set).Methods("POST")
+	h.HandleFunc(urlPath, cm.help).Methods("GET")
+	h.HandleFunc(valuesUrlPath, cm.get).Methods("GET")
+	h.HandleFunc(valuesUrlPath, cm.set).Methods("POST")
 	return h
 }
 
 func (cm *CMode) AddOption(opt CModeOpt) {
-	if opt != nil {
+	if !isOptNil(opt) {
 		cm.opts = append(cm.opts, opt)
+		cm.generateUsage()
 	}
-	cm.generateUsage()
 }
 
 func (cm *CMode) generateUsage() {
-	maxPathLength := 0
+	maxPathLength := len(valuesUrlPath)
 	for _, opt := range cm.opts {
-		path := fmt.Sprintf("/cmode/values?%s=$%s", opt.Name(), strings.ToUpper(opt.Name()))
+		path := fmt.Sprintf("%s?%s=$%s", valuesUrlPath, opt.Name(), strings.ToUpper(opt.Name()))
 		if len(path) > maxPathLength {
 			maxPathLength = len(path)
 		}
@@ -65,29 +79,30 @@ func (cm *CMode) generateUsage() {
 
 	baseString := strings.Repeat(" ", maxPathLength)
 
-	usage := []string{
-		"Usage:",
-	}
+	usage := []string{}
 
-	usage = append(usage, fmt.Sprintf("GET  %s%s -- print usage", "/cmode", baseString[6:]))
-	usage = append(usage, fmt.Sprintf("GET  %s%s -- get current values", "/cmode/values", baseString[13:]))
+	usage = append(usage, "Usage:")
+	usage = append(usage, fmt.Sprintf("GET  %s%s -- print usage", urlPath, baseString[6:]))
+	usage = append(usage, fmt.Sprintf("GET  %s%s -- get current values", valuesUrlPath, baseString[13:]))
 
-	for _, opt := range cm.opts {
-		path := fmt.Sprintf("/cmode/values?%s=$%s", opt.Name(), strings.ToUpper(opt.Name()))
+	if len(cm.opts) > 0 {
+		for _, opt := range cm.opts {
+			path := fmt.Sprintf("%s?%s=$%s", valuesUrlPath, opt.Name(), strings.ToUpper(opt.Name()))
 
-		sb := strings.Builder{}
-		sb.WriteString(path)
-		sb.WriteString(baseString[len(path):])
-		path = sb.String()
+			sb := strings.Builder{}
+			sb.WriteString(path)
+			sb.WriteString(baseString[len(path):])
+			path = sb.String()
 
-		usage = append(usage, fmt.Sprintf("POST %s -- %s", path, opt.Description()))
-	}
+			usage = append(usage, fmt.Sprintf("POST %s -- %s", path, opt.Description()))
+		}
 
-	usage = append(usage, "")
+		usage = append(usage, "")
 
-	for _, opt := range cm.opts {
-		v := fmt.Sprintf("valid %s values: [ %s ]", opt.Name(), strings.Join(opt.ValidValues(), ", "))
-		usage = append(usage, v)
+		for _, opt := range cm.opts {
+			v := fmt.Sprintf("valid %s values: [ %s ]", opt.Name(), strings.Join(opt.ValidValues(), ", "))
+			usage = append(usage, v)
+		}
 	}
 
 	cm.usage = usage
@@ -119,12 +134,12 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 				reply = append(reply, replyText)
 				reply = append(reply, cm.usage...)
 				writeReply(w, http.StatusBadRequest, reply)
-				if cm.logger != nil {
+				if !cm.isLoggerNil() {
 					cm.logger.Errorf(replyText)
 				}
 				return
 			}
-			if cm.logger != nil {
+			if !cm.isLoggerNil() {
 				cm.logger.Infof("%s is set to %s", opt.Name(), optVal)
 			}
 		}
@@ -138,15 +153,37 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 	writeReply(w, http.StatusOK, reply)
 }
 
+func (cm *CMode) isLoggerNil() bool {
+	switch v := cm.logger.(type) {
+	case CModeLogger:
+		return reflect.ValueOf(v).IsNil()
+	case nil:
+		return true
+	default:
+		panic("You're trying to pass a var that doesn't implement 'CMode' interface")
+	}
+}
+
 func writeReply(w http.ResponseWriter, status int, reply []string) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(status)
 	_, err := w.Write([]byte(strings.Join(reply, "\n")))
 	if err != nil {
-		logrus.Errorf("error writing reply: %v", err)
+		logrus.Errorf("error writing reply: %s", err)
 	}
 	_, err = w.Write([]byte("\n"))
 	if err != nil {
-		logrus.Errorf("error writing reply: %v", err)
+		logrus.Errorf("error writing reply: %s", err)
+	}
+}
+
+func isOptNil(opt CModeOpt) bool {
+	switch v := opt.(type) {
+	case CModeOpt:
+		return reflect.ValueOf(v).IsNil()
+	case nil:
+		return true
+	default:
+		panic("You're trying to pass a var that doesn't implement 'CModeOpt' interface")
 	}
 }
