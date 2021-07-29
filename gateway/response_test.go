@@ -10,18 +10,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
+	gateway_test "github.com/infobloxopen/atlas-app-toolkit/gateway/internal"
 )
 
+/*
 type user struct {
 	Name string `json:"user"`
 	Age  int    `json:"age"`
 }
+
+func (m *user) ProtoReflect() protoreflect.Message { return nil }
 
 type result struct {
 	Users []*user `json:"users"`
@@ -31,33 +35,33 @@ type userWithPtr struct {
 	PtrValue *wrappers.Int64Value `json:"ptr_value"`
 }
 
-func (m *userWithPtr) Reset()         {}
-func (m *userWithPtr) ProtoMessage()  {}
-func (m *userWithPtr) String() string { return "" }
+func (m *userWithPtr) Reset()                             {}
+func (m *userWithPtr) ProtoReflect() protoreflect.Message { return nil }
+func (m *userWithPtr) String() string                     { return "" }
 
 type userWithPtrResult struct {
 	Results *userWithPtr `json:"results"`
 }
 
-func (m *userWithPtrResult) Reset()         {}
-func (m *userWithPtrResult) ProtoMessage()  {}
-func (m *userWithPtrResult) String() string { return "" }
+func (m *userWithPtrResult) Reset()                             {}
+func (m *userWithPtrResult) ProtoReflect() protoreflect.Message { return nil }
+func (m *userWithPtrResult) String() string                     { return "" }
 
-func (m *result) Reset()         {}
-func (m *result) ProtoMessage()  {}
-func (m *result) String() string { return "" }
+func (m *result) Reset()                             {}
+func (m *result) ProtoReflect() protoreflect.Message { return nil }
+func (m *result) String() string                     { return "" }
 
 type badresult struct {
 	Success []*user `json:"success"`
 }
 
-func (m *badresult) Reset()         {}
-func (m *badresult) ProtoMessage()  {}
-func (m *badresult) String() string { return "" }
-
+func (m *badresult) Reset()                             {}
+func (m *badresult) ProtoReflect() protoreflect.Message { return nil }
+func (m *badresult) String() string                     { return "" }
+*/
 type response struct {
 	Error   []map[string]interface{} `json:"error,omitempty"`
-	Result  []*user                  `json:"users"`
+	Result  []*gateway_test.User     `json:"users"`
 	Success map[string]interface{}   `json:"success"`
 }
 
@@ -78,7 +82,7 @@ func TestForwardResponseMessage(t *testing.T) {
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
 	rw := httptest.NewRecorder()
-	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
+	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &gateway_test.Result{Users: []*gateway_test.User{{Name: "Poe", Age: 209}, {Name: "Hemingway", Age: 119}}})
 
 	if rw.Code != http.StatusCreated {
 		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusCreated)
@@ -116,11 +120,11 @@ func TestForwardResponseMessage(t *testing.T) {
 
 	poe, hemingway := v.Result[0], v.Result[1]
 	if poe.Name != "Poe" || poe.Age != 209 {
-		t.Errorf("invalid result item: %+v - expected: %+v", poe, &user{"Poe", 209})
+		t.Errorf("invalid result item: %+v - expected: %+v", poe, &gateway_test.User{Name: "Poe", Age: 209})
 	}
 
 	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
-		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &gateway_test.User{Name: "Hemingway", Age: 119})
 	}
 }
 
@@ -138,7 +142,7 @@ func TestForwardResponseMessageWithDetailsIncluded(t *testing.T) {
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
 	rw := httptest.NewRecorder()
-	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
+	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &gateway_test.Result{Users: []*gateway_test.User{{Name: "Poe", Age: 209}, {Name: "Hemingway", Age: 119}}})
 
 	if rw.Code != http.StatusCreated {
 		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusCreated)
@@ -176,11 +180,11 @@ func TestForwardResponseMessageWithDetailsIncluded(t *testing.T) {
 
 	poe, hemingway := v.Result[0], v.Result[1]
 	if poe.Name != "Poe" || poe.Age != 209 {
-		t.Errorf("invalid result item: %+v - expected: %+v", poe, &user{"Poe", 209})
+		t.Errorf("invalid result item: %+v - expected: %+v", poe, &gateway_test.User{Name: "Poe", Age: 209})
 	}
 
 	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
-		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &gateway_test.User{Name: "Hemingway", Age: 119})
 	}
 }
 
@@ -200,7 +204,7 @@ func TestForwardResponseMessageWithErrorsAndDetailsIncluded(t *testing.T) {
 	}
 	ctx := runtime.NewServerMetadataContext(context.Background(), md)
 	rw := httptest.NewRecorder()
-	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &result{Users: []*user{{"Poe", 209}, {"Hemingway", 119}}})
+	ForwardResponseMessage(ctx, nil, &runtime.JSONBuiltin{}, rw, nil, &gateway_test.Result{Users: []*gateway_test.User{{Name: "Poe", Age: 209}, {Name: "Hemingway", Age: 119}}})
 
 	if rw.Code != http.StatusCreated {
 		t.Errorf("invalid http status code: %d - expected: %d", rw.Code, http.StatusCreated)
@@ -246,11 +250,11 @@ func TestForwardResponseMessageWithErrorsAndDetailsIncluded(t *testing.T) {
 
 	poe, hemingway := v.Result[0], v.Result[1]
 	if poe.Name != "Poe" || poe.Age != 209 {
-		t.Errorf("invalid result item: %+v - expected: %+v", poe, &user{"Poe", 209})
+		t.Errorf("invalid result item: %+v - expected: %+v", poe, &gateway_test.User{Name: "Poe", Age: 209})
 	}
 
 	if hemingway.Name != "Hemingway" || hemingway.Age != 119 {
-		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &user{"Hemingway", 119})
+		t.Errorf("invalid result item: %+v - expected: %+v", hemingway, &gateway_test.User{Name: "Hemingway", Age: 119})
 	}
 }
 
@@ -265,7 +269,7 @@ func TestForwardResponseMessageWithNil(t *testing.T) {
 				EmitUnpopulated: true,
 			},
 		}, rw, nil,
-		&userWithPtrResult{Results: &userWithPtr{PtrValue: nil}},
+		&gateway_test.UserWithPtrResult{Result: &gateway_test.UserWithPtr{PtrValue: nil}},
 	)
 
 	var v map[string]interface{}
@@ -275,7 +279,7 @@ func TestForwardResponseMessageWithNil(t *testing.T) {
 	}
 	fmt.Printf("%+v %s", v, rw.Body.Bytes())
 
-	if len(v["results"].(map[string]interface{})) != 1 {
+	if len(v["result"].(map[string]interface{})) != 1 {
 		t.Errorf("invalid result item: %+v - expected %+v", v["results"], map[string]interface{}{})
 	}
 }
@@ -286,10 +290,10 @@ func TestForwardResponseMessageWithSuccessField(t *testing.T) {
 	rw := httptest.NewRecorder()
 	ForwardResponseMessage(
 		ctx, nil, &runtime.JSONBuiltin{}, rw, nil,
-		&badresult{Success: []*user{{"Poe", 209}, {"Hemingway", 119}}},
+		&gateway_test.BadResult{Success: []*gateway_test.User{{Name: "Poe", Age: 209}, {Name: "Hemingway", Age: 119}}},
 	)
 
-	var v map[string][]*user
+	var v map[string][]*gateway_test.User
 	if err := json.Unmarshal(rw.Body.Bytes(), &v); err != nil {
 		t.Fatalf("failed to unmarshal response: %s", err)
 	}
@@ -301,10 +305,10 @@ func TestForwardResponseMessageWithSuccessField(t *testing.T) {
 		t.Fatalf("invalid number of items in response: %d - expected: %d", len(l), 2)
 	}
 	if u := l[0]; u.Name != "Poe" || u.Age != 209 {
-		t.Errorf("invalid response item: %+v - expected: %+v", u, &user{"Poe", 209})
+		t.Errorf("invalid response item: %+v - expected: %+v", u, &gateway_test.User{Name: "Poe", Age: 209})
 	}
 	if u := l[1]; u.Name != "Hemingway" || u.Age != 119 {
-		t.Errorf("invalid response item: %+v - expected: %+v", u, &user{"Hemingway", 119})
+		t.Errorf("invalid response item: %+v - expected: %+v", u, &gateway_test.User{Name: "Hemingway", Age: 119})
 	}
 }
 
@@ -318,11 +322,11 @@ func TestForwardResponseStream(t *testing.T) {
 	rw := httptest.NewRecorder()
 
 	count := 0
-	items := []*result{
-		{[]*user{{"Poe", 209}}},
-		{[]*user{{"Hemingway", 119}}},
+	items := []*gateway_test.Result{
+		{Users: []*gateway_test.User{{Name: "Poe", Age: 209}}},
+		{Users: []*gateway_test.User{{Name: "Hemingway", Age: 119}}},
 	}
-	recv := func() (proto.Message, error) {
+	recv := func() (protoreflect.ProtoMessage, error) {
 		if count < len(items) {
 			i := items[count]
 			count++
@@ -346,7 +350,7 @@ func TestForwardResponseStream(t *testing.T) {
 
 	dec := json.NewDecoder(rw.Body)
 
-	var rv *result
+	var rv *gateway_test.Result
 	// test Poe
 	if err := dec.Decode(&rv); err != nil {
 		t.Fatalf("failed to unmarshal response chunked result: %s", err)
@@ -355,7 +359,7 @@ func TestForwardResponseStream(t *testing.T) {
 		t.Fatalf("invalid number of items in chuncked result: %d - expected: %d", len(rv.Users), 1)
 	}
 	if u := rv.Users[0]; u.Name != "Poe" || u.Age != 209 {
-		t.Errorf("invalid item from chuncked result: %+v - expected: %+v", u, &user{"Poe", 209})
+		t.Errorf("invalid item from chuncked result: %+v - expected: %+v", u, &gateway_test.User{Name: "Poe", Age: 209})
 	}
 
 	// test Hemingway
@@ -366,6 +370,6 @@ func TestForwardResponseStream(t *testing.T) {
 		t.Fatalf("invalid number of items in chuncked result: %d - expected: %d", len(rv.Users), 1)
 	}
 	if u := rv.Users[0]; u.Name != "Hemingway" || u.Age != 119 {
-		t.Errorf("invalid item from chuncked result: %+v - expected: %+v", u, &user{"Hemingway", 119})
+		t.Errorf("invalid item from chuncked result: %+v - expected: %+v", u, &gateway_test.User{Name: "Hemingway", Age: 119})
 	}
 }

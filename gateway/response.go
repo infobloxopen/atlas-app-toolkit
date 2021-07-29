@@ -7,23 +7,23 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	runtime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
 type (
 	// ForwardResponseMessageFunc forwards gRPC response to HTTP client inaccordance with REST API Syntax
-	ForwardResponseMessageFunc func(context.Context, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, proto.Message, ...func(context.Context, http.ResponseWriter, proto.Message) error)
+	ForwardResponseMessageFunc func(context.Context, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, protoreflect.ProtoMessage, ...func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error)
 	// ForwardResponseStreamFunc forwards gRPC stream response to HTTP client inaccordance with REST API Syntax
-	ForwardResponseStreamFunc func(context.Context, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, func() (proto.Message, error), ...func(context.Context, http.ResponseWriter, proto.Message) error)
+	ForwardResponseStreamFunc func(context.Context, *runtime.ServeMux, runtime.Marshaler, http.ResponseWriter, *http.Request, func() (protoreflect.ProtoMessage, error), ...func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error)
 )
 
 // ResponseForwarder implements ForwardResponseMessageFunc in method ForwardMessage
 // and ForwardResponseStreamFunc in method ForwardStream
 // in accordance with REST API Syntax Specification.
-// See: https://github.com/infobloxopen/atlas-app-toolkit#responses
+// See: https://github.com/infobloxopen/atlas-app-toolkit/v2#responses
 // for format of JSON response.
 type ResponseForwarder struct {
 	OutgoingHeaderMatcher runtime.HeaderMatcherFunc
@@ -59,7 +59,7 @@ func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ErrorHa
 }
 
 // ForwardMessage implements runtime.ForwardResponseMessageFunc
-func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, resp proto.Message, opts ...func(context.Context, http.ResponseWriter, proto.Message) error) {
+func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, resp protoreflect.ProtoMessage, opts ...func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error) {
 
 	//	fmt.Printf("First line: %+v %T %+v\n", req, resp, resp.String())
 	md, ok := runtime.ServerMetadataFromContext(ctx)
@@ -146,7 +146,7 @@ type delimited interface {
 
 // ForwardStream implements runtime.ForwardResponseStreamFunc.
 // RestStatus comes first in the chuncked result.
-func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, recv func() (proto.Message, error), opts ...func(context.Context, http.ResponseWriter, proto.Message) error) {
+func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, recv func() (protoreflect.ProtoMessage, error), opts ...func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error) {
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		grpclog.Infof("forward response stream: flush not supported in %T", rw)
@@ -218,7 +218,7 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 	}
 }
 
-func handleForwardResponseOptions(ctx context.Context, rw http.ResponseWriter, resp proto.Message, opts []func(context.Context, http.ResponseWriter, proto.Message) error) error {
+func handleForwardResponseOptions(ctx context.Context, rw http.ResponseWriter, resp protoreflect.ProtoMessage, opts []func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error) error {
 	if len(opts) == 0 {
 		return nil
 	}
