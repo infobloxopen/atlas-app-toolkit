@@ -7,8 +7,8 @@ import "wrappers.proto";
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/gateway;gateway_test";
 
 message User {
- string	name = 1;
- int32 age = 2;
+  string	name = 1;
+  int32 age = 2;
 }
 
 message Result {
