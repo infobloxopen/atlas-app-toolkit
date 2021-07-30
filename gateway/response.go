@@ -60,8 +60,6 @@ func NewForwardResponseStream(out runtime.HeaderMatcherFunc, meh runtime.ErrorHa
 
 // ForwardMessage implements runtime.ForwardResponseMessageFunc
 func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, resp protoreflect.ProtoMessage, opts ...func(context.Context, http.ResponseWriter, protoreflect.ProtoMessage) error) {
-
-	//	fmt.Printf("First line: %+v %T %+v\n", req, resp, resp.String())
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
 		grpclog.Infof("forward response message: failed to extract ServerMetadata from context")
@@ -73,12 +71,10 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 
 	rw.Header().Set("Content-Type", marshaler.ContentType(nil))
 
-	//	fmt.Printf("Pre handleForwardResponseOptions: %+v %+v\n", req, resp)
 	if err := handleForwardResponseOptions(ctx, rw, resp, opts); err != nil {
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 		return
 	}
-	//	fmt.Printf("Post handleForwardResponseOptions: %+v %+v\n", req, resp)
 
 	// here we start doing a bit strange things
 	// 1. marshal response into bytes
@@ -100,7 +96,6 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		grpclog.Infof("forward response: failed to unmarshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
-	//	fmt.Printf("Initial marshaled: %s\n%+v\n", data, dynmap)
 
 	httpStatus, statusStr := HTTPStatus(ctx, nil)
 
@@ -129,7 +124,6 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		grpclog.Infof("forward response: failed to marshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
-	//	fmt.Printf("Final marshaled: %s\n%+v\n", data, dynmap)
 	rw.WriteHeader(httpStatus)
 
 	if _, err = rw.Write(data); err != nil {
