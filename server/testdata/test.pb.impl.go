@@ -7,7 +7,7 @@ import (
 )
 
 type HelloServerImpl struct {
-	HelloServer
+	UnimplementedHelloServer
 }
 
 func (HelloServerImpl) SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {

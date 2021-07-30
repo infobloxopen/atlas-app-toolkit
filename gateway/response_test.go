@@ -19,46 +19,6 @@ import (
 	gateway_test "github.com/infobloxopen/atlas-app-toolkit/gateway/internal"
 )
 
-/*
-type user struct {
-	Name string `json:"user"`
-	Age  int    `json:"age"`
-}
-
-func (m *user) ProtoReflect() protoreflect.Message { return nil }
-
-type result struct {
-	Users []*user `json:"users"`
-}
-
-type userWithPtr struct {
-	PtrValue *wrappers.Int64Value `json:"ptr_value"`
-}
-
-func (m *userWithPtr) Reset()                             {}
-func (m *userWithPtr) ProtoReflect() protoreflect.Message { return nil }
-func (m *userWithPtr) String() string                     { return "" }
-
-type userWithPtrResult struct {
-	Results *userWithPtr `json:"results"`
-}
-
-func (m *userWithPtrResult) Reset()                             {}
-func (m *userWithPtrResult) ProtoReflect() protoreflect.Message { return nil }
-func (m *userWithPtrResult) String() string                     { return "" }
-
-func (m *result) Reset()                             {}
-func (m *result) ProtoReflect() protoreflect.Message { return nil }
-func (m *result) String() string                     { return "" }
-
-type badresult struct {
-	Success []*user `json:"success"`
-}
-
-func (m *badresult) Reset()                             {}
-func (m *badresult) ProtoReflect() protoreflect.Message { return nil }
-func (m *badresult) String() string                     { return "" }
-*/
 type response struct {
 	Error   []map[string]interface{} `json:"error,omitempty"`
 	Result  []*gateway_test.User     `json:"users"`
