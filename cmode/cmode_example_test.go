@@ -10,7 +10,7 @@ func ExampleCMode() {
 	appLogger := logrus.New()
 
 	cmLogger := newStubLogger(appLogger)
-	cm := New(&cmLogger)
+	cm := New(appLogger, &cmLogger)
 
 	http.Handle("/", Handler(cm))
 
