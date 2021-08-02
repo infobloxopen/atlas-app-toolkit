@@ -139,13 +139,13 @@ func TestCModeUsage(t *testing.T) {
 
 			reqRes := rec.Result()
 			if reqRes.StatusCode != http.StatusOK {
-				t.Fatalf("Hadnler returned wrong status code: %v", reqRes.StatusCode)
+				t.Fatalf("Handler returned wrong status code: %v", reqRes.StatusCode)
 			}
 
 			expectedUsage := strings.Join(test.expectedUsage, "\n")
 			res := strings.TrimSpace(rec.Body.String())
 			if res != expectedUsage {
-				t.Fatalf("Hadnler returned unexpected usage: \n- Got \n%s \n- Want \n%s", res, expectedUsage)
+				t.Fatalf("Handler returned unexpected usage: \n- Got \n%s \n- Want \n%s", res, expectedUsage)
 			}
 		})
 	}
@@ -219,7 +219,7 @@ func TestCModeOpts(t *testing.T) {
 			reqRes := rec.Result()
 			if test.expectedErr == nil {
 				if reqRes.StatusCode != http.StatusOK {
-					t.Fatalf("Hadnler returned wrong status code: %v", reqRes.StatusCode)
+					t.Fatalf("Handler returned wrong status code: %v", reqRes.StatusCode)
 				}
 
 				for _, opt := range cm.opts {
@@ -230,12 +230,12 @@ func TestCModeOpts(t *testing.T) {
 				}
 			} else {
 				if reqRes.StatusCode != http.StatusBadRequest {
-					t.Fatalf("Hadnler returned wrong status code: %v", reqRes.StatusCode)
+					t.Fatalf("Handler returned wrong status code: %v", reqRes.StatusCode)
 				}
 
 				res := strings.TrimSpace(rec.Body.String())
 				if res != test.expectedErr.Error() {
-					t.Fatalf("Hadnler returned unexpected response: \n- Got \n%s \n- Want \n%s",
+					t.Fatalf("Handler returned unexpected response: \n- Got \n%s \n- Want \n%s",
 						res, test.expectedErr.Error())
 				}
 				return
