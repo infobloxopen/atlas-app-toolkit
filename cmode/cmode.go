@@ -135,20 +135,20 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if isInValidValues {
-			err := opt.ParseAndSet(optVal)
-			if err != nil {
-				reply = append(reply, "unexpected server error")
-				cm.writeReply(w, http.StatusInternalServerError, reply)
-				cm.logger.Errorf("%v", err)
-				return
-			}
-		} else {
+		if !isInValidValues {
 			replyText := fmt.Sprintf("invalid %s value: %s", opt.Name(), optVal)
 			reply = append(reply, replyText)
 			reply = append(reply, cm.usage...)
 			cm.writeReply(w, http.StatusBadRequest, reply)
 			cm.logger.Errorf(replyText)
+			return
+		}
+
+		err := opt.ParseAndSet(optVal)
+		if err != nil {
+			reply = append(reply, "unexpected server error")
+			cm.writeReply(w, http.StatusInternalServerError, reply)
+			cm.logger.Errorf("%v", err)
 			return
 		}
 
