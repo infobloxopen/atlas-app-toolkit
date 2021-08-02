@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -31,31 +30,16 @@ type CModeOpt interface {
 }
 
 type CModeLogger interface {
-	CModeOpt
 	Errorf(format string, args ...interface{}) // Printing message when option setting is failed
 	Infof(format string, args ...interface{})  // Printing message when option is successfully set
 }
 
 // Accepts cmLogger and options
-// If cmLogger isn't nil then it will automatically be added to options
 func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
 	cm := CMode{
-		opts:   []CModeOpt{},
+		opts:   opts,
 		usage:  []string{},
 		logger: cmLogger,
-	}
-
-	if !cm.isLoggerNil() {
-		cm.AddOption(cmLogger)
-	}
-
-	for _, opt := range opts {
-		if !isOptNil(opt) {
-			if cm.isOptWithNameExists(opt.Name()) {
-				log.Fatalf("Option with the same name '%s' was already added", opt.Name())
-			}
-			cm.opts = append(cm.opts, opt)
-		}
 	}
 
 	cm.generateUsage()
@@ -68,28 +52,6 @@ func Handler(cm CMode) http.Handler {
 	h.HandleFunc(valuesUrlPath, cm.get).Methods("GET")
 	h.HandleFunc(valuesUrlPath, cm.set).Methods("POST")
 	return h
-}
-
-func (cm *CMode) AddOption(opt CModeOpt) {
-	if !isOptNil(opt) {
-		if cm.isOptWithNameExists(opt.Name()) {
-			log.Fatalf("Option with the same name '%s' was already added", opt.Name())
-		}
-
-		cm.opts = append(cm.opts, opt)
-		cm.generateUsage()
-	}
-}
-
-func (cm *CMode) isOptWithNameExists(name string) bool {
-	isExists := false
-	for _, cmOpt := range cm.opts {
-		if cmOpt.Name() == name {
-			isExists = true
-			break
-		}
-	}
-	return isExists
 }
 
 func (cm *CMode) generateUsage() {
@@ -133,7 +95,7 @@ func (cm *CMode) generateUsage() {
 }
 
 func (cm *CMode) help(w http.ResponseWriter, _ *http.Request) {
-	writeReply(w, http.StatusOK, cm.usage)
+	cm.writeReply(w, http.StatusOK, cm.usage)
 }
 
 func (cm *CMode) get(w http.ResponseWriter, _ *http.Request) {
@@ -141,7 +103,7 @@ func (cm *CMode) get(w http.ResponseWriter, _ *http.Request) {
 	for _, opt := range cm.opts {
 		reply = append(reply, fmt.Sprintf("%s: %s", opt.Name(), opt.Get()))
 	}
-	writeReply(w, http.StatusOK, reply)
+	cm.writeReply(w, http.StatusOK, reply)
 }
 
 func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
@@ -166,14 +128,14 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					cm.logger.Errorf("%v", err)
 					reply = append(reply, "unexpected server error")
-					writeReply(w, http.StatusInternalServerError, reply)
+					cm.writeReply(w, http.StatusInternalServerError, reply)
 					return
 				}
 			} else {
 				replyText := fmt.Sprintf("invalid %s value: %s", opt.Name(), optVal)
 				reply = append(reply, replyText)
 				reply = append(reply, cm.usage...)
-				writeReply(w, http.StatusBadRequest, reply)
+				cm.writeReply(w, http.StatusBadRequest, reply)
 				if !cm.isLoggerNil() {
 					cm.logger.Errorf(replyText)
 				}
@@ -187,11 +149,11 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if empty {
-		writeReply(w, http.StatusBadRequest, cm.usage)
+		cm.writeReply(w, http.StatusBadRequest, cm.usage)
 		return
 	}
 
-	writeReply(w, http.StatusOK, reply)
+	cm.writeReply(w, http.StatusOK, reply)
 }
 
 func (cm *CMode) isLoggerNil() bool {
@@ -206,27 +168,15 @@ func (cm *CMode) isLoggerNil() bool {
 	}
 }
 
-func writeReply(w http.ResponseWriter, status int, reply []string) {
+func (cm *CMode) writeReply(w http.ResponseWriter, status int, reply []string) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(status)
 	_, err := w.Write([]byte(strings.Join(reply, "\n")))
 	if err != nil {
-		logrus.Errorf("error writing reply: %s", err)
+		cm.logger.Errorf("error writing reply: %s", err)
 	}
 	_, err = w.Write([]byte("\n"))
-	if err != nil {
-		logrus.Errorf("error writing reply: %s", err)
-	}
-}
-
-func isOptNil(opt CModeOpt) bool {
-	switch v := opt.(type) {
-	case CModeOpt:
-		return reflect.ValueOf(v).IsNil()
-	case nil:
-		return true
-	default:
-		log.Fatalf("Opt isn't nil and doesn't implement 'CModeOpt' interface: %v", opt)
-		return false
+	if err != nil && !cm.isLoggerNil() {
+		cm.logger.Errorf("error writing reply: %s", err)
 	}
 }

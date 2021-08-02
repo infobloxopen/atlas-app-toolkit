@@ -101,12 +101,14 @@ func TestCModeUsage(t *testing.T) {
 
 	var tests = []struct {
 		name          string
-		logger        *stubLogger
+		logger        CModeLogger
+		opts          []CModeOpt
 		expectedUsage []string
 	}{
 		{
-			name:   "Logger is nil",
+			name:   "No opts",
 			logger: nil,
+			opts:   nil,
 			expectedUsage: []string{
 				"Usage:",
 				fmt.Sprintf("GET  %s        -- print usage", urlPath),
@@ -114,15 +116,16 @@ func TestCModeUsage(t *testing.T) {
 			},
 		},
 		{
-			name:          "Logger is not nil",
-			logger:        &logger,
+			name:          "Logger is in opts",
+			logger:        logrusLogger,
+			opts:          []CModeOpt{&logger},
 			expectedUsage: stubLoggerUsage,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cm := New(test.logger)
+			cm := New(test.logger, test.opts...)
 
 			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
 			if req == nil {
@@ -163,7 +166,6 @@ func TestCModeOpts(t *testing.T) {
 
 	var tests = []struct {
 		name        string
-		logger      *stubLogger
 		opts        []CModeOpt
 		value       string
 		valueName   string
@@ -171,23 +173,20 @@ func TestCModeOpts(t *testing.T) {
 	}{
 		{
 			name:        "Set Logger to 'info'",
-			logger:      &logger,
-			opts:        nil,
+			opts:        []CModeOpt{&logger},
 			value:       "info",
 			valueName:   "loglevel",
 			expectedErr: nil,
 		},
 		{
 			name:        "Set Logger to 'error'",
-			logger:      &logger,
-			opts:        nil,
+			opts:        []CModeOpt{&logger},
 			value:       "error",
 			valueName:   "loglevel",
 			expectedErr: nil,
 		},
 		{
 			name:        "Set 'data' opt to 'all'",
-			logger:      &logger,
 			opts:        []CModeOpt{&dataOpt},
 			value:       "all",
 			valueName:   "data",
@@ -195,8 +194,7 @@ func TestCModeOpts(t *testing.T) {
 		},
 		{
 			name:        "Try to pass not valid 'loglevel' val",
-			logger:      &logger,
-			opts:        nil,
+			opts:        []CModeOpt{&logger},
 			value:       "notvalid",
 			valueName:   "loglevel",
 			expectedErr: fmt.Errorf("%s", strings.Join(logLevelExpectedError, "\n")),
@@ -205,7 +203,7 @@ func TestCModeOpts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cm := New(test.logger, test.opts...)
+			cm := New(logrusLogger, test.opts...)
 			path := fmt.Sprintf("%s?%s=%s", valuesUrlPath, test.valueName, test.value)
 
 			reqSetValue := httptest.NewRequest(http.MethodPost, path, nil)

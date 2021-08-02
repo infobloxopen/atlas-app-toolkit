@@ -7,17 +7,10 @@ Package implements tools to get/set provided options (opts) via HTTP requests.
 ### HTTP Handler
 
 ```go
-    appLogger := logger.New()
+    appLogger := logger.New() // Implements CModeLogger
+    someOption := NewOption() // CModeOpt
 
-    // You need to write a wrapper for appLogger because it should implement 'CModeLogger' interface
-    cmLogger := NewAppLoggerWrapper(appLogger)
-
-    // cmLogger will automatically be added to opts
-    cm := cmode.New(&cmLogger)
-
-    // You can add other options later or pass it to cmode.New
-    someOption := NewOption()
-    cm.AddOption(someOption)
+    cm := cmode.New(appLogger, someOption)
 
     http.Handle("/", Handler(cm))
 
