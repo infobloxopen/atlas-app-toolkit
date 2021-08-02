@@ -7,54 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/infobloxopen/atlas-app-toolkit/cmode/logger"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-var stubLoggerUsage = []string{
+var logrusWrapperUsage = []string{
 	"Usage:",
 	fmt.Sprintf("GET  %s                           -- print usage", urlPath),
 	fmt.Sprintf("GET  %s                    -- get current values", valuesUrlPath),
 	fmt.Sprintf("POST %s?loglevel=$LOGLEVEL -- set logging level", valuesUrlPath),
 	"",
-	"valid loglevel values: [ error, info ]",
-}
-
-type stubLogger struct {
-	*logrus.Logger
-}
-
-func newStubLogger(logger *logrus.Logger) stubLogger {
-	return stubLogger{logger}
-}
-
-func (l *stubLogger) Name() string {
-	return "loglevel"
-}
-
-func (l *stubLogger) Get() string {
-	return l.Level.String()
-}
-
-func (l *stubLogger) ParseAndSet(val string) error {
-	level, err := logrus.ParseLevel(val)
-	if err != nil {
-		return err
-	}
-	l.SetLevel(level)
-	l.Infof("Logging level set to %v", level)
-	return nil
-}
-
-func (l *stubLogger) Description() string {
-	return "set logging level"
-}
-
-func (l *stubLogger) ValidValues() []string {
-	return []string{
-		"error",
-		"info",
-	}
+	"valid loglevel values: [ panic, fatal, error, warning, info, debug, trace ]",
 }
 
 type dataOpt string
@@ -97,7 +61,7 @@ func (l *dataOpt) ValidValues() []string {
 
 func TestCModeUsage(t *testing.T) {
 	logrusLogger := logrus.New()
-	logger := newStubLogger(logrusLogger)
+	logger := logger.New(logrusLogger)
 
 	var tests = []struct {
 		name          string
@@ -116,7 +80,7 @@ func TestCModeUsage(t *testing.T) {
 		{
 			name:          "Logger is in opts",
 			opts:          []CModeOpt{&logger},
-			expectedUsage: stubLoggerUsage,
+			expectedUsage: logrusWrapperUsage,
 		},
 	}
 
@@ -146,13 +110,13 @@ func TestCModeUsage(t *testing.T) {
 
 func TestCModeOpts(t *testing.T) {
 	logrusLogger := logrus.New()
-	logger := newStubLogger(logrusLogger)
+	logger := logger.New(logrusLogger)
 	dataOpt := newDataOpt()
 
 	logLevelExpectedError := []string{
 		"invalid loglevel value: notvalid",
 	}
-	logLevelExpectedError = append(logLevelExpectedError, stubLoggerUsage...)
+	logLevelExpectedError = append(logLevelExpectedError, logrusWrapperUsage...)
 
 	var tests = []struct {
 		name        string
