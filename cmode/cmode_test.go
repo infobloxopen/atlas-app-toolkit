@@ -101,14 +101,12 @@ func TestCModeUsage(t *testing.T) {
 
 	var tests = []struct {
 		name          string
-		logger        CModeLogger
 		opts          []CModeOpt
 		expectedUsage []string
 	}{
 		{
-			name:   "No opts",
-			logger: nil,
-			opts:   nil,
+			name: "No opts",
+			opts: nil,
 			expectedUsage: []string{
 				"Usage:",
 				fmt.Sprintf("GET  %s        -- print usage", urlPath),
@@ -117,7 +115,6 @@ func TestCModeUsage(t *testing.T) {
 		},
 		{
 			name:          "Logger is in opts",
-			logger:        logrusLogger,
 			opts:          []CModeOpt{&logger},
 			expectedUsage: stubLoggerUsage,
 		},
@@ -125,7 +122,7 @@ func TestCModeUsage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cm := New(test.logger, test.opts...)
+			cm := New(nil, test.opts...)
 
 			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
 			if req == nil {

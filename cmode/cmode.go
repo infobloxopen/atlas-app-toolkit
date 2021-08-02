@@ -2,9 +2,7 @@ package cmode
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -34,8 +32,18 @@ type CModeLogger interface {
 	Infof(format string, args ...interface{})  // Printing message when option is successfully set
 }
 
+type nopLogger struct{}
+
+func (nl nopLogger) Errorf(format string, args ...interface{}) {}
+func (nl nopLogger) Infof(format string, args ...interface{})  {}
+
 // Accepts cmLogger and options
 func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
+
+	if cmLogger == nil {
+		cmLogger = nopLogger{}
+	}
+
 	cm := CMode{
 		opts:   opts,
 		usage:  []string{},
@@ -111,41 +119,40 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 	empty := true
 
 	for _, opt := range cm.opts {
+
 		optVal := r.URL.Query().Get(opt.Name())
-		if optVal != "" {
-			empty = false
+		if optVal == "" {
+			continue
+		}
 
-			isInValidValues := false
-			for _, vv := range opt.ValidValues() {
-				if optVal == vv {
-					isInValidValues = true
-					break
-				}
-			}
+		empty = false
 
-			if isInValidValues {
-				err := opt.ParseAndSet(optVal)
-				if err != nil {
-					cm.logger.Errorf("%v", err)
-					reply = append(reply, "unexpected server error")
-					cm.writeReply(w, http.StatusInternalServerError, reply)
-					return
-				}
-			} else {
-				replyText := fmt.Sprintf("invalid %s value: %s", opt.Name(), optVal)
-				reply = append(reply, replyText)
-				reply = append(reply, cm.usage...)
-				cm.writeReply(w, http.StatusBadRequest, reply)
-				if !cm.isLoggerNil() {
-					cm.logger.Errorf(replyText)
-				}
-				return
-			}
-
-			if !cm.isLoggerNil() {
-				cm.logger.Infof("%s is set to %s", opt.Name(), optVal)
+		isInValidValues := false
+		for _, vv := range opt.ValidValues() {
+			if optVal == vv {
+				isInValidValues = true
+				break
 			}
 		}
+
+		if isInValidValues {
+			err := opt.ParseAndSet(optVal)
+			if err != nil {
+				reply = append(reply, "unexpected server error")
+				cm.writeReply(w, http.StatusInternalServerError, reply)
+				cm.logger.Errorf("%v", err)
+				return
+			}
+		} else {
+			replyText := fmt.Sprintf("invalid %s value: %s", opt.Name(), optVal)
+			reply = append(reply, replyText)
+			reply = append(reply, cm.usage...)
+			cm.writeReply(w, http.StatusBadRequest, reply)
+			cm.logger.Errorf(replyText)
+			return
+		}
+
+		cm.logger.Infof("%s is set to %s", opt.Name(), optVal)
 	}
 
 	if empty {
@@ -156,27 +163,15 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 	cm.writeReply(w, http.StatusOK, reply)
 }
 
-func (cm *CMode) isLoggerNil() bool {
-	switch v := cm.logger.(type) {
-	case CModeLogger:
-		return reflect.ValueOf(v).IsNil()
-	case nil:
-		return true
-	default:
-		log.Fatalf("Logger isn't nil and doesn't implement 'CModeLogger' interface: %v", cm.logger)
-		return false
-	}
-}
-
 func (cm *CMode) writeReply(w http.ResponseWriter, status int, reply []string) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(status)
 	_, err := w.Write([]byte(strings.Join(reply, "\n")))
-	if err != nil && !cm.isLoggerNil() {
+	if err != nil {
 		cm.logger.Errorf("error writing reply: %s", err)
 	}
 	_, err = w.Write([]byte("\n"))
-	if err != nil && !cm.isLoggerNil() {
+	if err != nil {
 		cm.logger.Errorf("error writing reply: %s", err)
 	}
 }
