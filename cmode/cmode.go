@@ -172,7 +172,7 @@ func (cm *CMode) writeReply(w http.ResponseWriter, status int, reply []string) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(status)
 	_, err := w.Write([]byte(strings.Join(reply, "\n")))
-	if err != nil {
+	if err != nil && !cm.isLoggerNil() {
 		cm.logger.Errorf("error writing reply: %s", err)
 	}
 	_, err = w.Write([]byte("\n"))
