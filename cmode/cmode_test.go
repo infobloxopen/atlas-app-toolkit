@@ -125,14 +125,7 @@ func TestCModeUsage(t *testing.T) {
 			cm := New(nil, test.opts...)
 
 			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
-			if req == nil {
-				t.Fatal("Can not create http request")
-			}
-
 			rec := httptest.NewRecorder()
-			if rec == nil {
-				t.Fatal("Can not create http recorder")
-			}
 
 			handler := Handler(cm)
 			handler.ServeHTTP(rec, req)
@@ -204,14 +197,7 @@ func TestCModeOpts(t *testing.T) {
 			path := fmt.Sprintf("%s?%s=%s", valuesUrlPath, test.valueName, test.value)
 
 			reqSetValue := httptest.NewRequest(http.MethodPost, path, nil)
-			if reqSetValue == nil {
-				t.Fatal("Can not create http request")
-			}
-
 			rec := httptest.NewRecorder()
-			if rec == nil {
-				t.Fatal("Can not create http recorder")
-			}
 
 			handler := Handler(cm)
 			handler.ServeHTTP(rec, reqSetValue)
