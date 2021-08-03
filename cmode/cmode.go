@@ -151,6 +151,8 @@ func (cm *CMode) set(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		reply = append(reply, fmt.Sprintf("%s is set to %s", opt.Name(), optVal))
+
 		cm.logger.Infof("%s is set to %s", opt.Name(), optVal)
 	}
 

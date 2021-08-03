@@ -7,9 +7,14 @@ Package implements tools to get/set provided options (opts) via HTTP requests.
 ### HTTP Handler
 
 ```go
+    // Create logrus logger for application
     appLogger := logrus.StandartLogger()
 
+    // Create CMode option to change log level dynamically
     cmLogger := logger.New(appLogger)
+    
+    // Create CMode object, pass logger for logging (mandatory) and a CMode option (cmLogger).
+    // You can add more self-made options (see /pkg/cmode/logger as a reference)
     cm := cmode.New(appLogger, cmLogger)
 
     http.Handle("/", cm.Handler())

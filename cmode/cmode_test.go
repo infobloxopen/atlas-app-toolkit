@@ -172,13 +172,23 @@ func TestCModeOpts(t *testing.T) {
 					t.Fatalf("Handler returned wrong status code: %v", reqRes.StatusCode)
 				}
 
+				expectedReply := fmt.Sprintf("%s is set to %s", test.valueName, test.value)
+
+				res := strings.TrimSpace(rec.Body.String())
+				if res != expectedReply {
+					t.Fatalf("Handler returned unexpected reply msg: \n- Got \n%s \n- Want \n%s",
+						res, expectedReply)
+				}
+
 				for _, opt := range cm.opts {
 					if opt.Name() == test.valueName {
 						assert.Equal(t, test.value, opt.Get())
 						return
 					}
 				}
-			} else {
+
+				t.Fatalf("There is no opt with name '%s'", test.valueName)
+			} else { // Error is expected
 				if reqRes.StatusCode != http.StatusBadRequest {
 					t.Fatalf("Handler returned wrong status code: %v", reqRes.StatusCode)
 				}
@@ -188,10 +198,7 @@ func TestCModeOpts(t *testing.T) {
 					t.Fatalf("Handler returned unexpected response: \n- Got \n%s \n- Want \n%s",
 						res, test.expectedErr.Error())
 				}
-				return
 			}
-
-			t.Fatalf("There is no opt with name '%s'", test.valueName)
 		})
 	}
 }
