@@ -53,7 +53,7 @@ func New(cmLogger Logger, opts ...CModeOpt) CMode {
 	return cm
 }
 
-func (cm CMode) Handler() http.Handler {
+func (cm *CMode) Handler() http.Handler {
 	h := mux.NewRouter()
 	h.HandleFunc(urlPath, cm.help).Methods("GET")
 	h.HandleFunc(valuesUrlPath, cm.get).Methods("GET")
