@@ -240,7 +240,7 @@ func TestForwardResponseMessageWithNil(t *testing.T) {
 	fmt.Printf("%+v %s", v, rw.Body.Bytes())
 
 	if len(v["result"].(map[string]interface{})) != 1 {
-		t.Errorf("invalid result item: %+v - expected %+v", v["results"], map[string]interface{}{})
+		t.Errorf("invalid result item: %+v - expected %+v", v["result"], map[string]interface{}{})
 	}
 }
 

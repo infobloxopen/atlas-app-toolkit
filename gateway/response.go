@@ -23,7 +23,7 @@ type (
 // ResponseForwarder implements ForwardResponseMessageFunc in method ForwardMessage
 // and ForwardResponseStreamFunc in method ForwardStream
 // in accordance with REST API Syntax Specification.
-// See: https://github.com/infobloxopen/atlas-app-toolkit/v2#responses
+// See: https://github.com/infobloxopen/atlas-app-toolkit#responses
 // for format of JSON response.
 type ResponseForwarder struct {
 	OutgoingHeaderMatcher runtime.HeaderMatcherFunc
