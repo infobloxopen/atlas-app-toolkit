@@ -79,7 +79,7 @@ func TestCModeUsage(t *testing.T) {
 		},
 		{
 			name:          "Logger is in opts",
-			opts:          []CModeOpt{&logger},
+			opts:          []CModeOpt{logger},
 			expectedUsage: logrusWrapperUsage,
 		},
 	}
@@ -91,7 +91,7 @@ func TestCModeUsage(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
 			rec := httptest.NewRecorder()
 
-			handler := Handler(cm)
+			handler := cm.Handler()
 			handler.ServeHTTP(rec, req)
 
 			reqRes := rec.Result()
@@ -127,14 +127,14 @@ func TestCModeOpts(t *testing.T) {
 	}{
 		{
 			name:        "Set Logger to 'info'",
-			opts:        []CModeOpt{&logger},
+			opts:        []CModeOpt{logger},
 			value:       "info",
 			valueName:   "loglevel",
 			expectedErr: nil,
 		},
 		{
 			name:        "Set Logger to 'error'",
-			opts:        []CModeOpt{&logger},
+			opts:        []CModeOpt{logger},
 			value:       "error",
 			valueName:   "loglevel",
 			expectedErr: nil,
@@ -148,7 +148,7 @@ func TestCModeOpts(t *testing.T) {
 		},
 		{
 			name:        "Try to pass not valid 'loglevel' val",
-			opts:        []CModeOpt{&logger},
+			opts:        []CModeOpt{logger},
 			value:       "notvalid",
 			valueName:   "loglevel",
 			expectedErr: fmt.Errorf("%s", strings.Join(logLevelExpectedError, "\n")),
@@ -163,7 +163,7 @@ func TestCModeOpts(t *testing.T) {
 			reqSetValue := httptest.NewRequest(http.MethodPost, path, nil)
 			rec := httptest.NewRecorder()
 
-			handler := Handler(cm)
+			handler := cm.Handler()
 			handler.ServeHTTP(rec, reqSetValue)
 
 			reqRes := rec.Result()

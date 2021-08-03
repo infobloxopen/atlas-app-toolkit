@@ -14,7 +14,7 @@ const (
 )
 
 type CMode struct {
-	logger CModeLogger
+	logger Logger
 	opts   []CModeOpt
 	usage  []string
 }
@@ -27,7 +27,7 @@ type CModeOpt interface {
 	ValidValues() []string        // Acceptable values. Used in CMode.usage
 }
 
-type CModeLogger interface {
+type Logger interface {
 	Errorf(format string, args ...interface{}) // Printing message when option setting is failed
 	Infof(format string, args ...interface{})  // Printing message when option is successfully set
 }
@@ -37,8 +37,7 @@ type nopLogger struct{}
 func (nl nopLogger) Errorf(format string, args ...interface{}) {}
 func (nl nopLogger) Infof(format string, args ...interface{})  {}
 
-// Accepts cmLogger and options
-func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
+func New(cmLogger Logger, opts ...CModeOpt) CMode {
 
 	if cmLogger == nil {
 		cmLogger = nopLogger{}
@@ -54,7 +53,7 @@ func New(cmLogger CModeLogger, opts ...CModeOpt) CMode {
 	return cm
 }
 
-func Handler(cm CMode) http.Handler {
+func (cm CMode) Handler() http.Handler {
 	h := mux.NewRouter()
 	h.HandleFunc(urlPath, cm.help).Methods("GET")
 	h.HandleFunc(valuesUrlPath, cm.get).Methods("GET")

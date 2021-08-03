@@ -8,8 +8,8 @@ type CModeLogger struct {
 	*logrus.Logger
 }
 
-func New(logger *logrus.Logger) CModeLogger {
-	return CModeLogger{logger}
+func New(logger *logrus.Logger) *CModeLogger {
+	return &CModeLogger{logger}
 }
 
 func (l *CModeLogger) Name() string {

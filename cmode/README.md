@@ -7,12 +7,12 @@ Package implements tools to get/set provided options (opts) via HTTP requests.
 ### HTTP Handler
 
 ```go
-    appLogger := logger.New() // Implements CModeLogger
-    someOption := NewOption() // CModeOpt
+    appLogger := logrus.StandartLogger()
 
-    cm := cmode.New(appLogger, &someOption)
+    cmLogger := logger.New(appLogger)
+    cm := cmode.New(appLogger, cmLogger)
 
-    http.Handle("/", Handler(cm))
+    http.Handle("/", cm.Handler())
 
     err := http.ListenAndServe(":8080", nil)
     if err != nil {

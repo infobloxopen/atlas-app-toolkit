@@ -8,12 +8,12 @@ import (
 )
 
 func ExampleCMode() {
-	appLogger := logrus.New()
+	appLogger := logrus.StandardLogger()
 
 	cmLogger := logger.New(appLogger)
-	cm := New(appLogger, &cmLogger)
+	cm := New(appLogger, cmLogger)
 
-	http.Handle("/", Handler(cm))
+	http.Handle("/", cm.Handler())
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
