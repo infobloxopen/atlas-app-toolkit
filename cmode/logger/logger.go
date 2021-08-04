@@ -26,7 +26,6 @@ func (l *CModeLogger) ParseAndSet(val string) error {
 		return err
 	}
 	l.SetLevel(level)
-	l.Infof("Logging level set to %v", level)
 	return nil
 }
 
