@@ -2,7 +2,9 @@
 
 Package implements tools to get/set provided options (opts) via HTTP requests.
 
-## Example
+## Examples
+
+Package can be used to change log level dynamically in the running service
 
 ### HTTP Handler
 
@@ -27,15 +29,27 @@ Package implements tools to get/set provided options (opts) via HTTP requests.
 
 ### List of available opts and endpoints
 ```bash
-curl SERVER_ADDR/cmode
+# Curl
+curl localhost:8080/cmode
+
+# Kubectl
+kubectl -n <ns> exec <pod> -- curl localhost:8080/cmode
 ```
 
 ### Get options values
 ```bash
-curl SERVER_ADDR/cmode/values
+# Curl
+curl localhost:8080/cmode/values
+
+# Kubectl
+kubectl -n <ns> exec <pod> -- curl localhost:8080/cmode/values
 ```
 
 ### Set option value
 ```bash
-curl -X POST SERVER_ADDR/cmode/values?OPT_NAME=OPT_VALUE
+# Curl
+curl -X POST localhost:8080/cmode/values?loglevel=debug
+
+# Kubectl
+kubectl -n <ns> exec <pod> -- curl -X POST localhost:8080/cmode/values?loglevel=debug
 ```
