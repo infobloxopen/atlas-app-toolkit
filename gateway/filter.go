@@ -1,6 +1,6 @@
 package gateway
 
-import "github.com/grpc-ecosystem/grpc-gateway/utilities"
+import "github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 
 // DefaultQueryFilter can be set to override the filter_{service}_{rpc}_{num}
 // field in generated .pb.gw.go files to prevent parse errors in the gateway

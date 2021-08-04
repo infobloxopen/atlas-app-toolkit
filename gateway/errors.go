@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
@@ -43,7 +43,7 @@ var (
 )
 
 // NewProtoMessageErrorHandler returns runtime.ProtoErrorHandlerFunc
-func NewProtoMessageErrorHandler(out runtime.HeaderMatcherFunc) runtime.ProtoErrorHandlerFunc {
+func NewProtoMessageErrorHandler(out runtime.HeaderMatcherFunc) runtime.ErrorHandlerFunc {
 	h := &ProtoErrorHandler{out}
 	return h.MessageHandler
 }
@@ -141,7 +141,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	}
 	if !headerWritten {
 		rw.Header().Del("Trailer")
-		rw.Header().Set("Content-Type", marshaler.ContentType())
+		rw.Header().Set("Content-Type", marshaler.ContentType(nil))
 		rw.WriteHeader(statusCode)
 	}
 

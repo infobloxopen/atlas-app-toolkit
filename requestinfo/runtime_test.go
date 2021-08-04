@@ -2,10 +2,11 @@ package requestinfo
 
 import (
 	"context"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/grpc/metadata"
 	"reflect"
 	"testing"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestRequestInfoFromContext(t *testing.T) {

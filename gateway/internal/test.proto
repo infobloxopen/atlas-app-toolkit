@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package infoblox.test;
+
+import "wrappers.proto";
+
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/gateway;gateway_test";
+
+message User {
+  string	name = 1;
+  int32 age = 2;
+}
+
+message Result {
+  repeated User users = 1;
+}
+
+message UserWithPtr {
+  google.protobuf.Int64Value ptr_value = 1;
+}
+
+message UserWithPtrResult {
+  UserWithPtr result = 1;
+}
+
+message BadResult {
+  repeated User success = 1;
+}
