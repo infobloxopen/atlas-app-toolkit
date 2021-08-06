@@ -21,7 +21,7 @@ require (
 	go.opencensus.io v0.22.4
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.39.1
 	google.golang.org/grpc/examples v0.0.0-20210715165331-ce7bdf50abb1 // indirect
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.2.8 // indirect
