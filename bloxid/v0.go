@@ -103,11 +103,13 @@ func parseV0(bloxid, salt string) (*V0, error) {
 
 	switch {
 	case bytes.HasPrefix(decoded, hashIDPrefixBytes):
-		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
-		v0.hashIDInt64, err = getInt64FromHashID(v0.decoded, salt)
+		var hashed string
+		hashed = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
+		v0.hashIDInt64, err = getInt64FromHashID(hashed, salt)
 		if err != nil {
 			return nil, err
 		}
+		v0.decoded = fmt.Sprintf("%v", v0.hashIDInt64)
 		v0.scheme = IDSchemeHashID
 	case bytes.HasPrefix(decoded, extrinsicIDPrefixBytes):
 		v0.decoded = strings.TrimSpace(string(decoded[bloxidTypeLen:]))
@@ -295,18 +297,20 @@ func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 
 	switch opts.scheme {
 	case IDSchemeHashID:
+		var hashed string
 
 		if opts.hashIDInt64 < 0 {
 			err = ErrInvalidID
 			return
 		}
 
-		decoded, err = getHashID(opts.hashIDInt64, opts.hashidSalt)
+		decoded = fmt.Sprintf("%v", opts.hashIDInt64)
+		hashed, err = getHashID(opts.hashIDInt64, opts.hashidSalt)
 		if err != nil {
 			return
 		}
 
-		encoded = encodeLowerAlphaNumeric(hashIDPrefix, decoded)
+		encoded = encodeLowerAlphaNumeric(hashIDPrefix, hashed)
 
 	case IDSchemeExtrinsic:
 
