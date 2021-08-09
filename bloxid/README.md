@@ -29,7 +29,7 @@ v0, err := NewV0("",
 parse bloxid to retrieve extrinsic id
 ```golang
 parsed, err := NewV0("blox0.iam.user.us-com-1.ivmfiurrgiztinjweaqcaiba")
-// v0.Decoded(): 1
+// v0.Decoded(): "123456"
 ```
 
 

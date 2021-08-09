@@ -2,6 +2,7 @@ package bloxid
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -96,6 +97,9 @@ func TestHashIDInttoInt(t *testing.T) {
 
 				assert.Equal(t, test.err, err)
 				assert.Equal(t, test.int64ID, v0_1.HashIDInt64())
+				decoded, err := strconv.ParseInt(v0_1.DecodedID(), 10, 64)
+				assert.NoError(t, err)
+				assert.Equal(t, test.int64ID, decoded)
 				assert.Equal(t, v0, v0_1)
 			}
 		})
