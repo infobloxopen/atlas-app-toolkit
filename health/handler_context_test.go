@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,4 +106,64 @@ func TestNewChecksContextHandler(t *testing.T) {
 				"Result codes don't match %q. [%s]", reqStr, test.name)
 		})
 	}
+}
+
+func addNiceLivenessContext(h CheckerContext, number int, counterCall *int) {
+	h.AddLiveness("Liveness"+strconv.Itoa(number), func(context.Context) error {
+		*counterCall++
+		return nil
+	})
+}
+
+func addFailedLivenessContext(h CheckerContext, number int, counterCall *int) {
+	h.AddLiveness("Liveness"+strconv.Itoa(number), func(context.Context) error {
+		*counterCall++
+		return errors.New("Liveness" + strconv.Itoa(number) + " check failed")
+	})
+}
+
+func TestNoFailFastHandlerContext(t *testing.T) {
+	h := NewChecksContextHandler("/healthz", "/ready")
+
+	counterCall := 0
+	expectedCalls := 3
+
+	addNiceLivenessContext(h, 1, &counterCall)
+	addFailedLivenessContext(h, 2, &counterCall)
+	addFailedLivenessContext(h, 3, &counterCall)
+
+	req, err := http.NewRequestWithContext(context.TODO(), http.MethodGet, "/healthz", nil)
+	assert.NoError(t, err)
+
+	httpRecorder := httptest.NewRecorder()
+	h.Handler().ServeHTTP(httpRecorder, req)
+
+	assert.Equal(t, expectedCalls, counterCall, "Excepted %d calls of check.", expectedCalls)
+	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
+		"Result codes don't match, current is '%s'.", http.StatusText(httpRecorder.Code))
+}
+
+func TestFailFastHandlerContext(t *testing.T) {
+	h := NewChecksContextHandler("/healthz", "/ready")
+	h.SetFailFast(true)
+
+	counterCall := 0
+	expectedCalls := 2
+
+	addNiceLivenessContext(h, 1, &counterCall)
+	addFailedLivenessContext(h, 2, &counterCall)
+	addFailedLivenessContext(h, 3, &counterCall)
+
+	req, err := http.NewRequestWithContext(context.TODO(), http.MethodGet, "/healthz", nil)
+	assert.NoError(t, err)
+
+	httpRecorder := httptest.NewRecorder()
+	h.Handler().ServeHTTP(httpRecorder, req)
+
+	// we cannot determine the order of elements while iterationg over `checks` map in `handle` function
+	// so we just check that amount is between the range
+	assert.GreaterOrEqual(t, expectedCalls, counterCall, "Excepted less or equal %d calls of check.", expectedCalls)
+	assert.NotEqual(t, 0, counterCall, "Cannot be zero calls of check.")
+	assert.Equal(t, http.StatusServiceUnavailable, httpRecorder.Code,
+		"Result codes don't match, current is '%s'.", http.StatusText(httpRecorder.Code))
 }
