@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/protoc-gen-go/generator"
 	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jinzhu/inflection"
@@ -16,6 +15,7 @@ import (
 	"time"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 // HandleFieldPath converts fieldPath to appropriate db string for use in where/order by clauses
@@ -36,7 +36,7 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 		}
 	}
 	if len(fieldPath) == 2 {
-		return dbPath, generator.CamelCase(fieldPath[0]), nil
+		return dbPath, util.Camel(fieldPath[0]), nil
 	}
 	return dbPath, "", nil
 }
@@ -84,7 +84,7 @@ func isRawJSON(values ...string) bool {
 
 //TODO: add supprt for embeded objects
 func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) bool {
-	fieldName := generator.CamelCase(fieldPath[0])
+	fieldName := util.Camel(fieldPath[0])
 	objType := indirectType(reflect.TypeOf(obj))
 	field, ok := objType.FieldByName(fieldName)
 	if !ok {
@@ -108,7 +108,7 @@ func fieldPathToDBName(fieldPath []string, obj interface{}) (string, error) {
 		if !isModel(objType) {
 			return "", fmt.Errorf("%s: non-last field of %s field path should be a model", objType, fieldPath)
 		}
-		sf, ok := objType.FieldByName(generator.CamelCase(part))
+		sf, ok := objType.FieldByName(util.Camel(part))
 		if !ok {
 			return "", fmt.Errorf("Cannot find field %s in %s", part, objType)
 		}
