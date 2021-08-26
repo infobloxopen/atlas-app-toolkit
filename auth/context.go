@@ -1,10 +1,10 @@
-package util
+package auth
 
 import (
 	"context"
+
 	"google.golang.org/grpc/metadata"
 
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/requestid"
 )
@@ -12,7 +12,7 @@ import (
 // OutgoingContext set to outgoing context request_id, auth_token, X-Forwarded-For, x-geo- and x-b3- headers value
 func OutgoingContext(ctx context.Context) context.Context {
 	keys := []string{
-		auth.AuthorizationHeader,
+		AuthorizationHeader,
 		requestid.DefaultRequestIDKey,
 		gateway.XForwardedFor,
 	}
