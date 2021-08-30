@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/protoc-gen-go/generator"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 // DefaultFilteringConditionProcessor processes filter operator conversion
@@ -182,7 +182,7 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 	objType := indirectType(reflect.TypeOf(p.pb))
 	pathLength := len(fieldPath)
 	for i, part := range fieldPath {
-		sf, ok := objType.FieldByName(generator.CamelCase(part))
+		sf, ok := objType.FieldByName(util.Camel(part))
 		if !ok {
 			return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
 		}
@@ -198,7 +198,7 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 					return nil, err
 				}
 				newPb := reflect.New(objType)
-				v := newPb.Elem().FieldByName(generator.CamelCase(part))
+				v := newPb.Elem().FieldByName(util.Camel(part))
 				v.Set(reflect.ValueOf(id))
 				toOrm := newPb.MethodByName("ToORM")
 				if !toOrm.IsValid() {
@@ -217,7 +217,7 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 						return nil, fmt.Errorf("ToOrm second return value of %s is expected to be error", objType)
 					}
 				}
-				ormId := orm.FieldByName(generator.CamelCase(part))
+				ormId := orm.FieldByName(util.Camel(part))
 				if !ormId.IsValid() {
 					return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
 				}

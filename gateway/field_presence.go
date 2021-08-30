@@ -9,10 +9,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/golang/protobuf/protoc-gen-go/generator"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 const (
@@ -90,7 +91,7 @@ func NewPresenceAnnotator(methods ...string) func(context.Context, *http.Request
 func extendPath(parent []string, key string) []string {
 	newPath := make([]string, len(parent)+1)
 	copy(newPath, parent)
-	newPath[len(newPath)-1] = generator.CamelCase(key)
+	newPath[len(newPath)-1] = util.Camel(key)
 	return newPath
 }
 
