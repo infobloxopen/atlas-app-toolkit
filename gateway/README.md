@@ -39,18 +39,18 @@ This enables the following two alternative HTTP JSON to RPC mappings:
 
 ## HTTP Headers
 
-Your application or service might depend on HTTP headers from incoming REST requests. The official gRPC gateway documentation describes how to handle HTTP headers in detail, so check out the documentation [here](https://grpc-ecosystem.github.io/grpc-gateway/docs/customizingyourgateway.html).
+Your application or service might depend on HTTP headers from incoming REST requests. The official gRPC gateway documentation describes how to handle HTTP headers in detail, so check out the documentation [here](https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_your_gateway/).
 
 ### Using Headers in gRPC Service
 
-To extract headers from metadata, you can use the [`FromIncomingContext`](https://godoc.org/google.golang.org/grpc/metadata#FromIncomingContext) function.
+To extract headers from metadata, you can use the [`FromIncomingContext`](https://pkg.go.dev/google.golang.org/grpc/metadata#FromIncomingContext) function.
 
 ```go
 import (
     "context"
 
     "google.golang.org/grpc/metadata"
-    "github.com/grpc-ecosystem/grpc-gateway/runtime"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
@@ -349,7 +349,7 @@ Here's an example that shows how to use [`DefaultProtoErrorHandler`](gateway/err
 
 ```go
 import (
-    "github.com/grpc-ecosystem/grpc-gateway/runtime"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
     "github.com/infobloxopen/atlas-app-toolkit/gateway"
 
     "github.com/yourrepo/yourapp"

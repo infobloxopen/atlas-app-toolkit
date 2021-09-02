@@ -40,7 +40,7 @@ For grpc-gateway support, the `MetadataAnnotator` should also be added to the ga
 Using the toolkit's server package, that setup looks something like this:
 ```golang
 import (
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/infobloxopen/atlas-app-toolkit/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/logging"
 	"github.com/infobloxopen/atlas-app-toolkit/server"
