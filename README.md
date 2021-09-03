@@ -21,7 +21,7 @@ The following libraries have how-to guides included at the package level.
 
 #### Request Handling Tools
 
-[`requestid`](requestid) - gets the request ID from incoming requests (or creates a unique ID if it doesn't exist) 
+[`requestid`](requestid) - gets the request ID from incoming requests (or creates a unique ID if it doesn't exist)
 
 [`query`](query) - provides query parameter-specific helpers, like sorting, paging, and filtering resources
 
@@ -35,7 +35,7 @@ The following libraries have how-to guides included at the package level.
 
 [`server`](server) - provides a wrapper utility that manages a gRPC server and its REST gateway as a single unit
 
-[`gateway`](gateway) - creates a gRPC gateway with built-in REST syntax compliancy 
+[`gateway`](gateway) - creates a gRPC gateway with built-in REST syntax compliancy
 
 [`health`](health) -  helps developers add health and readiness checks to their gRPC services
 
@@ -148,7 +148,7 @@ message ExcludedMessage {
 #### Swagger
 
 Optionally you may generate [Swagger](https://swagger.io/) schema from your proto file.
-To do so install [this plugin](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-swagger).
+To do so install [this plugin](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-openapiv2).
 
 ```sh
 go get -u github.com/golang/protobuf/protoc-gen-go
@@ -169,7 +169,7 @@ protoc -I/usr/local/include -I. \
 ```proto
 import "protoc-gen-swagger/options/annotations.proto";
 
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "My Service";
     version: "1.0";
@@ -181,7 +181,7 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
 };
 
 message MyMessage {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     external_docs: {
       url: "https://infoblox.com/docs/mymessage";
       description: "MyMessage description";
@@ -189,7 +189,7 @@ message MyMessage {
 };
 ```
 
-For more Swagger options see [this scheme](https://github.com/grpc-ecosystem/grpc-gateway/blob/master/protoc-gen-swagger/options/openapiv2.proto)
+For more Swagger options see [this scheme](https://github.com/grpc-ecosystem/grpc-gateway/blob/master/protoc-gen-openapiv2/options/openapiv2.proto)
 
 See example [contacts app](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.proto).
 Here is a [generated Swagger schema](https://github.com/infobloxopen/atlas-contacts-app/blob/master/pkg/pb/contacts.swagger.json).
@@ -209,4 +209,3 @@ generated in a bit unusual way:
 
 For convenience purposes there is an atlas-gentool image available which contains a pre-installed set of often used plugins.
 For more details see [infobloxopen/atlas-gentool](https://github.com/infobloxopen/atlas-gentool) repository.
-

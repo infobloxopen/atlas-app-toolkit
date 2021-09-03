@@ -89,14 +89,14 @@ Consider that you have a following object where `info` field is a `jsonb` field:
 Filterting request with `jsonb` query will look like:
 ```
 ...?_filter=info.Address.City=='Tacoma'
-``` 
+```
 if you want to compare enclosed object with json you are able to write:
 ```
 ...?_filter=info.Address=='{"City": "Tacoma", "Country": "USA"}'
 ```
 
-Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use [vanilla](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-swagger) swagger schema generation, since this plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
-In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/atlas-patch/protoc-gen-swagger) which has a fix for this issue. 
+Note: if you decide to use toolkit provided `infoblox.api.Filtering` proto type, then you'll not be able to use [vanilla](https://github.com/grpc-ecosystem/grpc-gateway/tree/master/protoc-gen-openapiv2) swagger schema generation, since this plugin doesn't work with recursive nature of `infoblox.api.Filtering`.
+In this case you can use our [fork](https://github.com/infobloxopen/grpc-gateway/tree/v2/protoc-gen-openapiv2) which has a fix for this issue.
 You can also use [atlas-gentool](https://github.com/infobloxopen/atlas-gentool) which contains both versions of the plugin.
 
 ## Sorting
@@ -137,7 +137,7 @@ This is done by `gateway.ResponseForwarder`.
 Using the toolkit's [server](../server) package functionality, you can optionally enable automatic filling of a `google.protobuf.FieldMask` within the gRPC Gateway.
 
 As a prerequisite, the request passing through the gateway must match the list
-of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the 
+of given HTTP methods (e.g. POST, PUT, PATCH) and contain a FieldMask at the
 top level.
 ```proto
 import "google/protobuf/field_mask.proto";

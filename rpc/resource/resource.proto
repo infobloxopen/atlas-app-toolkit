@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package atlas.rpc;
 
-import "protoc-gen-swagger/options/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;resource";
 
@@ -12,7 +12,7 @@ option go_package = "github.com/infobloxopen/atlas-app-toolkit/rpc/resource;reso
 // an application-defined resource type,
 // and an application-defined ID for that resource
 message Identifier {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {
             type: STRING;
             description: "atlas.api.identifier";
