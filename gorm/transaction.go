@@ -47,6 +47,7 @@ type Transaction struct {
 	parent          *gorm.DB
 	current         *gorm.DB
 	afterCommitHook []func(context.Context)
+	configFn        []func() *Transaction // configFn holds a set of functions to configure the transaction state if neccessary.
 }
 
 func NewTransaction(db *gorm.DB) Transaction {
@@ -55,6 +56,10 @@ func NewTransaction(db *gorm.DB) Transaction {
 
 func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
+}
+
+func (t *Transaction) AddConfigFn(configs ...func() *Transaction) {
+	t.configFn = configs
 }
 
 // BeginFromContext will extract transaction wrapper from context and start new transaction.
@@ -174,13 +179,20 @@ func (t *Transaction) Commit(ctx context.Context) error {
 // If call of grpc.UnaryHandler returns with an error the transaction
 // is aborted, otherwise committed.
 func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
-	txn := &Transaction{parent: db}
+	txn := &Transaction{}
+	txn.AddConfigFn(WithNew(db))
 	return UnaryServerInterceptorTxn(txn)
 }
 
 func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
+	configFn := txn.configFn
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		// prepare new *Transaction instance
+		// Renew (necessary as the next intercepter invocation overrides txn
+		// being used by the previouse invocation) and configure *Transaction instance.
+		txn := txn
+		for _, fn := range configFn {
+			txn = fn()
+		}
 
 		defer func() {
 			// simple panic handler
@@ -223,5 +235,11 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 		resp, err = handler(ctx, req)
 
 		return resp, err
+	}
+}
+
+func WithNew(db *gorm.DB) func() *Transaction {
+	return func() *Transaction {
+		return &Transaction{parent: db}
 	}
 }
