@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/infobloxopen/atlas-app-toolkit/auth"

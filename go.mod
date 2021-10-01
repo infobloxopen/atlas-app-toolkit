@@ -1,11 +1,11 @@
 module github.com/infobloxopen/atlas-app-toolkit
 
-go 1.14
+go 1.15
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
