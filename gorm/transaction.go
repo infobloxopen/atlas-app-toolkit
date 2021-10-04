@@ -180,8 +180,8 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 
 func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		// prepare new *Transaction instance
-
+		// Deep copy is necessary as a tansaction should be created per request.
+		txn := &Transaction{parent: txn.parent, afterCommitHook: txn.afterCommitHook}
 		defer func() {
 			// simple panic handler
 			if perr := recover(); perr != nil {
