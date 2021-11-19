@@ -78,16 +78,15 @@ func AddErrorCurrentSpan(ctx context.Context, err error) error {
 
 //AddErrorSpan adds error into span
 func AddErrorSpan(span *trace.Span, err error) error {
-	var code int32 = trace.StatusCodeUnknown
+	var code int32 = trace.StatusCodeOK
 	status, ok := status.FromError(err)
 	if ok && status != nil {
 		code = int32(status.Code())
 	}
 
-	span.SetStatus(trace.Status{
-		Code:    code,
-		Message: err.Error(),
-	})
+	if code != trace.StatusCodeOK {
+		span.AddAttributes(trace.Int64Attribute("census.status_code", int64(code)), trace.StringAttribute("census.status_description", err.Error()), trace.BoolAttribute("error", true))
+	}
 
 	return err
 }
