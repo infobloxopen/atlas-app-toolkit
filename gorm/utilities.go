@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/golang/protobuf/proto"
-	jgorm "github.com/jinzhu/gorm"
-	"github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/jinzhu/inflection"
-
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/inflection"
+	"gorm.io/gorm/schema"
+
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/types"
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
@@ -93,7 +92,7 @@ func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) b
 
 	fInterface := reflect.Zero(indirectType(field.Type)).Interface()
 	switch fInterface.(type) {
-	case postgres.Jsonb:
+	case types.Jsonb:
 		return true
 	}
 
@@ -136,7 +135,7 @@ func tableName(t reflect.Type) string {
 	if tn, ok := table.(tableNamer); ok {
 		return tn.TableName()
 	}
-	return inflection.Plural(jgorm.ToDBName(t.Name()))
+	return inflection.Plural(ToDBName(t.Name()))
 }
 
 func columnName(sf *reflect.StructField) string {
@@ -144,7 +143,7 @@ func columnName(sf *reflect.StructField) string {
 	if ex {
 		return tagCol
 	}
-	return jgorm.ToDBName(sf.Name)
+	return ToDBName(sf.Name)
 }
 
 func gormTag(sf *reflect.StructField, tag string) (bool, string) {
@@ -213,4 +212,10 @@ type EmptyFieldPathError struct {
 
 func (e *EmptyFieldPathError) Error() string {
 	return fmt.Sprintf("Empty field path is not allowed")
+}
+
+var namingStrategy = schema.NamingStrategy{}
+
+func ToDBName(s string) string {
+	return schema.NamingStrategy{}.ColumnName("", s)
 }

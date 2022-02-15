@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/jinzhu/gorm"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func TestVersionFromPath(t *testing.T) {
@@ -82,7 +83,7 @@ func TestVersionInDB(t *testing.T) {
 			vrows.AddRow(tc.hasV, tc.hasDirty)
 			mock.ExpectQuery(`SELECT \* FROM schema_migrations`).WillReturnRows(vrows)
 
-			gdb, err := gorm.Open("postgres", db)
+			gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/types"
 )
 
 type Entity struct {
@@ -19,7 +19,7 @@ type Entity struct {
 	NestedEntity NestedEntity
 	Id           string
 	Ref          *string
-	Tags         *postgres.Jsonb
+	Tags         *types.Jsonb
 }
 
 type EntityProto struct {
