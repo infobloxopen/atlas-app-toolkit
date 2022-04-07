@@ -76,10 +76,12 @@ func TestNewV0(t *testing.T) {
 }
 
 type generateTestCase struct {
+	bid          string
 	realm        string
 	entityDomain string
 	entityType   string
 	extrinsicID  string
+	encodedID    string
 	expected     string
 	err          error
 }
@@ -187,8 +189,80 @@ func TestGenerateV0(t *testing.T) {
 			continue
 		}
 
-		//		t.Log(v0)
-		//		t.Logf("%#v\n", v0)
+		validateGenerateV0(t, tm, v0, err)
+
+		parsed, err := NewV0(v0.String())
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("got: %s wanted: %s", err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		validateGenerateV0(t, tm, parsed, err)
+	}
+}
+
+func TestGenerateV0WithRandomEncodedID(t *testing.T) {
+	var testmap = []generateTestCase{
+		{
+			realm:        "us-com-1",
+			entityDomain: "iam",
+			entityType:   "group",
+			expected:     "blox0.iam.group.us-com-1.",
+			err:          ErrEmptyRandomEncodedID,
+		},
+		{
+			realm:        "us-com-2",
+			entityDomain: "iam",
+			entityType:   "group",
+			expected:     "blox0.iam.group.us-com-2.",
+			err:          ErrEmptyRandomEncodedID,
+		},
+		{
+			realm:        "us-com-2",
+			entityDomain: "iam",
+			entityType:   "group",
+			encodedID:    "foo",
+			expected:     "",
+			err:          ErrInvalidSizeRandomEncodedID,
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "iam",
+			entityType:   "group",
+			encodedID:    "tshwyq3mfkgqqcfa76a5hbr2uaayzw3h",
+			expected:     "blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "iam",
+			entityType:   "group",
+			encodedID:    "dyf5zexvwheul2bqqcibpmvfvvbh5ybp",
+			expected:     "blox0.iam.group.us-com-1.dyf5zexvwheul2bqqcibpmvfvvbh5ybp",
+		},
+	}
+
+	for index, tm := range testmap {
+		v0, err := NewV0("",
+			WithEntityDomain(tm.entityDomain),
+			WithEntityType(tm.entityType),
+			WithRealm(tm.realm),
+			WithRandomEncodedID(tm.encodedID),
+		)
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("index: %d got: %s wanted error: %s", index, err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		if v0 == nil {
+			t.Errorf("unexpected nil id")
+			continue
+		}
 
 		validateGenerateV0(t, tm, v0, err)
 
@@ -205,8 +279,73 @@ func TestGenerateV0(t *testing.T) {
 	}
 }
 
+func TestGenerateV0RandomEntityID(t *testing.T) {
+	var testmap = []generateTestCase{
+		{
+			bid:          "random",
+			realm:        "us-com-1",
+			entityDomain: "iam",
+			entityType:   "group",
+			err:          nil,
+		},
+	}
+
+	for index, tm := range testmap {
+		v0, err := NewV0("",
+			WithEntityDomain(tm.entityDomain),
+			WithEntityType(tm.entityType),
+			WithRealm(tm.realm),
+		)
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("index: %d got: %s wanted error: %s", index, err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		if v0 == nil {
+			t.Errorf("unexpected nil id")
+			continue
+		}
+
+		validateGenerateV0(t, tm, v0, err)
+
+		parsed, err := NewV0(v0.String())
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("got: %s wanted: %s", err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		validateGenerateV0(t, tm, parsed, err)
+
+		t.Logf("created random scheme bloxid: %s\n", parsed.String())
+	}
+}
+
 func validateGenerateV0(t *testing.T, tm generateTestCase, v0 *V0, err error) {
-	if len(tm.extrinsicID) > 0 {
+	if len(tm.bid) > 0 {
+		if tm.bid == "random" {
+			// check length
+			if ln := len(v0.encoded); ln != 32 {
+				t.Errorf("got: %q wanted bloxid.Encoded() len of: %q", v0.encoded, 32)
+			}
+		} else {
+			if v0.String() != tm.expected {
+				t.Errorf("got: %q wanted bloxid: %q", v0, tm.expected)
+			}
+		}
+	} else if len(tm.encodedID) > 0 {
+		if v0.encoded != tm.encodedID {
+			t.Errorf("got: %q wanted encoded: %q", v0.encoded, tm.encodedID)
+		}
+		if v0.String() != tm.expected {
+			t.Errorf("got: %q wanted bloxid: %q", v0, tm.expected)
+		}
+	} else if len(tm.extrinsicID) > 0 {
 		if v0.decoded != tm.extrinsicID {
 			t.Errorf("got: %q wanted decoded: %q", v0.decoded, tm.extrinsicID)
 		}

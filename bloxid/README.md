@@ -90,3 +90,16 @@ parsed, err := NewV0("blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
 // parsed.Decoded(): "9c8f6c436c2a8d0808a0ff81d3863aa0018cdb67"
 ```
 
+create bloxid from unique entity id portion of a previously generated bloxid with random scheme
+```
+v0, err := NewV0("",
+            WithEntityDomain("iam"),
+            WithEntityType("group"),
+            WithRealm("us-com-1"),
+            WithRandomEncodedID("tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"),
+        )
+// v0.String(): blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h
+// v0.Encoded(): "tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
+// v0.Decoded(): "9c8f6c436c2a8d0808a0ff81d3863aa0018cdb67"
+```
+

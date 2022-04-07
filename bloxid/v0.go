@@ -14,8 +14,6 @@ const (
 
 	VersionUnknown Version = iota
 	Version0       Version = iota
-
-	IDSchemeRandom = "random"
 )
 
 type Version uint8
@@ -248,6 +246,7 @@ type V0Options struct {
 	extrinsicID  string
 	hashIDInt64  int64
 	hashidSalt   string
+	encodedID    string
 	scheme       string
 }
 
@@ -270,6 +269,14 @@ func WithRealm(realm string) func(o *V0Options) {
 		o.realm = realm
 	}
 }
+
+/* WIP
+func WithScheme(fnOpt GenerateV0Opts) func(o *V0Options) {
+	return func(o *V0Options) {
+		fnOpt(o)
+	}
+}
+*/
 
 func generateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 	for _, fn := range fnOpts {
@@ -320,6 +327,14 @@ func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 		}
 
 		encoded = encodeLowerAlphaNumeric(extrinsicIDPrefix, decoded)
+
+	case IDSchemeRandom:
+
+		decoded, err = getDecodedIDFromRandomEncodedID(opts.encodedID)
+		if err != nil {
+			return
+		}
+		encoded = opts.encodedID
 
 	default:
 		rndm := randDefault()
