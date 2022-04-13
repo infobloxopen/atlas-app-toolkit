@@ -14,8 +14,6 @@ const (
 
 	VersionUnknown Version = iota
 	Version0       Version = iota
-
-	IDSchemeRandom = "random"
 )
 
 type Version uint8
@@ -245,10 +243,9 @@ type V0Options struct {
 	entityDomain string
 	entityType   string
 	realm        string
-	extrinsicID  string
-	hashIDInt64  int64
 	hashidSalt   string
 	scheme       string
+	schemer      Schemer
 }
 
 type GenerateV0Opts func(o *V0Options)
@@ -281,52 +278,37 @@ func generateV0(opts *V0Options, fnOpts ...GenerateV0Opts) (*V0, error) {
 		return nil, err
 	}
 
-	return &V0{
+	v0 := &V0{
 		version:      Version0,
 		realm:        opts.realm,
 		decoded:      decoded,
 		encoded:      encoded,
 		entityDomain: opts.entityDomain,
 		entityType:   opts.entityType,
-		hashIDInt64:  opts.hashIDInt64,
 		scheme:       opts.scheme,
-	}, nil
+	}
+
+	if !isNilInterface(opts.schemer) {
+		if t, ok := opts.schemer.(*schemerHashIDInt64); ok {
+			v0.hashIDInt64 = t.HashIDInt64
+		}
+	}
+
+	return v0, nil
 }
 
 func uniqueID(opts *V0Options) (encoded, decoded string, err error) {
 
-	switch opts.scheme {
-	case IDSchemeHashID:
-		var hashed string
-
-		if opts.hashIDInt64 < 0 {
-			err = ErrInvalidID
-			return
-		}
-
-		decoded = fmt.Sprintf("%v", opts.hashIDInt64)
-		hashed, err = getHashID(opts.hashIDInt64, opts.hashidSalt)
-		if err != nil {
-			return
-		}
-
-		encoded = encodeLowerAlphaNumeric(hashIDPrefix, hashed)
-
-	case IDSchemeExtrinsic:
-
-		decoded, err = getExtrinsicID(opts.extrinsicID)
-		if err != nil {
-			return
-		}
-
-		encoded = encodeLowerAlphaNumeric(extrinsicIDPrefix, decoded)
-
-	default:
-		rndm := randDefault()
-		decoded = hex.EncodeToString(rndm)
-		encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
-		opts.scheme = IDSchemeRandom
+	if !isNilInterface(opts.schemer) {
+		opts.scheme, decoded, encoded, err = opts.schemer.FromEntityID(opts)
+		return
 	}
+
+	// default to random scheme to generate the entity id
+	rndm := randDefault()
+	decoded = hex.EncodeToString(rndm)
+	encoded = strings.ToLower(base32.StdEncoding.EncodeToString(rndm))
+	opts.scheme = IDSchemeRandom
 
 	return
 }

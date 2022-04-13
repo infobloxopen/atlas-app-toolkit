@@ -32,9 +32,9 @@ v0, err := NewV0("",
             WithEntityDomain("iam"),
             WithEntityType("user"),
             WithRealm("us-com-1"),
-            WithExtrinsic("123456"),
+            WithSchemer(WithExtrinsic("123456")),
         )
-// v0.String(): blox0.iam.user.us-com-1.ivmfiurrgiztinjweaqcaiba
+// v0.String(): "blox0.iam.user.us-com-1.ivmfiurrgiztinjweaqcaiba"
 // v0.Decoded(): "123456"
 ```
 
@@ -53,10 +53,10 @@ v0, err := NewV0("",
             WithEntityDomain("infra"),
             WithEntityType("host"),
             WithRealm("us-com-1"),
-            WithHashIDInt64(1),
+            WithSchemer(WithHashIDInt64(1)),
             WithHashIDSalt("test"),
         )
-// v0.String(): blox0.infra.host.us-com-1.jbeuiwrsmq3tkmzwmuzwcojsmrqwemrtgy3tqzbvhbsdizjvhe2dkn3cgzrdizlb
+// v0.String(): "blox0.infra.host.us-com-1.jbeuiwrsmq3tkmzwmuzwcojsmrqwemrtgy3tqzbvhbsdizjvhe2dkn3cgzrdizlb"
 // v0.HashIDInt64(): 1
 ```
 
@@ -78,7 +78,7 @@ v0, err := NewV0("",
             WithEntityType("group"),
             WithRealm("us-com-1"),
         )
-// v0.String(): blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h
+// v0.String(): "blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
 // v0.Encoded(): "tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
 // v0.Decoded(): "9c8f6c436c2a8d0808a0ff81d3863aa0018cdb67"
 ```
@@ -88,5 +88,18 @@ parse bloxid to retrieve the unique entity id portion of the bloxid
 parsed, err := NewV0("blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h")
 // parsed.Encoded(): "tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
 // parsed.Decoded(): "9c8f6c436c2a8d0808a0ff81d3863aa0018cdb67"
+```
+
+create bloxid from unique entity id portion of a previously generated bloxid with random scheme
+```
+v0, err := NewV0("",
+            WithEntityDomain("iam"),
+            WithEntityType("group"),
+            WithRealm("us-com-1"),
+            WithSchemer(WithRandomEncodedID("tshwyq3mfkgqqcfa76a5hbr2uaayzw3h")),
+        )
+// v0.String(): "blox0.iam.group.us-com-1.tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
+// v0.Encoded(): "tshwyq3mfkgqqcfa76a5hbr2uaayzw3h"
+// v0.Decoded(): "9c8f6c436c2a8d0808a0ff81d3863aa0018cdb67"
 ```
 

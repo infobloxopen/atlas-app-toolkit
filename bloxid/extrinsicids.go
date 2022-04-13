@@ -23,9 +23,29 @@ var (
 // WithExtrinsicID supplies a locally unique ID that is not randomly generated
 func WithExtrinsicID(eid string) func(o *V0Options) {
 	return func(o *V0Options) {
-		o.extrinsicID = eid
-		o.scheme = IDSchemeExtrinsic
+		o.schemer = &schemerExtrinsicID{
+			extrinsicID: eid,
+			scheme:      IDSchemeExtrinsic,
+		}
 	}
+}
+
+type schemerExtrinsicID struct {
+	extrinsicID string
+	scheme      string
+}
+
+var _ Schemer = (*schemerRandomEncodedID)(nil)
+
+func (sch *schemerExtrinsicID) FromEntityID(opts *V0Options) (scheme string, decoded string, encoded string, err error) {
+	decoded, err = getExtrinsicID(sch.extrinsicID)
+	if err != nil {
+		return
+	}
+
+	encoded = encodeLowerAlphaNumeric(extrinsicIDPrefix, decoded)
+	scheme = IDSchemeExtrinsic
+	return
 }
 
 func validateGetExtrinsicID(id string) error {
