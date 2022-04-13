@@ -27,9 +27,28 @@ var (
 // WithRandomEncodedID supplies the unique id portion of a previously generated random scheme bloxid
 func WithRandomEncodedID(eid string) func(o *V0Options) {
 	return func(o *V0Options) {
-		o.encodedID = eid
-		o.scheme = IDSchemeRandom
+		o.schemer = &schemerRandomEncodedID{
+			encodedID: eid,
+			scheme:    IDSchemeRandom,
+		}
 	}
+}
+
+type schemerRandomEncodedID struct {
+	encodedID string
+	scheme    string
+}
+
+var _ Schemer = (*schemerRandomEncodedID)(nil)
+
+func (sch *schemerRandomEncodedID) FromEntityID(opts *V0Options) (scheme string, decoded string, encoded string, err error) {
+	decoded, err = getDecodedIDFromRandomEncodedID(sch.encodedID)
+	if err != nil {
+		return
+	}
+	encoded = sch.encodedID
+	scheme = IDSchemeRandom
+	return
 }
 
 func validateGetRandomEncodedID(id string) error {

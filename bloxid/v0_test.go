@@ -86,7 +86,7 @@ type generateTestCase struct {
 	err          error
 }
 
-func TestGenerateV0(t *testing.T) {
+func TestGenerateV0WithExtrinsicIDDeprecated(t *testing.T) {
 	var testmap = []generateTestCase{
 		{
 			realm:        "us-com-1",
@@ -189,6 +189,126 @@ func TestGenerateV0(t *testing.T) {
 			continue
 		}
 
+		//              t.Log(v0)
+		//              t.Logf("%#v\n", v0)
+		validateGenerateV0(t, tm, v0, err)
+
+		parsed, err := NewV0(v0.String())
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("got: %s wanted: %s", err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		validateGenerateV0(t, tm, parsed, err)
+	}
+}
+
+func TestGenerateV0WithExtrinsicID(t *testing.T) {
+	var testmap = []generateTestCase{
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			expected:     "blox0.infra.host.us-com-1.",
+			err:          ErrEmptyExtrinsicID,
+		},
+		{
+			realm:        "us-com-2",
+			entityDomain: "infra",
+			entityType:   "host",
+			expected:     "blox0.infra.host.us-com-2.",
+			err:          ErrEmptyExtrinsicID,
+		},
+
+		// ensure `=` is not part of id when encoded
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "1",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurreaqcaiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "12",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiqcaiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "123",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgizsaiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "1234",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztiiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "12345",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztinja",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "123456",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztinjweaqcaiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "1234567",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztinjwg4qcaiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "12345678",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztinjwg44caiba",
+		},
+		{
+			realm:        "us-com-1",
+			entityDomain: "infra",
+			entityType:   "host",
+			extrinsicID:  "123456789",
+			expected:     "blox0.infra.host.us-com-1.ivmfiurrgiztinjwg44dsiba",
+		},
+	}
+
+	for index, tm := range testmap {
+		v0, err := NewV0("",
+			WithEntityDomain(tm.entityDomain),
+			WithEntityType(tm.entityType),
+			WithRealm(tm.realm),
+			WithSchemer(WithExtrinsicID(tm.extrinsicID)),
+		)
+		if err != tm.err {
+			t.Logf("test: %#v", tm)
+			t.Errorf("index: %d got: %s wanted error: %s", index, err, tm.err)
+		}
+		if err != nil {
+			continue
+		}
+
+		if v0 == nil {
+			t.Errorf("unexpected nil id")
+			continue
+		}
+
 		validateGenerateV0(t, tm, v0, err)
 
 		parsed, err := NewV0(v0.String())
@@ -249,7 +369,7 @@ func TestGenerateV0WithRandomEncodedID(t *testing.T) {
 			WithEntityDomain(tm.entityDomain),
 			WithEntityType(tm.entityType),
 			WithRealm(tm.realm),
-			WithRandomEncodedID(tm.encodedID),
+			WithSchemer(WithRandomEncodedID(tm.encodedID)),
 		)
 		if err != tm.err {
 			t.Logf("test: %#v", tm)

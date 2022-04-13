@@ -2,6 +2,7 @@ package bloxid
 
 import (
 	"errors"
+	"fmt"
 
 	hashids "github.com/speps/go-hashids/v2"
 )
@@ -23,6 +24,41 @@ var (
 
 	hashIDPrefixBytes = []byte(hashIDPrefix)
 )
+
+func WithHashIDInt64(id int64) func(o *V0Options) {
+	return func(o *V0Options) {
+		o.schemer = &schemerHashIDInt64{
+			HashIDInt64: id,
+			scheme:      IDSchemeHashID,
+		}
+	}
+}
+
+type schemerHashIDInt64 struct {
+	HashIDInt64 int64
+	scheme      string
+}
+
+var _ Schemer = (*schemerRandomEncodedID)(nil)
+
+func (sch *schemerHashIDInt64) FromEntityID(opts *V0Options) (scheme string, decoded string, encoded string, err error) {
+	var hashed string
+
+	if sch.HashIDInt64 < 0 {
+		err = ErrInvalidID
+		return
+	}
+
+	decoded = fmt.Sprintf("%v", sch.HashIDInt64)
+	hashed, err = getHashID(sch.HashIDInt64, opts.hashidSalt)
+	if err != nil {
+		return
+	}
+
+	encoded = encodeLowerAlphaNumeric(hashIDPrefix, hashed)
+	scheme = IDSchemeHashID
+	return
+}
 
 func newHashID(salt string) (*hashids.HashID, error) {
 	hid := hashids.HashIDData{
@@ -94,13 +130,6 @@ func getInt64FromHashID(id, salt string) (int64, error) {
 	}
 
 	return dID[0], err
-}
-
-func WithHashIDInt64(id int64) func(o *V0Options) {
-	return func(o *V0Options) {
-		o.hashIDInt64 = id
-		o.scheme = IDSchemeHashID
-	}
 }
 
 func WithHashIDSalt(salt string) func(o *V0Options) {
