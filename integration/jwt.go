@@ -1,7 +1,7 @@
 package integration
 
 import (
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/infobloxopen/atlas-app-toolkit/auth"
 )
 
