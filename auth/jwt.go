@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
 )
 
@@ -71,7 +71,7 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 // getToken parses the token into a jwt.Token type from the grpc metadata.
 // WARNING: if keyfunc is nil, the token will get parsed but not verified
 // because it has been checked previously in the stack. More information
-// here: https://godoc.org/github.com/dgrijalva/jwt-go#Parser.ParseUnverified
+// here: https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Parser.ParseUnverified
 func getToken(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (jwt.Token, error) {
 	if ctx == nil {
 		return jwt.Token{}, errMissingToken
