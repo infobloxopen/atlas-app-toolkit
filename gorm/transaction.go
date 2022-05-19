@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	errorspkg "github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -165,9 +166,12 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	if t.current == nil {
 		return nil
 	}
-	if sqlDB, err := t.current.DB(); err == nil && reflect.ValueOf(sqlDB).IsNil() {
+	if sqlDB, err := t.current.DB(); err == nil {
+		return errorspkg.Wrap(err, "unable to get DB object")
+	} else if reflect.ValueOf(sqlDB).IsNil() {
 		return nil
 	}
+
 	t.current = t.current.Commit()
 	err := t.current.Error
 	if err == nil {
@@ -192,7 +196,7 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 
 func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		// Deep copy is necessary as a tansaction should be created per request.
+		// Deep copy is necessary as a transaction should be created per request.
 		txn := &Transaction{parent: txn.parent, afterCommitHook: txn.afterCommitHook}
 		defer func() {
 			// simple panic handler

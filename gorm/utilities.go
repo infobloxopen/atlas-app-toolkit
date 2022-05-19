@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"gorm.io/datatypes"
 	"reflect"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"gorm.io/gorm/schema"
 
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/types"
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
@@ -92,7 +92,7 @@ func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) b
 
 	fInterface := reflect.Zero(indirectType(field.Type)).Interface()
 	switch fInterface.(type) {
-	case types.Jsonb:
+	case *datatypes.JSON:
 		return true
 	}
 
@@ -217,5 +217,5 @@ func (e *EmptyFieldPathError) Error() string {
 var namingStrategy = schema.NamingStrategy{}
 
 func ToDBName(s string) string {
-	return schema.NamingStrategy{}.ColumnName("", s)
+	return namingStrategy.ColumnName("", s)
 }

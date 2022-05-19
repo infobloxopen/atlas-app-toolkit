@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/datatypes"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/types"
 )
 
 type Entity struct {
@@ -19,7 +19,7 @@ type Entity struct {
 	NestedEntity NestedEntity
 	Id           string
 	Ref          *string
-	Tags         *types.Jsonb
+	Tags         *datatypes.JSON
 }
 
 type EntityProto struct {
