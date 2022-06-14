@@ -171,3 +171,12 @@ func GetFieldSelection(req proto.Message) (fieldName string, fs *query.FieldSele
 	}
 	return
 }
+
+func GetSearching(req proto.Message) (fieldName string, s *query.Searching, err error) {
+	s = new(query.Searching)
+	fieldName, err = getAndUnsetOp(req, s, false)
+	if fieldName == "" {
+		s = nil
+	}
+	return
+}
