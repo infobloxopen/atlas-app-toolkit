@@ -367,7 +367,7 @@ func (converter *DefaultPaginationConverter) PaginationToGorm(ctx context.Contex
 }
 
 func (converter *DefaultSearchingConverter) SearchingToGorm(ctx context.Context, s *query.Searching, fieldsForFTS []string, obj interface{}) (string, error) {
-	mask := GetFullTextSearchDBMask(obj, fieldsForFTS)
+	mask := GetFullTextSearchDBMask(obj, fieldsForFTS, " ")
 	fullTextSearchQuery := FormFullTextSearchQuery(mask)
 	return fullTextSearchQuery, nil
 }

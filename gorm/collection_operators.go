@@ -87,7 +87,7 @@ func ApplySearchingEx(ctx context.Context, db *gorm.DB, s *query.Searching, obj 
 	if err != nil {
 		return nil, err
 	}
-	if str != "" {
+	if s != nil && s.Query != "" {
 		return db.Where(str, s.Query), nil
 	}
 	return db, nil

@@ -6,7 +6,7 @@ import (
 )
 
 // GetFullTextSearchDBMask ...
-func GetFullTextSearchDBMask(object interface{}, fields []string) string {
+func GetFullTextSearchDBMask(object interface{}, fields []string, separator string) string {
 	mask := ""
 	objectVal := indirectValue(reflect.ValueOf(object))
 	if objectVal.Kind() != reflect.Struct {
@@ -40,7 +40,7 @@ func GetFullTextSearchDBMask(object interface{}, fields []string) string {
 			continue
 		}
 		if i != fieldsSize-1 {
-			mask += " || "
+			mask += " || '" + separator + "' || "
 		}
 	}
 
