@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
@@ -224,5 +225,66 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 		resp, err = handler(ctx, req)
 
 		return resp, err
+	}
+}
+
+// StreamServerInterceptor returns grpc.StreamServerInterceptor that manages
+// a `*Transaction` instance.
+// New *Transaction instance is created before grpc.StreamHandler call.
+// Client is responsible to call `txn.Begin()` to open transaction.
+// If call of grpc.StreamHandler returns with an error the transaction
+// is aborted, otherwise committed.
+func StreamServerInterceptor(db *gorm.DB) grpc.StreamServerInterceptor {
+	txn := &Transaction{parent: db}
+	return StreamServerInterceptorTxn(txn)
+}
+
+func StreamServerInterceptorTxn(txn *Transaction) grpc.StreamServerInterceptor {
+	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+		// Deep copy is necessary as a tansaction should be created per request.
+		txn := &Transaction{parent: txn.parent, afterCommitHook: txn.afterCommitHook}
+		ctx := NewContext(stream.Context(), txn)
+
+		defer func() {
+			// simple panic handler
+			if perr := recover(); perr != nil {
+				// we do not try to safe the world -
+				// just attempt to close our transaction
+				// re-raise panic and let someone to handle it
+				txn.Rollback()
+				panic(perr)
+			}
+
+			var terr error
+			if err != nil {
+				terr = txn.Rollback()
+			} else {
+				if terr = txn.Commit(ctx); terr != nil {
+					err = status.Error(codes.Internal, "failed to commit transaction")
+				}
+			}
+
+			if terr == nil {
+				return
+			}
+			// Catch the status: UNAVAILABLE error that Rollback might return
+			if _, ok := status.FromError(terr); ok {
+				err = terr
+				return
+			}
+
+			st := status.Convert(err)
+			st, serr := st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
+			// do not override error if failed to attach details
+			if serr == nil {
+				err = st.Err()
+			}
+		}()
+
+		wrapped := grpc_middleware.WrapServerStream(stream)
+		wrapped.WrappedContext = ctx
+		err = handler(srv, wrapped)
+
+		return err
 	}
 }
