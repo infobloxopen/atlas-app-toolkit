@@ -23,11 +23,16 @@ type PaginationConverter interface {
 	PaginationToGorm(ctx context.Context, p *query.Pagination) (offset, limit int32)
 }
 
+type SearchingConverter interface {
+	SearchingToGorm(ctx context.Context, s *query.Searching, fieldsForFTS []string, obj interface{}) (string, error)
+}
+
 type CollectionOperatorsConverter interface {
 	FilteringConditionConverter
 	SortingCriteriaConverter
 	FieldSelectionConverter
 	PaginationConverter
+	SearchingConverter
 }
 
 func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{}, c CollectionOperatorsConverter, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
@@ -59,6 +64,32 @@ func ApplyCollectionOperatorsEx(ctx context.Context, db *gorm.DB, obj interface{
 		return nil, err
 	}
 
+	return db, nil
+}
+
+func ApplyCollectionOperatorsWithSearchingEx(ctx context.Context, db *gorm.DB, obj interface{}, c CollectionOperatorsConverter, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection, sc *query.Searching, fieldsForFTS []string) (*gorm.DB, error) {
+	db, err := ApplyCollectionOperatorsEx(ctx, db, obj, c, f, s, p, fs)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err = ApplySearchingEx(ctx, db, sc, obj, fieldsForFTS, c)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+// ApplySearchingEx applies searching operator s to gorm instance db.
+func ApplySearchingEx(ctx context.Context, db *gorm.DB, s *query.Searching, obj interface{}, fieldsForFTS []string, c SearchingConverter) (*gorm.DB, error) {
+	str, err := c.SearchingToGorm(ctx, s, fieldsForFTS, obj)
+	if err != nil {
+		return nil, err
+	}
+	if s != nil && s.Query != "" {
+		return db.Where(str, s.Query), nil
+	}
 	return db, nil
 }
 
