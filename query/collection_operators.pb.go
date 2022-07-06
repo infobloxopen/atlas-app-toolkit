@@ -1431,6 +1431,54 @@ func (x *PageInfo) GetOffset() int32 {
 	return 0
 }
 
+// Searching represents search by.
+type Searching struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+}
+
+func (x *Searching) Reset() {
+	*x = Searching{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Searching) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Searching) ProtoMessage() {}
+
+func (x *Searching) ProtoReflect() protoreflect.Message {
+	mi := &file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Searching.ProtoReflect.Descriptor instead.
+func (*Searching) Descriptor() ([]byte, []int) {
+	return file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *Searching) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
 var File_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto protoreflect.FileDescriptor
 
 var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_rawDesc = []byte{
@@ -1655,11 +1703,16 @@ var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_pr
 	0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f,
 	0x6b, 0x65, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x05, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65,
-	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x42,
-	0x37, 0x5a, 0x35, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x69, 0x6e,
-	0x66, 0x6f, 0x62, 0x6c, 0x6f, 0x78, 0x6f, 0x70, 0x65, 0x6e, 0x2f, 0x61, 0x74, 0x6c, 0x61, 0x73,
-	0x2d, 0x61, 0x70, 0x70, 0x2d, 0x74, 0x6f, 0x6f, 0x6c, 0x6b, 0x69, 0x74, 0x2f, 0x71, 0x75, 0x65,
-	0x72, 0x79, 0x3b, 0x71, 0x75, 0x65, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x22,
+	0x41, 0x0a, 0x09, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x12, 0x14, 0x0a, 0x05,
+	0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x71, 0x75, 0x65,
+	0x72, 0x79, 0x3a, 0x1e, 0x92, 0x41, 0x1b, 0x0a, 0x19, 0x32, 0x13, 0x61, 0x74, 0x6c, 0x61, 0x73,
+	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x5f, 0x62, 0x79, 0x9a, 0x02,
+	0x01, 0x07, 0x42, 0x37, 0x5a, 0x35, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x69, 0x6e, 0x66, 0x6f, 0x62, 0x6c, 0x6f, 0x78, 0x6f, 0x70, 0x65, 0x6e, 0x2f, 0x61, 0x74,
+	0x6c, 0x61, 0x73, 0x2d, 0x61, 0x70, 0x70, 0x2d, 0x74, 0x6f, 0x6f, 0x6c, 0x6b, 0x69, 0x74, 0x2f,
+	0x71, 0x75, 0x65, 0x72, 0x79, 0x3b, 0x71, 0x75, 0x65, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1675,7 +1728,7 @@ func file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_p
 }
 
 var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_goTypes = []interface{}{
 	(SortCriteria_Order)(0),        // 0: infoblox.api.SortCriteria.Order
 	(LogicalOperator_Type)(0),      // 1: infoblox.api.LogicalOperator.Type
@@ -1696,14 +1749,15 @@ var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_pr
 	(*NumberArrayCondition)(nil),   // 16: infoblox.api.NumberArrayCondition
 	(*Pagination)(nil),             // 17: infoblox.api.Pagination
 	(*PageInfo)(nil),               // 18: infoblox.api.PageInfo
-	nil,                            // 19: infoblox.api.FieldSelection.FieldsEntry
-	nil,                            // 20: infoblox.api.Field.SubsEntry
+	(*Searching)(nil),              // 19: infoblox.api.Searching
+	nil,                            // 20: infoblox.api.FieldSelection.FieldsEntry
+	nil,                            // 21: infoblox.api.Field.SubsEntry
 }
 var file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_depIdxs = []int32{
 	0,  // 0: infoblox.api.SortCriteria.order:type_name -> infoblox.api.SortCriteria.Order
 	6,  // 1: infoblox.api.Sorting.criterias:type_name -> infoblox.api.SortCriteria
-	19, // 2: infoblox.api.FieldSelection.fields:type_name -> infoblox.api.FieldSelection.FieldsEntry
-	20, // 3: infoblox.api.Field.subs:type_name -> infoblox.api.Field.SubsEntry
+	20, // 2: infoblox.api.FieldSelection.fields:type_name -> infoblox.api.FieldSelection.FieldsEntry
+	21, // 3: infoblox.api.Field.subs:type_name -> infoblox.api.Field.SubsEntry
 	11, // 4: infoblox.api.Filtering.operator:type_name -> infoblox.api.LogicalOperator
 	12, // 5: infoblox.api.Filtering.string_condition:type_name -> infoblox.api.StringCondition
 	13, // 6: infoblox.api.Filtering.number_condition:type_name -> infoblox.api.NumberCondition
@@ -1898,6 +1952,18 @@ func file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_p
 				return nil
 			}
 		}
+		file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Searching); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_msgTypes[4].OneofWrappers = []interface{}{
 		(*Filtering_Operator)(nil),
@@ -1927,7 +1993,7 @@ func file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_p
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_github_com_infobloxopen_atlas_app_toolkit_query_collection_operators_proto_rawDesc,
 			NumEnums:      6,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
