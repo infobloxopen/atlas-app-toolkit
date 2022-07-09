@@ -142,6 +142,11 @@ func (db PostgresDB) GetDSN() string {
 	)
 }
 
+// GetDriverName returns the name of the driver used for the DSN.
+func (db PostgresDB) GetDriverName() string {
+	return "postgres"
+}
+
 type option func(*PostgresDB)
 
 // WithName is used to specify the name of the test Postgres database. By default
