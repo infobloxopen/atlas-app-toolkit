@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/jackc/pgconn v1.11.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/lib/pq v1.10.2
 	github.com/pkg/errors v0.8.1
