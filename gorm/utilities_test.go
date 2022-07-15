@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/datatypes"
 )
 
 type Human struct {
-	Name  string
-	Age   uint32 `gorm:"column:years"`
-	Child *Child
+	Name     string
+	Age      uint32 `gorm:"column:years"`
+	Child    *Child
+	JsonInfo *datatypes.JSON
 }
 
 func (p Human) TableName() string {
@@ -22,6 +24,20 @@ func (p Human) TableName() string {
 
 type Child struct {
 	Name string
+}
+
+func TestIsJSONCondition(t *testing.T) {
+	tests := []struct {
+		fieldPath []string
+		res       bool
+	}{
+		{[]string{"name"}, false},
+		{[]string{"json_info", "data"}, true},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.res, IsJSONCondition(context.Background(), test.fieldPath, &Human{}))
+	}
 }
 
 func TestHandleFieldPath(t *testing.T) {

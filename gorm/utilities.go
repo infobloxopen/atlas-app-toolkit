@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-	"gorm.io/datatypes"
 	"reflect"
 	"strings"
 	"time"
+
+	"gorm.io/datatypes"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/inflection"
@@ -90,10 +91,21 @@ func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) b
 		return false
 	}
 
-	fInterface := reflect.Zero(indirectType(field.Type)).Interface()
-	switch fInterface.(type) {
-	case *datatypes.JSON:
-		return true
+	fType := field.Type
+
+	// we need to check each of indirect types as well
+	//
+	// this is required as if type alias is used it will be considered
+	// as an underlying type (which might be a slice/other indirect type)
+	// like for gorm.io/datatypes.JSON
+	for isIndirectType(fType) {
+		fInterface := reflect.Zero(fType).Interface()
+		switch fInterface.(type) {
+		case *datatypes.JSON:
+			return true
+		}
+
+		fType = fType.Elem()
 	}
 
 	return false
@@ -178,13 +190,19 @@ type tableNamer interface {
 }
 
 func indirectType(t reflect.Type) reflect.Type {
-	for {
-		switch t.Kind() {
-		case reflect.Ptr, reflect.Slice, reflect.Array:
-			t = t.Elem()
-		default:
-			return t
-		}
+	for isIndirectType(t) {
+		t = t.Elem()
+	}
+
+	return t
+}
+
+func isIndirectType(t reflect.Type) bool {
+	switch t.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Array:
+		return true
+	default:
+		return false
 	}
 }
 
