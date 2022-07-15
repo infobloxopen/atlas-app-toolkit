@@ -88,6 +88,9 @@ func ApplySearchingEx(ctx context.Context, db *gorm.DB, s *query.Searching, obj 
 		return nil, err
 	}
 	if s != nil && s.Query != "" {
+		s.Query = strings.TrimSpace(s.Query)
+		s.Query = strings.ReplaceAll(s.Query, " ", " | ")
+		s.Query = s.Query + ":*"
 		return db.Where(str, s.Query), nil
 	}
 	return db, nil
