@@ -24,11 +24,11 @@ func Camel(s string) string {
 	}
 	// Invariant: if the next letter is lower case, it must be converted
 	// to upper case.
-	// That is, we process a word at a time, where words are marked by _ or
-	// upper case letter. Digits are treated as words.
+	// That is, we process a word at a time, where words are marked by _
+	// Digits are treated as words.
 	for ; i < len(s); i++ {
 		c := s[i]
-		if c == '_' && i+1 < len(s) && isASCIILower(s[i+1]) {
+		if c == '_' {
 			continue // Skip the underscore in s.
 		}
 		if isASCIIDigit(c) {
@@ -41,8 +41,8 @@ func Camel(s string) string {
 			c ^= ' ' // Make it a capital letter.
 		}
 		t = append(t, c) // Guaranteed not lower case.
-		// Accept lower case sequence that follows.
-		for i+1 < len(s) && isASCIILower(s[i+1]) {
+		// Accept lower or upper case sequence that follows.
+		for i+1 < len(s) && (isASCIILower(s[i+1]) || isASCIILower(s[i+1]+32)) {
 			i++
 			t = append(t, s[i])
 		}
