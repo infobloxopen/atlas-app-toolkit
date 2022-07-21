@@ -72,6 +72,11 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
+			"non_camel_model_mix,sub_model,non_camel_2_model,cycle_model",
+			[]string{"CycleModel", "NonCAMEL2Model", "NonCamelModelMIX", "SubModel"},
+			false,
+		},
+		{
 			"sub_model_mix.non_camel_model_mix",
 			[]string{"SubModelMix.NonCamelModelMIX", "SubModelMix"},
 			false,
@@ -102,8 +107,8 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
-			"non_CAMEL_2_Model, Non_camel_2_model, non_camel2_model, non_camel_2model",
-			[]string{"NonCAMEL2Model"},
+			"non_CAMEL_2_Model,Non_camel_2_model,non_camel2_model,non_camel_2model",
+			[]string{"NonCAMEL2Model", "NonCAMEL2Model", "NonCAMEL2Model", "NonCAMEL2Model"},
 			false,
 		},
 		{
@@ -132,7 +137,17 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
-			"sub_model,sub_model.sub_sub_model.sub_sub_property",
+			"sub_model",
+			[]string{"SubModel"},
+			false,
+		},
+		{
+			"sub_model.sub_sub_model",
+			[]string{"SubModel.SubSubModel", "SubModel"},
+			false,
+		},
+		{
+			"sub_model.sub_sub_model.sub_sub_property",
 			[]string{"SubModel.SubSubModel", "SubModel"},
 			false,
 		},
@@ -163,7 +178,7 @@ func TestGormFieldSelection(t *testing.T) {
 			assert.Nil(t, toPreload)
 			assert.NotNil(t, err)
 		} else {
-			fmt.Printf("expected=%v, actual=%v\n", test.toPreload, toPreload)
+			fmt.Printf("expected=%v\nactual=%v\n\n", test.toPreload, toPreload)
 			assert.Equal(t, test.toPreload, toPreload)
 			assert.Nil(t, err)
 		}
