@@ -2,18 +2,36 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type Model struct {
-	Property      string
-	SubModel      SubModel
-	SubModels     []SubModel
-	CycleModel    *CycleModel
-	NotPreloadObj SubModel `gorm:"preload:false"`
-	PreloadObj    SubModel `gorm:"preload:true"`
+	Property         string
+	SubModel         SubModel
+	SubModels        []SubModel
+	CycleModel       *CycleModel
+	NotPreloadObj    SubModel `gorm:"preload:false"`
+	PreloadObj       SubModel `gorm:"preload:true"`
+	NonCamelMODEL    NonCamelMODEL
+	NonCAMEL2Model   NonCAMEL2Model
+	NonCamelSUBMODEL NonCamelSUBMODEL
+}
+
+type NonCamelMODEL struct {
+	NonCamelProperty string
+	NonCamelSUBMODEL NonCamelSUBMODEL
+}
+
+type NonCamelSUBMODEL struct {
+	NonCamelSubProperty string
+}
+
+type NonCAMEL2Model struct {
+	NonCamelProperty string
+	Model            *Model
 }
 
 type CycleModel struct {
@@ -36,6 +54,31 @@ func TestGormFieldSelection(t *testing.T) {
 		toPreload []string
 		err       bool
 	}{
+		{
+			"non_camel_model.non_camel_submodel.noncamelsubproperty",
+			[]string{"NonCamelMODEL.NonCamelSUBMODEL", "NonCamelMODEL"},
+			false,
+		},
+		{
+			"non_camel_model.non_camel_submodel",
+			[]string{"NonCamelMODEL.NonCamelSUBMODEL", "NonCamelMODEL"},
+			false,
+		},
+		{
+			"non_camel_model",
+			[]string{"NonCamelMODEL"},
+			false,
+		},
+		{
+			"non_camel_model.noncamelproperty",
+			[]string{"NonCamelMODEL"},
+			false,
+		},
+		{
+			"non_CAMEL_2_Model, Non_camel_2_model, non_camel2_model, non_camel_2model",
+			[]string{"NonCAMEL2Model"},
+			false,
+		},
 		{
 			"property",
 			nil,
@@ -78,7 +121,9 @@ func TestGormFieldSelection(t *testing.T) {
 		},
 		{
 			"",
-			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels", "CycleModel", "PreloadObj.SubSubModel", "PreloadObj"},
+			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels",
+				"CycleModel", "PreloadObj.SubSubModel", "PreloadObj",
+				"NonCamelMODEL.NonCamelSUBMODEL", "NonCamelMODEL", "NonCAMEL2Model", "NonCamelSUBMODEL"},
 			false,
 		},
 	}
@@ -88,6 +133,7 @@ func TestGormFieldSelection(t *testing.T) {
 			assert.Nil(t, toPreload)
 			assert.NotNil(t, err)
 		} else {
+			fmt.Printf("expected=%v, actual=%v\n", test.toPreload, toPreload)
 			assert.Equal(t, test.toPreload, toPreload)
 			assert.Nil(t, err)
 		}
