@@ -84,10 +84,10 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 		var findFieldByName reflect.StructField
 		var ok bool
 		camelQueryFieldName := util.Camel(s)
-		fmt.Printf("Camel format = %v\n", camelQueryFieldName)
 		// find field as camel string
 		findFieldByName, ok = objType.FieldByName(camelQueryFieldName)
 		if ok {
+			fmt.Printf("Found field by name: %v\n", camelQueryFieldName)
 			return camelQueryFieldName, findFieldByName, ok
 		}
 
