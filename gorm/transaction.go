@@ -167,7 +167,7 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	if t.current == nil {
 		return nil
 	}
-	if sqlDB, err := t.current.DB(); err == nil {
+	if sqlDB, err := t.current.DB(); err != nil {
 		return errorspkg.Wrap(err, "unable to get DB object")
 	} else if reflect.ValueOf(sqlDB).IsNil() {
 		return nil
