@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -118,7 +120,10 @@ func (db PostgresDB) CheckConnection() error {
 		for {
 			select {
 			case <-time.After(500 * time.Millisecond):
-				driver, _ := sql.Open("postgres", db.GetDSN())
+				driver, err := sql.Open("postgres", db.GetDSN())
+				if err != nil {
+					panic(err)
+				}
 				if err := driver.Ping(); err == nil {
 					errStream <- nil
 					return

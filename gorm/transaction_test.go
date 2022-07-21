@@ -9,9 +9,10 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func TestUnaryServerInterceptor_success(t *testing.T) {
@@ -22,7 +23,7 @@ func TestUnaryServerInterceptor_success(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -53,7 +54,7 @@ func TestUnaryServerInterceptorTxn_success(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -85,7 +86,7 @@ func TestUnaryServerInterceptor_error(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectRollback().WillReturnError(errors.New("handler"))
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -117,7 +118,7 @@ func TestUnaryServerInterceptor_details(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -183,7 +184,7 @@ func TestTransaction_Begin(t *testing.T) {
 			}
 			mock.ExpectBegin()
 
-			gdb, err := gorm.Open("postgres", db)
+			gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}
@@ -216,7 +217,7 @@ func TestTransaction_Commit(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -248,7 +249,7 @@ func TestTransaction_AfterCommitHook(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -278,7 +279,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectRollback()
 
-	gdb, err := gorm.Open("postgres", db)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 	if err != nil {
 		t.Fatalf("failed to open gorm db - %s", err)
 	}
@@ -301,12 +302,16 @@ func TestTransaction_Rollback(t *testing.T) {
 		t.Error("failed to reset current gorm instance - txn.current is not nil")
 	}
 
-	fdb, err := gorm.Open("postgres", db)
-	fdb.Close()
+	fdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
+	sqlDB, err := fdb.DB()
+	if err != nil {
+		t.Fatalf("unable to access underlying DB: %v", err)
+	}
+	sqlDB.Close()
 	txn = &Transaction{parent: gdb}
 
 	txn.Begin()
-	if err := txn.Rollback(); !reflect.DeepEqual(err, status.Error(codes.Unavailable, "Database connection not available")) {
+	if err := txn.Rollback(); !reflect.DeepEqual(err, status.Error(codes.Unavailable, "Database connection not available: sql: database is closed")) {
 		t.Errorf("Did not receive proper error for broken DB - %s", err)
 	}
 }
@@ -363,7 +368,7 @@ func TestBeginFromContext_Good(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create sqlmock - %s", err)
 			}
-			gdb, err := gorm.Open("postgres", db)
+			gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}
@@ -444,7 +449,7 @@ func TestBeginFromContext_Bad(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create sqlmock - %s", err)
 			}
-			gdb, err := gorm.Open("postgres", db)
+			gdb, err := gorm.Open(postgres.New(postgres.Config{Conn: db}))
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}

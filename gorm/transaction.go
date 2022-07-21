@@ -5,14 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/jinzhu/gorm"
+	errorspkg "github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 // ctxKey is an unexported type for keys defined in this package.
@@ -41,7 +43,7 @@ func FromContext(ctx context.Context) (txn *Transaction, ok bool) {
 }
 
 // Transaction serves as a wrapper around `*gorm.DB` instance.
-// It works as a singleton to prevent an application of creating more than one
+// It works as a singleton to prevent an application from creating more than one
 // transaction instance per incoming request.
 type Transaction struct {
 	mu              sync.Mutex
@@ -104,28 +106,21 @@ func (t *Transaction) Begin() *gorm.DB {
 }
 
 func (t *Transaction) beginWithContext(ctx context.Context) *gorm.DB {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.current == nil {
-		t.current = t.parent.BeginTx(ctx, nil)
-	}
-
-	return t.current
+	return t.beginWithContextAndOptions(ctx)
 }
 
 // BeginWithOptions starts new transaction by calling `*gorm.DB.BeginTx()`
 // Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
-func (t *Transaction) BeginWithOptions(opts *sql.TxOptions) *gorm.DB {
-	return t.beginWithContextAndOptions(context.Background(), opts)
+func (t *Transaction) BeginWithOptions(opts ...*sql.TxOptions) *gorm.DB {
+	return t.beginWithContextAndOptions(context.Background(), opts...)
 }
 
-func (t *Transaction) beginWithContextAndOptions(ctx context.Context, opts *sql.TxOptions) *gorm.DB {
+func (t *Transaction) beginWithContextAndOptions(ctx context.Context, opts ...*sql.TxOptions) *gorm.DB {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	if t.current == nil {
-		t.current = t.parent.BeginTx(ctx, opts)
+		t.current = t.parent.WithContext(ctx).Begin(opts...)
 	}
 
 	return t.current
@@ -140,13 +135,27 @@ func (t *Transaction) Rollback() error {
 	if t.current == nil {
 		return nil
 	}
-	if reflect.ValueOf(t.current.CommonDB()).IsNil() {
-		return status.Error(codes.Unavailable, "Database connection not available")
+	sqlDB, err := t.current.DB()
+	if err == nil && reflect.ValueOf(sqlDB).IsNil() {
+		err = errors.New("no underlying connection")
 	}
-	t.current.Rollback()
-	err := t.current.Error
+	if err != nil {
+		return databaseConnectionError(err)
+	}
+
+	t.current = t.current.Rollback()
+	err = t.current.Error
 	t.current = nil
+
+	if err != nil && strings.Contains(err.Error(), "database is closed") {
+		return databaseConnectionError(err)
+	}
+
 	return err
+}
+
+func databaseConnectionError(err error) error {
+	return status.Errorf(codes.Unavailable, "Database connection not available: %v", err)
 }
 
 // Commit finishes transaction by calling `*gorm.DB.Commit()`
@@ -155,10 +164,16 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if t.current == nil || reflect.ValueOf(t.current.CommonDB()).IsNil() {
+	if t.current == nil {
 		return nil
 	}
-	t.current.Commit()
+	if sqlDB, err := t.current.DB(); err == nil {
+		return errorspkg.Wrap(err, "unable to get DB object")
+	} else if reflect.ValueOf(sqlDB).IsNil() {
+		return nil
+	}
+
+	t.current = t.current.Commit()
 	err := t.current.Error
 	if err == nil {
 		for i := range t.afterCommitHook {
@@ -182,14 +197,14 @@ func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
 
 func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		// Deep copy is necessary as a tansaction should be created per request.
+		// Deep copy is necessary as a transaction should be created per request.
 		txn := &Transaction{parent: txn.parent, afterCommitHook: txn.afterCommitHook}
 		defer func() {
 			// simple panic handler
 			if perr := recover(); perr != nil {
-				// we do not try to safe the world -
+				// we do not try to save the world -
 				// just attempt to close our transaction
-				// re-raise panic and let someone to handle it
+				// re-raise panic and let someone else handle it
 				txn.Rollback()
 				panic(perr)
 			}

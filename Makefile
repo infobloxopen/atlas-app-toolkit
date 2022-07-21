@@ -12,7 +12,7 @@ GENTOOL_IMAGE := infoblox/atlas-gentool:latest
 default: test
 
 test: check-fmt vendor
-	go test -cover ./...
+	go test -cover -count=1 ./...
 
 .PHONY: vendor
 vendor:
