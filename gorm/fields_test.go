@@ -19,6 +19,7 @@ type Model struct {
 	NonCAMEL2Model   NonCAMEL2Model
 	NonCamelSUBMODEL NonCamelSUBMODEL
 	SubModelMix      SubModelMix
+	SubModelMix2     SubModelMix2
 	NonCamelModelMIX NonCamelModelMIX
 }
 
@@ -29,7 +30,12 @@ type NonCamelModelMIX struct {
 
 type SubModelMix struct {
 	SubModelMixProperty string
-	NonCamelModelMIX    NonCamelModelMIX
+	NonCamelMODEL       NonCamelMODEL
+}
+
+type SubModelMix2 struct {
+	SubModelMixProperty string
+	NonCamelSUBMODEL    NonCamelSUBMODEL
 }
 
 type NonCamelMODEL struct {
@@ -67,6 +73,11 @@ func TestGormFieldSelection(t *testing.T) {
 		err       bool
 	}{
 		{
+			"sub_model_mix2.non_camel_submodel",
+			[]string{"SubModelMix2.NonCamelSUBMODEL", "SubModelMix2"},
+			false,
+		},
+		{
 			"non_camel_model_mix.sub_model.model_mix_property",
 			[]string{"NonCamelModelMIX.SubModel", "NonCamelModelMIX"},
 			false,
@@ -77,8 +88,8 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
-			"sub_model_mix.non_camel_model_mix",
-			[]string{"SubModelMix.NonCamelModelMIX", "SubModelMix"},
+			"sub_model_mix.non_camel_model",
+			[]string{"SubModelMix.NonCamelMODEL", "SubModelMix"},
 			false,
 		},
 		{
@@ -166,8 +177,8 @@ func TestGormFieldSelection(t *testing.T) {
 			[]string{"SubModel.SubSubModel", "SubModel", "SubModels.SubSubModel", "SubModels",
 				"CycleModel", "PreloadObj.SubSubModel", "PreloadObj",
 				"NonCamelMODEL.NonCamelSUBMODEL", "NonCamelMODEL", "NonCAMEL2Model", "NonCamelSUBMODEL",
-				"SubModelMix.NonCamelModelMIX.SubModel.SubSubModel", "SubModelMix.NonCamelModelMIX.SubModel",
-				"SubModelMix.NonCamelModelMIX", "SubModelMix",
+				"SubModelMix.NonCamelMODEL.NonCamelSUBMODEL", "SubModelMix.NonCamelMODEL", "SubModelMix",
+				"SubModelMix2.NonCamelSUBMODEL", "SubModelMix2",
 				"NonCamelModelMIX.SubModel.SubSubModel", "NonCamelModelMIX.SubModel", "NonCamelModelMIX"},
 			false,
 		},
