@@ -3,7 +3,6 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"reflect"
 	"sort"
 	"strings"
@@ -80,43 +79,29 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	queryFieldName := f.GetName()
 	fmt.Printf("Query name = %v\n", queryFieldName)
 
-	findFieldNameFunc := func(objType reflect.Type, s string) (string, reflect.StructField, bool) {
-		var findFieldByName reflect.StructField
-		var ok bool
-		camelQueryFieldName := util.Camel(s)
-		// find field as camel string
-		findFieldByName, ok = objType.FieldByName(camelQueryFieldName)
-		if ok {
-			fmt.Printf("Found field by name: %v\n", camelQueryFieldName)
-			return camelQueryFieldName, findFieldByName, ok
-		}
-
-		for _, subString := range strings.Split(s, "_") {
-			// assume that there is no duplicate substring
-			fieldName := strings.Replace(s, subString, strings.ToUpper(subString), 1)
-			fieldName = util.Camel(fieldName)
-			findFieldByName, ok = objType.FieldByName(fieldName)
-			if ok {
-				fmt.Printf("Found field by name: %v\n", fieldName)
-				return fieldName, findFieldByName, ok
+	sf, ok := objType.FieldByNameFunc(func(name string) bool {
+		for i := 0; i < objType.NumField(); i++ {
+			if strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", ""))) {
+				return true
 			}
 		}
-
-		return "", findFieldByName, false
-	}
-
-	fieldTypeName, sf, ok := findFieldNameFunc(objType, queryFieldName)
+		return false
+	})
 
 	if !ok {
+		fmt.Printf("===> no field found")
 		return nil, nil
 	}
 
 	fType := indirectType(sf.Type)
+	fName := sf.Name
+	fmt.Printf("===> found field by name '%v'\n", fName)
+
 	fieldSubs := f.GetSubs()
 
 	if fieldSubs == nil {
 		if isModel(fType) {
-			return []string{fieldTypeName}, nil
+			return []string{fName}, nil
 		} else {
 			return nil, nil
 		}
@@ -133,11 +118,11 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 			return nil, err
 		}
 		for i, e := range subPreload {
-			subPreload[i] = fieldTypeName + "." + e
+			subPreload[i] = fName + "." + e
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	return append(toPreload, fieldTypeName), nil
+	return append(toPreload, fName), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {
@@ -159,7 +144,7 @@ func preload(db *gorm.DB, obj interface{}, assoc string) (*gorm.DB, error) {
 	for i, part := range assocPath {
 		sf, ok := objType.FieldByName(part)
 		if !ok {
-			return nil, fmt.Errorf("Cannot find %s in %s", part, objType)
+			return nil, fmt.Errorf("cannot find %s in %s", part, objType)
 		}
 		objType = indirectType(sf.Type)
 		if !isModel(objType) {
