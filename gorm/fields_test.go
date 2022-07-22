@@ -78,7 +78,7 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 		{
-			"non_camel_model_mix.sub_model.model_mix_property",
+			"non_camel_model_mix.sub_model.sub_property",
 			[]string{"NonCamelModelMIX.SubModel", "NonCamelModelMIX"},
 			false,
 		},
