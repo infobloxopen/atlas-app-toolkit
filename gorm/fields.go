@@ -92,7 +92,7 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 		}
 
 		for _, subString := range strings.Split(s, "_") {
-			// TODO: if there are multiple substrings, only first one is replaced
+			// TODO: if there are multiple same substrings, only first one is replaced
 			fieldName := strings.Replace(s, subString, strings.ToUpper(subString), 1)
 			fieldName = util.Camel(fieldName)
 			findFieldByName, ok = objType.FieldByName(fieldName)
