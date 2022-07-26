@@ -30,10 +30,6 @@ func GetFullTextSearchDBMask(object interface{}, fields []string, separator stri
 		switch underlyingVal.Interface().(type) {
 		case int32:
 			mask += fieldName
-			mask += " || '" + separator + "' || "
-			mask += "replace(" + fieldName + ", '@', ' ')"
-			mask += " || '" + separator + "' || "
-			mask += "replace(" + fieldName + ", '.', ' ')"
 		case string:
 			mask += fieldName
 			mask += " || '" + separator + "' || "
@@ -44,10 +40,6 @@ func GetFullTextSearchDBMask(object interface{}, fields []string, separator stri
 			mask += "coalesce(to_char(" + fieldName + ", 'MM/DD/YY HH:MI pm'), '')"
 		case bool:
 			mask += fieldName
-			mask += " || '" + separator + "' || "
-			mask += "replace(" + fieldName + ", '@', ' ')"
-			mask += " || '" + separator + "' || "
-			mask += "replace(" + fieldName + ", '.', ' ')"
 		default:
 			continue
 		}
