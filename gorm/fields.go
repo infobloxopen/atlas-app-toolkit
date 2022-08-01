@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"fmt"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"log"
 	"reflect"
 	"sort"
@@ -18,13 +19,13 @@ type DefaultFieldSelectionConverter struct{}
 
 // FieldSelectionStringToGorm is a shortcut to parse a string into FieldSelection struct and
 // receive a list of associations to preload.
-func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}) ([]string, error) {
+func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}, ignoreCase ...bool) ([]string, error) {
 	c := &DefaultFieldSelectionConverter{}
-	return c.FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj)
+	return c.FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj, ignoreCase...)
 }
 
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
-func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
+func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}, ignoreCase ...bool) ([]string, error) {
 	objType := indirectType(reflect.TypeOf(obj))
 	selectedFields := fs.GetFields()
 	if selectedFields == nil {
@@ -34,7 +35,7 @@ func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx contex
 	fieldNames := getSortedFieldNames(selectedFields)
 	for _, fieldName := range fieldNames {
 		f := selectedFields[fieldName]
-		subPreload, err := handlePreloads(f, objType)
+		subPreload, err := handlePreloads(f, objType, ignoreCase...)
 		if err != nil {
 			return nil, err
 		}
@@ -76,18 +77,22 @@ fields:
 	return toPreload, nil
 }
 
-func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
+func handlePreloads(f *query.Field, objType reflect.Type, ignoreCase ...bool) ([]string, error) {
 	queryFieldName := f.GetName()
 	fmt.Printf("Query name = %v\n", queryFieldName)
 
-	sf, ok := objType.FieldByNameFunc(func(name string) bool {
-		for i := 0; i < objType.NumField(); i++ {
+	var sf reflect.StructField
+	var ok bool
+	if len(ignoreCase) > 0 && ignoreCase[0] {
+		sf, ok = objType.FieldByNameFunc(func(name string) bool {
 			if strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", ""))) {
 				return true
 			}
-		}
-		return false
-	})
+			return false
+		})
+	} else {
+		sf, ok = objType.FieldByName(util.Camel(queryFieldName))
+	}
 
 	if !ok {
 		log.Printf("no field found for query '%v\n'", queryFieldName)
@@ -114,7 +119,7 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	fieldNames := getSortedFieldNames(fieldSubs)
 	for _, fieldName := range fieldNames {
 		subField := fieldSubs[fieldName]
-		subPreload, err := handlePreloads(subField, fType)
+		subPreload, err := handlePreloads(subField, fType, ignoreCase...)
 		if err != nil {
 			return nil, err
 		}
