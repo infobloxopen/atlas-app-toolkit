@@ -85,10 +85,7 @@ func handlePreloads(f *query.Field, objType reflect.Type, ignoreCase ...bool) ([
 	var ok bool
 	if len(ignoreCase) > 0 && ignoreCase[0] {
 		sf, ok = objType.FieldByNameFunc(func(name string) bool {
-			if strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", ""))) {
-				return true
-			}
-			return false
+			return strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", "")))
 		})
 	} else {
 		sf, ok = objType.FieldByName(util.Camel(queryFieldName))
