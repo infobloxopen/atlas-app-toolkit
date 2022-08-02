@@ -50,9 +50,9 @@ func GetJWTFieldWithTokenType(ctx context.Context, tokenType, tokenField string,
 	if !ok {
 		return "", errMissingField
 	}
-	switch jwtField.(type) {
+	switch jwtField := jwtField.(type) {
 	case float64:
-		return strconv.FormatFloat(jwtField.(float64), 'f', -1, 64), nil
+		return strconv.FormatFloat(jwtField, 'f', -1, 64), nil
 	default:
 		return fmt.Sprint(jwtField), nil
 	}
