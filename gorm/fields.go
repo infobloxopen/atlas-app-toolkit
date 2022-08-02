@@ -3,7 +3,6 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"github.com/infobloxopen/atlas-app-toolkit/util"
 	"log"
 	"reflect"
 	"sort"
@@ -12,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
 // DefaultFieldSelectionConverter performs default convertion for FieldSelection collection operator
@@ -79,7 +79,7 @@ fields:
 
 func handlePreloads(f *query.Field, objType reflect.Type, ignoreCase ...bool) ([]string, error) {
 	queryFieldName := f.GetName()
-	fmt.Printf("Query name = %v\n", queryFieldName)
+	log.Printf("Query name = %v\n", queryFieldName)
 
 	var sf reflect.StructField
 	var ok bool
