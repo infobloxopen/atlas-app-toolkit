@@ -222,6 +222,18 @@ func TestGormFieldSelection(t *testing.T) {
 		}
 	}
 
+	for _, test := range tests {
+		toPreload, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{}, false)
+		if test.err {
+			assert.Nil(t, toPreload)
+			assert.NotNil(t, err)
+		} else {
+			fmt.Printf("Ignore case = false\nexpected=%v\nactual=%v\n\n", test.toPreload, toPreload)
+			assert.Equal(t, test.toPreload, toPreload)
+			assert.Nil(t, err)
+		}
+	}
+
 	// re-test with "ignoreCase" flag set to true
 	for _, test := range tests {
 		toPreloadIgnoreCase, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{}, true)
@@ -229,7 +241,7 @@ func TestGormFieldSelection(t *testing.T) {
 			assert.Nil(t, toPreloadIgnoreCase)
 			assert.NotNil(t, err)
 		} else {
-			fmt.Printf("Ignore case: \nexpected=%v\nactual=%v\n\n", test.toPreloadIgnoreCase, toPreloadIgnoreCase)
+			fmt.Printf("Ignore case = true \nexpected=%v\nactual=%v\n\n", test.toPreloadIgnoreCase, toPreloadIgnoreCase)
 			assert.Equal(t, test.toPreloadIgnoreCase, toPreloadIgnoreCase)
 			assert.Nil(t, err)
 		}
