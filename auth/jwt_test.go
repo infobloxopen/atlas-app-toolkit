@@ -99,6 +99,12 @@ func TestGetJWTField(t *testing.T) {
 			expected: "",
 			err:      errMissingField,
 		},
+		{
+			claims:   jwt.MapClaims{"long-id": float64(123456789)},
+			field:    "long-id",
+			expected: "123456789",
+			err:      nil,
+		},
 	}
 	for _, test := range jwtFieldTests {
 		ctx := contextWithToken(
