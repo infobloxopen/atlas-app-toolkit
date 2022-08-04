@@ -3,7 +3,6 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -86,7 +85,6 @@ fields:
 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	queryFieldName := f.GetName()
-	log.Printf("Query name = %v\n", queryFieldName)
 
 	var sf reflect.StructField
 	var ok bool
@@ -99,13 +97,11 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	}
 
 	if !ok {
-		log.Printf("no field found for query '%v\n'", queryFieldName)
 		return nil, nil
 	}
 
 	fType := indirectType(sf.Type)
 	fName := sf.Name
-	log.Printf("found field by name '%v'\n", fName)
 
 	fieldSubs := f.GetSubs()
 

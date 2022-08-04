@@ -210,6 +210,8 @@ func TestGormFieldSelection(t *testing.T) {
 			false,
 		},
 	}
+
+	// as default, case-sensitive search is enabled
 	for _, test := range tests {
 		toPreload, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{})
 		if test.err {
@@ -222,29 +224,31 @@ func TestGormFieldSelection(t *testing.T) {
 		}
 	}
 
+	// disable case-insensitive search for field string
+	EnableCaseSensitive(false)
 	for _, test := range tests {
-		toPreload, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{}, false)
-		if test.err {
-			assert.Nil(t, toPreload)
-			assert.NotNil(t, err)
-		} else {
-			fmt.Printf("Ignore case = false\nexpected=%v\nactual=%v\n\n", test.toPreload, toPreload)
-			assert.Equal(t, test.toPreload, toPreload)
-			assert.Nil(t, err)
-		}
-	}
-
-	// re-test with "ignoreCase" flag set to true
-	for _, test := range tests {
-		toPreloadIgnoreCase, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{}, true)
+		toPreloadIgnoreCase, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{})
 		if test.err {
 			assert.Nil(t, toPreloadIgnoreCase)
 			assert.NotNil(t, err)
 		} else {
-			fmt.Printf("Ignore case = true \nexpected=%v\nactual=%v\n\n", test.toPreloadIgnoreCase, toPreloadIgnoreCase)
+			fmt.Printf("Case-sensitive search is DISABLED \nexpected=%v\nactual=%v\n\n", test.toPreloadIgnoreCase, toPreloadIgnoreCase)
 			assert.Equal(t, test.toPreloadIgnoreCase, toPreloadIgnoreCase)
 			assert.Nil(t, err)
 		}
 	}
 
+	// enabled case-sensitive search for field string
+	EnableCaseSensitive(true)
+	for _, test := range tests {
+		toPreload, err := FieldSelectionStringToGorm(context.Background(), test.fs, &Model{})
+		if test.err {
+			assert.Nil(t, toPreload)
+			assert.NotNil(t, err)
+		} else {
+			fmt.Printf("Case-sensitive search is ENABLED\nexpected=%v\nactual=%v\n\n", test.toPreload, toPreload)
+			assert.Equal(t, test.toPreload, toPreload)
+			assert.Nil(t, err)
+		}
+	}
 }
