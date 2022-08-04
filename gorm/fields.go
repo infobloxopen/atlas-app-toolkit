@@ -13,13 +13,6 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
-// default will do case-sensitive matching ß
-var isCaseSensitive bool = true
-
-func EnableCaseSensitive(enable bool) {
-	isCaseSensitive = enable
-}
-
 // DefaultFieldSelectionConverter performs default convertion for FieldSelection collection operator
 type DefaultFieldSelectionConverter struct{}
 
@@ -88,16 +81,16 @@ func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 
 	var sf reflect.StructField
 	var ok bool
-	if isCaseSensitive {
-		sf, ok = objType.FieldByName(util.Camel(queryFieldName))
-	} else {
+	// do default(camel-case) search
+	sf, ok = objType.FieldByName(util.Camel(queryFieldName))
+	if !ok {
+		// do case-insensitive search
 		sf, ok = objType.FieldByNameFunc(func(name string) bool {
 			return strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", "")))
 		})
-	}
-
-	if !ok {
-		return nil, nil
+		if !ok {
+			return nil, nil
+		}
 	}
 
 	fType := indirectType(sf.Type)
