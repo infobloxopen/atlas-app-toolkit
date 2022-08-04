@@ -16,7 +16,7 @@ type SortingCriteriaConverter interface {
 }
 
 type FieldSelectionConverter interface {
-	FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}, ignoreCase ...bool) ([]string, error)
+	FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error)
 }
 
 type PaginationConverter interface {

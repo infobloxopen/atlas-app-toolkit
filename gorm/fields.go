@@ -14,18 +14,25 @@ import (
 	"github.com/infobloxopen/atlas-app-toolkit/util"
 )
 
+// default will do case-sensitive matching ß
+var isCaseSensitive bool = true
+
+func EnableCaseSensitive(enable bool) {
+	isCaseSensitive = enable
+}
+
 // DefaultFieldSelectionConverter performs default convertion for FieldSelection collection operator
 type DefaultFieldSelectionConverter struct{}
 
 // FieldSelectionStringToGorm is a shortcut to parse a string into FieldSelection struct and
 // receive a list of associations to preload.
-func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}, ignoreCase ...bool) ([]string, error) {
+func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{}) ([]string, error) {
 	c := &DefaultFieldSelectionConverter{}
-	return c.FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj, ignoreCase...)
+	return c.FieldSelectionToGorm(ctx, query.ParseFieldSelection(fs), obj)
 }
 
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
-func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}, ignoreCase ...bool) ([]string, error) {
+func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
 	objType := indirectType(reflect.TypeOf(obj))
 	selectedFields := fs.GetFields()
 	if selectedFields == nil {
@@ -35,7 +42,7 @@ func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx contex
 	fieldNames := getSortedFieldNames(selectedFields)
 	for _, fieldName := range fieldNames {
 		f := selectedFields[fieldName]
-		subPreload, err := handlePreloads(f, objType, ignoreCase...)
+		subPreload, err := handlePreloads(f, objType)
 		if err != nil {
 			return nil, err
 		}
@@ -77,18 +84,18 @@ fields:
 	return toPreload, nil
 }
 
-func handlePreloads(f *query.Field, objType reflect.Type, ignoreCase ...bool) ([]string, error) {
+func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
 	queryFieldName := f.GetName()
 	log.Printf("Query name = %v\n", queryFieldName)
 
 	var sf reflect.StructField
 	var ok bool
-	if len(ignoreCase) > 0 && ignoreCase[0] {
+	if isCaseSensitive {
+		sf, ok = objType.FieldByName(util.Camel(queryFieldName))
+	} else {
 		sf, ok = objType.FieldByNameFunc(func(name string) bool {
 			return strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", "")))
 		})
-	} else {
-		sf, ok = objType.FieldByName(util.Camel(queryFieldName))
 	}
 
 	if !ok {
@@ -116,7 +123,7 @@ func handlePreloads(f *query.Field, objType reflect.Type, ignoreCase ...bool) ([
 	fieldNames := getSortedFieldNames(fieldSubs)
 	for _, fieldName := range fieldNames {
 		subField := fieldSubs[fieldName]
-		subPreload, err := handlePreloads(subField, fType, ignoreCase...)
+		subPreload, err := handlePreloads(subField, fType)
 		if err != nil {
 			return nil, err
 		}
