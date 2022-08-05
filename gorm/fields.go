@@ -26,13 +26,14 @@ func FieldSelectionStringToGorm(ctx context.Context, fs string, obj interface{})
 // FieldSelectionToGorm receives FieldSelection struct and returns a list of associations to preload.
 func (converter *DefaultFieldSelectionConverter) FieldSelectionToGorm(ctx context.Context, fs *query.FieldSelection, obj interface{}) ([]string, error) {
 	objType := indirectType(reflect.TypeOf(obj))
-	if fs.GetFields() == nil {
+	selectedFields := fs.GetFields()
+	if selectedFields == nil {
 		return preloadEverything(objType, nil)
 	}
 	var toPreload []string
-	fieldNames := getSortedFieldNames(fs.GetFields())
+	fieldNames := getSortedFieldNames(selectedFields)
 	for _, fieldName := range fieldNames {
-		f := fs.GetFields()[fieldName]
+		f := selectedFields[fieldName]
 		subPreload, err := handlePreloads(f, objType)
 		if err != nil {
 			return nil, err
@@ -76,35 +77,51 @@ fields:
 }
 
 func handlePreloads(f *query.Field, objType reflect.Type) ([]string, error) {
-	sf, ok := objType.FieldByName(util.Camel(f.GetName()))
+	queryFieldName := f.GetName()
+
+	var sf reflect.StructField
+	var ok bool
+	// do default(camel-case) search
+	sf, ok = objType.FieldByName(util.Camel(queryFieldName))
 	if !ok {
-		return nil, nil
+		// do case-insensitive search
+		sf, ok = objType.FieldByNameFunc(func(name string) bool {
+			return strings.EqualFold(name, strings.ToLower(strings.ReplaceAll(queryFieldName, "_", "")))
+		})
+		if !ok {
+			return nil, nil
+		}
 	}
+
 	fType := indirectType(sf.Type)
-	if f.GetSubs() == nil {
+	fName := sf.Name
+
+	fieldSubs := f.GetSubs()
+
+	if fieldSubs == nil {
 		if isModel(fType) {
-			return []string{util.Camel(f.GetName())}, nil
+			return []string{fName}, nil
 		} else {
 			return nil, nil
 		}
 	}
 	if !isModel(fType) {
-		return nil, fmt.Errorf("%s is expected to be a model, but got %s ", f.GetName(), fType)
+		return nil, fmt.Errorf("%s is expected to be a model, but got %s ", queryFieldName, fType)
 	}
 	var toPreload []string
-	fieldNames := getSortedFieldNames(f.GetSubs())
+	fieldNames := getSortedFieldNames(fieldSubs)
 	for _, fieldName := range fieldNames {
-		subField := f.GetSubs()[fieldName]
+		subField := fieldSubs[fieldName]
 		subPreload, err := handlePreloads(subField, fType)
 		if err != nil {
 			return nil, err
 		}
 		for i, e := range subPreload {
-			subPreload[i] = util.Camel(f.GetName()) + "." + e
+			subPreload[i] = fName + "." + e
 		}
 		toPreload = append(toPreload, subPreload...)
 	}
-	return append(toPreload, util.Camel(f.GetName())), nil
+	return append(toPreload, fName), nil
 }
 
 func getSortedFieldNames(fields map[string]*query.Field) []string {
@@ -126,7 +143,7 @@ func preload(db *gorm.DB, obj interface{}, assoc string) (*gorm.DB, error) {
 	for i, part := range assocPath {
 		sf, ok := objType.FieldByName(part)
 		if !ok {
-			return nil, fmt.Errorf("Cannot find %s in %s", part, objType)
+			return nil, fmt.Errorf("cannot find %s in %s", part, objType)
 		}
 		objType = indirectType(sf.Type)
 		if !isModel(objType) {
@@ -143,5 +160,5 @@ func preload(db *gorm.DB, obj interface{}, assoc string) (*gorm.DB, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf("Cannot preload empty association")
+	return nil, fmt.Errorf("cannot preload empty association")
 }
