@@ -7,6 +7,7 @@ These types are:
 - `infoblox.api.Pagination`
 - `infoblox.api.PageInfo`(used in response)
 - `infoblox.api.FieldSelection`
+- `infoblox.api.Searching`
 
 ## Enabling *collection operators* in your application
 
@@ -22,6 +23,7 @@ message MyListRequest {
     infoblox.api.Sorting sorting = 2;
     infoblox.api.Pagination pagination = 3;
     infoblox.api.FieldSelection fields = 4;
+    infoblox.api.Searching searching = 5;
 }
 ```
 
@@ -162,3 +164,10 @@ server.WithGateway(
   )
 )
 ```
+## Searching
+
+The syntax of REST representation of `infoblox.api.Searching` is the following.
+
+| Request Parameter | Description                              |
+| ----------------- |------------------------------------------|
+| _fts              | A string expression which performs a full-text-search on the DB |
