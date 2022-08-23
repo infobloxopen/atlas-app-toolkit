@@ -9,8 +9,8 @@ const (
 	opCommonInnerDelimiter = "."
 )
 
-//FieldSelectionMap is a convenience type that represents map[string]*Field
-//used in FieldSelection and Field structs
+// FieldSelectionMap is a convenience type that represents map[string]*Field
+// used in FieldSelection and Field structs
 type FieldSelectionMap map[string]*Field
 
 func innerDelimiter(delimiter ...string) string {
@@ -26,9 +26,9 @@ func toParts(input string, delimiter ...string) []string {
 	return strings.Split(input, split)
 }
 
-//ParseFieldSelection transforms a string with comma-separated fields that comes
-//from client to FieldSelection struct. For complex fields dot is used as a delimeter by
-//default, but it is also possible to specify a different delimiter.
+// ParseFieldSelection transforms a string with comma-separated fields that comes
+// from client to FieldSelection struct. For complex fields dot is used as a delimeter by
+// default, but it is also possible to specify a different delimiter.
 func ParseFieldSelection(input string, delimiter ...string) *FieldSelection {
 	if len(input) == 0 {
 		return nil
@@ -44,8 +44,8 @@ func ParseFieldSelection(input string, delimiter ...string) *FieldSelection {
 	return result
 }
 
-//GoString converts FieldSelection to a string representation
-//It implements fmt.GoStringer interface and returns dot-notated fields separated by commas
+// GoString converts FieldSelection to a string representation
+// It implements fmt.GoStringer interface and returns dot-notated fields separated by commas
 func (f *FieldSelection) GoString() string {
 	return strings.Join(f.AllFieldStrings(), opCommonDelimiter)
 }
@@ -70,7 +70,7 @@ func addChildFieldString(result *[]string, parent string, field *Field) {
 	}
 }
 
-//Add allows to add new fields to FieldSelection
+// Add allows to add new fields to FieldSelection
 func (f *FieldSelection) Add(field string, delimiter ...string) {
 	if len(field) == 0 {
 		return
@@ -97,7 +97,7 @@ func (f *FieldSelection) Add(field string, delimiter ...string) {
 	}
 }
 
-//Delete allows to remove fields from FieldSelection
+// Delete allows to remove fields from FieldSelection
 func (f *FieldSelection) Delete(field string, delimiter ...string) bool {
 	if len(field) == 0 || f.Fields == nil {
 		return false
@@ -122,7 +122,7 @@ func (f *FieldSelection) Delete(field string, delimiter ...string) bool {
 	return true
 }
 
-//Get allows to get specified field from FieldSelection
+// Get allows to get specified field from FieldSelection
 func (f *FieldSelection) Get(field string, delimiter ...string) *Field {
 	if len(field) == 0 || f.Fields == nil {
 		return nil
