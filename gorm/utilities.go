@@ -41,7 +41,7 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 	return dbPath, "", nil
 }
 
-//HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
+// HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
 func HandleJSONFieldPath(ctx context.Context, fieldPath []string, obj interface{}, values ...string) (string, string, error) {
 	operator := "#>>"
 	if isRawJSON(values...) {
@@ -82,7 +82,7 @@ func isRawJSON(values ...string) bool {
 	return true
 }
 
-//TODO: add supprt for embeded objects
+// TODO: add supprt for embeded objects
 func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) bool {
 	fieldName := util.Camel(fieldPath[0])
 	objType := indirectType(reflect.TypeOf(obj))
@@ -189,6 +189,17 @@ func indirectType(t reflect.Type) reflect.Type {
 	}
 }
 
+func indirectValue(val reflect.Value) reflect.Value {
+	for {
+		switch val.Kind() {
+		case reflect.Ptr, reflect.Slice, reflect.Array:
+			val = val.Elem()
+		default:
+			return val
+		}
+	}
+}
+
 func isModel(t reflect.Type) bool {
 	kind := t.Kind()
 	_, isValuer := reflect.Zero(t).Interface().(driver.Valuer)
@@ -213,4 +224,14 @@ type EmptyFieldPathError struct {
 
 func (e *EmptyFieldPathError) Error() string {
 	return fmt.Sprintf("Empty field path is not allowed")
+}
+
+func camelCase(v string) string {
+	sp := strings.Split(v, "_")
+	r := make([]string, len(sp))
+	for i, v := range sp {
+		r[i] = strings.ToUpper(v[:1]) + v[1:]
+	}
+
+	return strings.Join(r, "")
 }
