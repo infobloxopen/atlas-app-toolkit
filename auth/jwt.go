@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -49,7 +50,12 @@ func GetJWTFieldWithTokenType(ctx context.Context, tokenType, tokenField string,
 	if !ok {
 		return "", errMissingField
 	}
-	return fmt.Sprint(jwtField), nil
+	switch jwtField := jwtField.(type) {
+	case float64:
+		return strconv.FormatFloat(jwtField, 'f', -1, 64), nil
+	default:
+		return fmt.Sprint(jwtField), nil
+	}
 }
 
 // GetJWTField gets the JWT from a context and returns the specified field

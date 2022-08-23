@@ -43,7 +43,7 @@ type Server struct {
 	isAutomaticStop bool
 }
 
-//Middleware wrapper
+// Middleware wrapper
 type Middleware func(handler http.Handler) http.Handler
 
 // Option is a functional option for creating a Server

@@ -221,3 +221,16 @@ message PageInfo {
     // A null value indicates no more pages.
     int32 offset = 3;
 }
+
+
+// Searching represents search by.
+message Searching {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            type: STRING;
+            description: "atlas.api.search_by";
+        };
+    };
+
+    string query = 1;
+}

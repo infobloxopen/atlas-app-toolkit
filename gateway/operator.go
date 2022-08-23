@@ -17,6 +17,7 @@ const (
 	limitQueryKey            = "_limit"
 	offsetQueryKey           = "_offset"
 	pageTokenQueryKey        = "_page_token"
+	searchQueryKey           = "_fts"
 	pageInfoSizeMetaKey      = "status-page-info-size"
 	pageInfoOffsetMetaKey    = "status-page-info-offset"
 	pageInfoPageTokenMetaKey = "status-page-info-page_token"

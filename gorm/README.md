@@ -65,12 +65,40 @@ var people []Person
 db.Find(&people)
 ...
 ```
+### Applying query.Searching
+
+```golang
+...
+db, assoc, err = gorm.ApplySearchingEx(ctx, db, searching, &PersonORM{}, fieldsForFTS, &Person{})
+if err != nil {
+    ...
+}
+db, err = gorm.JoinAssociations(ctx, db, assoc, &PersonORM{})
+if err != nil {
+    ...
+}
+var people []Person
+db.Find(&people)
+...
+```
 
 ### Applying everything
 
 ```golang
 ...
 db, err = gorm.ApplyCollectionOperators(ctx, db, &PersonORM{}, &Person{}, filtering, sorting, pagination, fields)
+if err != nil {
+    ...
+}
+var people []Person
+db.Find(&people)
+...
+```
+### Applying everything with Searching
+
+```golang
+...
+db, err = gorm.ApplyCollectionOperatorsWithSearchingEx(ctx, db, &PersonORM{}, &Person{}, filtering, sorting, pagination, fields, searching, fieldsForFTS)
 if err != nil {
     ...
 }

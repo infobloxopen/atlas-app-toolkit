@@ -7,6 +7,7 @@ These types are:
 - `infoblox.api.Pagination`
 - `infoblox.api.PageInfo`(used in response)
 - `infoblox.api.FieldSelection`
+- `infoblox.api.Searching`
 
 ## Enabling *collection operators* in your application
 
@@ -22,6 +23,7 @@ message MyListRequest {
     infoblox.api.Sorting sorting = 2;
     infoblox.api.Pagination pagination = 3;
     infoblox.api.FieldSelection fields = 4;
+    infoblox.api.Searching searching = 5;
 }
 ```
 
@@ -162,3 +164,38 @@ server.WithGateway(
   )
 )
 ```
+## Searching
+
+The syntax of REST representation of `infoblox.api.Searching` is the following.
+
+| Request Parameter | Description                              |
+| ----------------- |------------------------------------------|
+| _fts              | A string expression which performs a full-text-search on the DB |
+
+Full-text-search is an optimized mechanism to retrieve data from the DB efficiently when the user is only aware of some portion of the data they are searching.
+
+#### Example:
+Consider that you have the following objects:
+```
+{
+ name: "my first object",
+ city: "Santa Clara",
+ country: "USA"
+},
+{
+ name: "my second object",
+ city: "Tacoma",
+ country: "USA"
+}
+```
+If "name" is provided as a field for FTS, the Searching query will look like:
+```
+...?_fts=my first object
+```
+In this case, only the first object would be returned.
+
+If "country" is provided as a field for FTS, the Searching query will look like:
+```
+...?_fts=USA
+```
+In this case, both the objects would be returned.

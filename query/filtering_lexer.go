@@ -221,7 +221,7 @@ func (t InToken) String() string {
 	return "in"
 }
 
-//NumberArrayToken represent number array e.g. [1,2,5]
+// NumberArrayToken represent number array e.g. [1,2,5]
 type StringArrayToken struct {
 	TokenBase
 	Values []string
@@ -231,7 +231,7 @@ func (t StringArrayToken) String() string {
 	return fmt.Sprintf("%v", t.Values)
 }
 
-//NumberArrayToken represent number array e.g. [1,2,5]
+// NumberArrayToken represent number array e.g. [1,2,5]
 type NumberArrayToken struct {
 	TokenBase
 	Values []float64
