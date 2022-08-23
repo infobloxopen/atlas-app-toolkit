@@ -172,7 +172,7 @@ The syntax of REST representation of `infoblox.api.Searching` is the following.
 | ----------------- |------------------------------------------|
 | _fts              | A string expression which performs a full-text-search on the DB |
 
-Full-text-search is an optimized mechanism to retreive data from the DB efficiently when the user is only aware of some portion of the data they are searching.
+Full-text-search is an optimized mechanism to retrieve data from the DB efficiently when the user is only aware of some portion of the data they are searching.
 
 #### Example:
 Consider that you have the following objects:
