@@ -18,7 +18,7 @@ require (
 	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/stretchr/testify v1.5.1
 	go.opencensus.io v0.22.3
-	golang.org/x/net v0.0.0-20200520182314-0ba52f642ac2
+	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	google.golang.org/api v0.26.0 // indirect
 	google.golang.org/genproto v0.0.0-20200527145253-8367513e4ece
 	google.golang.org/grpc v1.29.1

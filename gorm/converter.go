@@ -30,12 +30,16 @@ type DefaultSortingCriteriaConverter struct{}
 // DefaultPaginationConverter performs default convertion for Paging collection operator
 type DefaultPaginationConverter struct{}
 
+// DefaultSearchingConverter performs default convertion for Searching operator
+type DefaultSearchingConverter struct{}
+
 // DefaultPbToOrmConverter performs default convertion for all collection operators
 type DefaultPbToOrmConverter struct {
 	DefaultFilteringConditionConverter
 	DefaultSortingCriteriaConverter
 	DefaultFieldSelectionConverter
 	DefaultPaginationConverter
+	DefaultSearchingConverter
 }
 
 // NewDefaultPbToOrmConverter creates default converter for all collection operators
@@ -45,6 +49,7 @@ func NewDefaultPbToOrmConverter(pb proto.Message) CollectionOperatorsConverter {
 		DefaultSortingCriteriaConverter{},
 		DefaultFieldSelectionConverter{},
 		DefaultPaginationConverter{},
+		DefaultSearchingConverter{},
 	}
 }
 
@@ -359,4 +364,10 @@ func (converter *DefaultPaginationConverter) PaginationToGorm(ctx context.Contex
 		return p.GetOffset(), p.GetLimit()
 	}
 	return 0, 0
+}
+
+func (converter *DefaultSearchingConverter) SearchingToGorm(ctx context.Context, s *query.Searching, fieldsForFTS []string, obj interface{}) (string, error) {
+	mask := GetFullTextSearchDBMask(obj, fieldsForFTS, " ")
+	fullTextSearchQuery := FormFullTextSearchQuery(mask)
+	return fullTextSearchQuery, nil
 }

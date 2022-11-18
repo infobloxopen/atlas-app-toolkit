@@ -74,6 +74,15 @@ func ClientUnaryInterceptor(parentCtx context.Context, method string, req, reply
 			}
 		}
 
+		// extracts "_fts" parameters from request
+		if v := vals.Get(searchQueryKey); v != "" {
+			s := query.ParseSearching(v)
+			err = SetCollectionOps(req, s)
+			if err != nil {
+				return err
+			}
+		}
+
 		// extracts "_limit", "_offset",  "_page_token" parameters from request
 		var p *query.Pagination
 		l := vals.Get(limitQueryKey)
