@@ -97,7 +97,11 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
 	}
 
-	httpStatus, statusStr := HTTPStatus(ctx, nil)
+	method := ""
+	if req != nil {
+		method = req.Method
+	}
+	httpStatus, statusStr := HTTPStatus(ctx, method, nil)
 
 	retainFields(ctx, req, dynmap)
 	errs, suc, _ := errorsAndSuccessFromContext(ctx)
@@ -164,7 +168,11 @@ func (fw *ResponseForwarder) ForwardStream(ctx context.Context, mux *runtime.Ser
 		return
 	}
 
-	httpStatus, _ := HTTPStatus(ctx, nil)
+	method := ""
+	if req != nil {
+		method = req.Method
+	}
+	httpStatus, _ := HTTPStatus(ctx, method, nil)
 	// if user did not set status explicitly
 	if httpStatus == http.StatusOK {
 		httpStatus = HTTPStatusFromCode(PartialContent)

@@ -75,7 +75,7 @@ func SetRunning(ctx context.Context, message, resource string) error {
 // API Syntax otherwise context will be used to extract
 // `grpcgateway-status-code` from gRPC metadata.
 // If `grpcgateway-status-code` is not set it is assumed that it is OK.
-func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
+func HTTPStatus(ctx context.Context, method string, st *status.Status) (int, string) {
 
 	if st != nil {
 		httpStatus := HTTPStatusFromCode(st.Code())
@@ -85,7 +85,20 @@ func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
 	statusName := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {
 		statusName = sc
+	} else {
+		switch method {
+		case http.MethodPost:
+			statusName = CodeName(Created)
+		case http.MethodPut:
+		case http.MethodPatch:
+			statusName = CodeName(Updated)
+		case http.MethodDelete:
+			statusName = CodeName(Deleted)
+		default:
+			statusName = CodeName(codes.OK)
+		}
 	}
+
 	httpCode := HTTPStatusFromCode(Code(statusName))
 
 	return httpCode, statusName
