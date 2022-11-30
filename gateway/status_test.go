@@ -39,6 +39,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	// test REST status from HTTP method
+	StatusFromMethod = true
 	stat, statName = HTTPStatus(context.Background(), "GET", nil)
 	if stat != http.StatusOK {
 		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)

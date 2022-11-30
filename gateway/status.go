@@ -19,6 +19,10 @@ import (
 // function by code that vendors this library.
 var OldStatusCreatedOnUpdate = false
 
+// StatusFromMethod if true will cause the HTTP code returned to be set depending
+// on the HTTP method, ex. a 201 for POST as a "create" operation
+var StatusFromMethod = false
+
 const (
 	// These custom codes defined here to conform REST API Syntax
 	// It is supposed that you do not send them over the wire as part of gRPC Status,
@@ -85,7 +89,7 @@ func HTTPStatus(ctx context.Context, method string, st *status.Status) (int, str
 	statusName := CodeName(codes.OK)
 	if sc, ok := Header(ctx, "status-code"); ok {
 		statusName = sc
-	} else {
+	} else if StatusFromMethod {
 		switch method {
 		case http.MethodPost:
 			statusName = CodeName(Created)
