@@ -36,7 +36,7 @@ func GetFullTextSearchDBMask(object interface{}, fields []string, separator stri
 			mask += "replace(" + fieldName + ", '@', ' ')"
 			mask += " || '" + separator + "' || "
 			mask += "replace(" + fieldName + ", '.', ' ')"
-		case *time.Time:
+		case time.Time:
 			mask += "coalesce(to_char(" + fieldName + ", 'MM/DD/YY HH:MI pm'), '')"
 		case bool:
 			mask += fieldName

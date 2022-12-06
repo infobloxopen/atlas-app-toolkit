@@ -2,13 +2,13 @@ package gorm
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/Infoblox-CTO/ddi.common/types/name"
-	"github.com/Infoblox-CTO/ddi.common/types/tags"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/infobloxopen/protoc-gen-gorm/types"
 )
 
 func NewSearchEntity() SearchEntity {
@@ -20,8 +20,7 @@ type SearchEntity struct {
 	FieldString string
 	FieldTime   *time.Time
 	FieldBool   bool
-	DDITags     *tags.DDITags
-	Name        name.Name
+	DDITagsOld  *types.JSONValue
 }
 
 func TestGetFullTextSearchDBMask(t *testing.T) {
@@ -31,12 +30,8 @@ func TestGetFullTextSearchDBMask(t *testing.T) {
 	time1 := time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
 	entity1.FieldTime = &time1
 	entity1.FieldBool = true
-	entityTags, err := tags.Parse(`{"key":"123345", "someTags":"someValue"}`)
-	assert.Equal(t, err, nil)
-	entity1.DDITags = &entityTags
-	entityName, err := name.ParseName("Entity Name")
-	assert.Equal(t, err, nil)
-	entity1.Name = entityName
+	entityTagsOld := types.JSONValue{Value: `{"tag1":"value1", "tag2":"value2"}`}
+	entity1.DDITagsOld = &entityTagsOld
 
 	entity2 := NewSearchEntity()
 	entity2.FieldInt32 = 2
@@ -44,12 +39,8 @@ func TestGetFullTextSearchDBMask(t *testing.T) {
 	time2 := time.Date(2022, time.Month(4), 4, 9, 0, 0, 0, time.UTC)
 	entity2.FieldTime = &time2
 	entity2.FieldBool = false
-	entityTags, err = tags.Parse(`{"key":"123345", "key2":"someothervalue"}`)
-	assert.Equal(t, err, nil)
-	entity2.DDITags = &entityTags
-	entityName, err = name.ParseName("Second Entity Name")
-	assert.Equal(t, err, nil)
-	entity2.Name = entityName
+	entityTagsOld2 := types.JSONValue{Value: `{"ned":"flanders", "lisa":"simpson"}`}
+	entity2.DDITagsOld = &entityTagsOld2
 
 	object := []*SearchEntity{
 		&entity1,
@@ -64,15 +55,19 @@ func TestGetFullTextSearchDBMask(t *testing.T) {
 		fields[i] = val.Type().Field(i).Name
 	}
 
+	assert.Equal(t, fields, []string{"FieldInt32", "FieldString", "FieldTime", "FieldBool", "DDITagsOld"})
+
 	// Expect mask to contain the fields FieldInt32, FieldString, FieldTime, and FieldBool
 	mask := GetFullTextSearchDBMask(entity1, fields, separator)
-	expectedMask := "FieldInt32 || ',' || FieldString || ',' || replace(FieldString, '@', ' ') || ',' || replace(FieldString, '.', ' ') || ',' || coalesce(to_char(FieldTime, 'MM/DD/YY HH:MI pm'), '') || ',' || FieldBool || ',' || "
+	expectedMask := "FieldInt32 || ',' || FieldString || ',' || replace(FieldString, '@', ' ') || ',' ||" +
+		" replace(FieldString, '.', ' ') || ',' || coalesce(to_char(FieldTime, 'MM/DD/YY HH:MI pm'), '') || ',' ||" +
+		" FieldBool || ',' || "
 	assert.Equal(t, mask, expectedMask)
 
 	// Expect to panic if function used with array
 	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in f", r)
+		if r := recover(); r == nil {
+			fmt.Println("Recovered panic:", r)
 		}
 	}()
 	GetFullTextSearchDBMask(object, fields, separator)
