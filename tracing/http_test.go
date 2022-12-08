@@ -177,7 +177,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	// Test that Span attributes were populated with Headers
 	reflectAttrMap := reflect.ValueOf(trace.FromContext(result.request.Context())).Elem().Field(3).Elem().Field(0)
 	reflectKeys := reflectAttrMap.MapKeys()
-	assert.Len(t, reflectKeys, 8)
+	assert.Len(t, reflectKeys, 9)
 
 	resultHeadersMap := make(map[string]string)
 	for _, k := range reflectKeys {
