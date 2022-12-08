@@ -93,8 +93,7 @@ func HTTPStatus(ctx context.Context, method string, st *status.Status) (int, str
 		switch method {
 		case http.MethodPost:
 			statusName = CodeName(Created)
-		case http.MethodPut:
-		case http.MethodPatch:
+		case http.MethodPut, http.MethodPatch:
 			statusName = CodeName(Updated)
 		case http.MethodDelete:
 			statusName = CodeName(Deleted)

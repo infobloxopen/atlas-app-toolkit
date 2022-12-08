@@ -56,12 +56,21 @@ func TestStatus(t *testing.T) {
 		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Created))
 	}
 
+	OldStatusCreatedOnUpdate = false
 	stat, statName = HTTPStatus(context.Background(), "PUT", nil)
 	if stat != http.StatusOK {
 		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
 	}
-	if statName != codes.OK.String() {
-		t.Errorf("invalid http status codename %q - expected: %q", statName, codes.OK.String())
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+
+	stat, statName = HTTPStatus(context.Background(), "PATCH", nil)
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
 	}
 
 	stat, statName = HTTPStatus(context.Background(), "DELETE", nil)
@@ -71,6 +80,16 @@ func TestStatus(t *testing.T) {
 	if statName != CodeName(Deleted) {
 		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Deleted))
 	}
+
+	OldStatusCreatedOnUpdate = true
+	stat, statName = HTTPStatus(context.Background(), "PUT", nil)
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+	OldStatusCreatedOnUpdate = false
 }
 
 func TestCodeName(t *testing.T) {
