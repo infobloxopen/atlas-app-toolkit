@@ -114,6 +114,13 @@ func TestStatusWithMethod(t *testing.T) {
 	if statName != CodeName(Updated) {
 		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
 	}
+	stat, statName = HTTPStatusWithMethod(context.Background(), "PATCH", nil)
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
 	OldStatusCreatedOnUpdate = false
 }
 
