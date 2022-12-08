@@ -21,7 +21,7 @@ var OldStatusCreatedOnUpdate = false
 
 // StatusFromMethod if true will cause the HTTP code returned to be set depending
 // on the HTTP method, ex. a 201 for POST as a "create" operation
-var StatusFromMethod = false
+var StatusFromMethod = true
 
 const (
 	// These custom codes defined here to conform REST API Syntax
@@ -79,7 +79,29 @@ func SetRunning(ctx context.Context, message, resource string) error {
 // API Syntax otherwise context will be used to extract
 // `grpcgateway-status-code` from gRPC metadata.
 // If `grpcgateway-status-code` is not set it is assumed that it is OK.
-func HTTPStatus(ctx context.Context, method string, st *status.Status) (int, string) {
+func HTTPStatus(ctx context.Context, st *status.Status) (int, string) {
+
+	if st != nil {
+		httpStatus := HTTPStatusFromCode(st.Code())
+
+		return httpStatus, CodeName(st.Code())
+	}
+	statusName := CodeName(codes.OK)
+	if sc, ok := Header(ctx, "status-code"); ok {
+		statusName = sc
+	}
+	httpCode := HTTPStatusFromCode(Code(statusName))
+
+	return httpCode, statusName
+}
+
+// HTTPStatusWithMethod returns REST representation of gRPC status.
+// If status.Status is not nil it will be converted in accordance with REST
+// API Syntax otherwise context will be used to extract
+// `grpcgateway-status-code` from gRPC metadata.
+// If `grpcgateway-status-code` is not set it falls back on the method string
+// provided, using default expectations for POST, PUT/PATCH, and DELETE verbs
+func HTTPStatusWithMethod(ctx context.Context, method string, st *status.Status) (int, string) {
 
 	if st != nil {
 		httpStatus := HTTPStatusFromCode(st.Code())

@@ -101,7 +101,7 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if req != nil {
 		method = req.Method
 	}
-	statusCode, statusStr := HTTPStatus(ctx, method, st)
+	statusCode, statusStr := HTTPStatusWithMethod(ctx, method, st)
 
 	details := []interface{}{}
 	var fields interface{}
