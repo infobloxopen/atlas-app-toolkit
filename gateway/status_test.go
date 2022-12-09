@@ -39,6 +39,91 @@ func TestStatus(t *testing.T) {
 	}
 }
 
+func TestStatusWithMethod(t *testing.T) {
+	// test REST status from gRPC one
+	stat, statName := HTTPStatusWithMethod(context.Background(), "GET", status.New(codes.OK, "success message"))
+
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
+	}
+	if statName != codes.OK.String() {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, codes.OK.String())
+	}
+
+	// test REST status from incoming context
+	md := metadata.Pairs(
+		runtime.MetadataPrefix+"status-code", CodeName(Created),
+	)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+	stat, statName = HTTPStatusWithMethod(ctx, "GET", nil)
+
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Created) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, codes.OK.String())
+	}
+
+	// test REST status from HTTP method
+	stat, statName = HTTPStatusWithMethod(context.Background(), "GET", nil)
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
+	}
+	if statName != codes.OK.String() {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, codes.OK.String())
+	}
+
+	stat, statName = HTTPStatusWithMethod(context.Background(), "POST", nil)
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Created) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Created))
+	}
+
+	OldStatusCreatedOnUpdate = false
+	stat, statName = HTTPStatusWithMethod(context.Background(), "PUT", nil)
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+
+	stat, statName = HTTPStatusWithMethod(context.Background(), "PATCH", nil)
+	if stat != http.StatusOK {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusOK)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+
+	stat, statName = HTTPStatusWithMethod(context.Background(), "DELETE", nil)
+	if stat != http.StatusNoContent {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusNoContent)
+	}
+	if statName != CodeName(Deleted) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Deleted))
+	}
+
+	OldStatusCreatedOnUpdate = true
+	stat, statName = HTTPStatusWithMethod(context.Background(), "PUT", nil)
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+	stat, statName = HTTPStatusWithMethod(context.Background(), "PATCH", nil)
+	if stat != http.StatusCreated {
+		t.Errorf("invalid http status code %d - expected: %d", stat, http.StatusCreated)
+	}
+	if statName != CodeName(Updated) {
+		t.Errorf("invalid http status codename %q - expected: %q", statName, CodeName(Updated))
+	}
+	OldStatusCreatedOnUpdate = false
+}
+
 func TestCodeName(t *testing.T) {
 	// test renamed code
 	if cn := CodeName(codes.Unimplemented); cn != "NOT_IMPLEMENTED" {

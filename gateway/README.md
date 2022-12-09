@@ -143,7 +143,22 @@ func init() {
 We made default [`ForwardResponseMessageFunc`](response.go#L21) and [`ForwardResponseStreamFunc`](response.go#L21)
 implementations that conform to Infoblox's REST API Syntax guidelines. These helper functions ensure that Infoblox teams who use toolkit follow the same REST API conventions. For non-Infoblox toolkit users, these are completely optional utilities.
 
-_Note: the forwarders still set `200 - OK` as HTTP status code if no errors are encountered._
+The forwarders set the response status based on the type of request made, using a couple
+of global configuration settings
+```
+OldStatusCreatedOnUpdate (default false)
+StatusFromMethod (default true)
+```
+When StatusFromMethod is true, if no status code is explicitly set using the
+functions described below, it will populate the responses based on the REST verb as follows.
+The output for PUT/PATCH is dependent on the `OldStatusCreatedOnUpdate` value.
+```
+GET = 200 OK
+POST = 201 CREATED
+PUT/PATCH = 201 UPDATED (OldStatusCreatedOnUpdate=true)
+PUT/PATCH = 200 UPDATED (OldStatusCreatedOnUpdate=false)
+DELETE = 204 DELETED
+```
 
 ### Setting HTTP Status Codes
 
