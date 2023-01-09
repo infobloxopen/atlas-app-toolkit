@@ -55,7 +55,7 @@ The Postgres types from tags are converted as follows:
 ```proto
 syntax = "proto3";
 
-import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource/resource.proto";
 import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";
 
 option go_package = "github.com/yourapp/pb;pb";
@@ -97,7 +97,7 @@ In JSON it could look like
 
 The generated code could be:
 ```go
-import "github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+import "github.com/infobloxopen/atlas-app-toolkit/v2/gorm/resource"
 
 type AORM struct {
 	Id int64
@@ -120,7 +120,7 @@ that name will be used during encoding to populate ApplicationName field of `atl
 ```go
 package main
 
-import "github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+import "github.com/infobloxopen/atlas-app-toolkit/v2/gorm/resource"
 
 func main() {
     resource.RegisterApplication("MyAppName")

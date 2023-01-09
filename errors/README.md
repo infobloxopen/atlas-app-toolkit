@@ -212,7 +212,7 @@ interceptor := errors.UnaryServerInterceptor(
 <a name="validation"></a>
 # Validation Errors
 
-    import "github.com/infobloxopen/atlas-app-toolkit/errors/mappers/validationerrors"
+    import "github.com/infobloxopen/atlas-app-toolkit/v2/errors/mappers/validationerrors"
 
 `validationerrors` is a request contents validator server-side middleware for
 gRPC.
@@ -309,7 +309,7 @@ Example Usage:
 
 # PQ Errors
 
-    import "github.com/infobloxopen/atlas-app-toolkit/errors/mappers/pqerrors"
+    import "github.com/infobloxopen/atlas-app-toolkit/v2/errors/mappers/pqerrors"
 
 `pqerrors` is a error mapper for postgres.
 

@@ -17,7 +17,7 @@ Note that the `LogLevelInterceptor` cannot effect whether or not the Info level 
 The middleware chain code should look something like this:
 ```golang
 import (
-	"github.com/infobloxopen/atlas-app-toolkit/logging"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/logging"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -41,9 +41,9 @@ Using the toolkit's server package, that setup looks something like this:
 ```golang
 import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/logging"
-	"github.com/infobloxopen/atlas-app-toolkit/server"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/logging"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/server"
 )
 
 func main() {

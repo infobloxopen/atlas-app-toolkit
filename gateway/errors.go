@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/atlas/atlasrpc"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.

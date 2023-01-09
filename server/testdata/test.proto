@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package testdata;
 
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/server/testdata;testdata";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/v2/server/testdata;testdata";
 
 import "google/api/annotations.proto";
 

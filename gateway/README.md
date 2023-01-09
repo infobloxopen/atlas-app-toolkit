@@ -71,7 +71,7 @@ You can also use the helper function provided in this package.
 import (
     "context"
 
-    "github.com/infobloxopen/atlas-app-toolkit/gateway"
+    "github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
 )
 
 func (s *myServiceImpl) MyMethod(ctx context.Context, req *MyRequest) (*MyResponse, error) {
@@ -130,7 +130,7 @@ To override this behavior, the gRPC Gateway documentation recommends overwriting
 
 ```go
 import (
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
 )
 
 func init() {
@@ -157,7 +157,7 @@ Also you may use shortcuts like `SetCreated`, `SetUpdated`, and `SetDeleted`.
 
 ```go
 import (
-    "github.com/infobloxopen/atlas-app-toolkit/gateway"
+    "github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
 )
 
 func (s *myService) MyMethod(req *MyRequest) (*MyResponse, error) {
@@ -350,7 +350,7 @@ Here's an example that shows how to use [`DefaultProtoErrorHandler`](gateway/err
 ```go
 import (
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/infobloxopen/atlas-app-toolkit/gateway"
+    "github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
 
     "github.com/yourrepo/yourapp"
 )

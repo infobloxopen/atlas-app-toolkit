@@ -18,7 +18,7 @@ You can enable support for Request Info in your gRPC-Server by adding the annota
 import (
   ...
   ...
-  "github.com/infobloxopen/atlas-app-toolkit/requestinfo"
+  "github.com/infobloxopen/atlas-app-toolkit/v2/requestinfo"
 )
 func main() {
     server := grpc.NewServer(

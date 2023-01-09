@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package atlas.atlasrpc.v1;
 
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc;atlasrpc";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/v2/atlas/atlasrpc;atlasrpc";
 
 // FieldsInfo is a default representation of field details that conforms
 // REST API Syntax Specification
