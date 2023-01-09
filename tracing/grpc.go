@@ -19,7 +19,7 @@ var sensitiveMetadata = map[string]struct{}{
 	"authorization":             struct{}{},
 }
 
-//GRPCOption allows extending handler with additional functionality
+// GRPCOption allows extending handler with additional functionality
 type GRPCOption func(*gRPCOptions)
 
 type metadataMatcher func(string) (string, bool)
@@ -42,48 +42,48 @@ func defaultGRPCOptions() *gRPCOptions {
 	}
 }
 
-//WithMetadataAnnotation annotate span with request metadata
+// WithMetadataAnnotation annotate span with request metadata
 func WithMetadataAnnotation(f func(context.Context, stats.RPCStats) bool) GRPCOption {
 	return func(ops *gRPCOptions) {
 		ops.spanWithMetadata = f
 	}
 }
 
-//WithMetadataMatcher set metadata matcher to filterout or preprocess metadata
+// WithMetadataMatcher set metadata matcher to filterout or preprocess metadata
 func WithMetadataMatcher(f func(string) (string, bool)) GRPCOption {
 	return func(ops *gRPCOptions) {
 		ops.metadataMatcher = f
 	}
 }
 
-//WithGRPCPayloadAnnotation add Inbound/Outbound payload as an attribute to span if f returns true
+// WithGRPCPayloadAnnotation add Inbound/Outbound payload as an attribute to span if f returns true
 func WithGRPCPayloadAnnotation(f func(context.Context, stats.RPCStats) bool) GRPCOption {
 	return func(ops *gRPCOptions) {
 		ops.spanWithPayload = f
 	}
 }
 
-//WithGRPCPayloadLimit limit payload size propogated to span
-//in case payload exceeds limit, payload truncated and
-//annotation payload.truncated=true added into span
+// WithGRPCPayloadLimit limit payload size propogated to span
+// in case payload exceeds limit, payload truncated and
+// annotation payload.truncated=true added into span
 func WithGRPCPayloadLimit(limit int) GRPCOption {
 	return func(ops *gRPCOptions) {
 		ops.maxPayloadSize = limit
 	}
 }
 
-//Check that &ServerHandler{} comply stats.Handler interface
+// Check that &ServerHandler{} comply stats.Handler interface
 var _ stats.Handler = &ServerHandler{}
 
-//ServerHandler is a wrapper over ocgrpc.ServerHandler
-//wrapper extends metadata added into the  span
+// ServerHandler is a wrapper over ocgrpc.ServerHandler
+// wrapper extends metadata added into the  span
 type ServerHandler struct {
 	ocgrpc.ServerHandler
 
 	options *gRPCOptions
 }
 
-//NewServerHandler returns wrapper over ocgrpc.ServerHandler
+// NewServerHandler returns wrapper over ocgrpc.ServerHandler
 func NewServerHandler(ops ...GRPCOption) *ServerHandler {
 	options := defaultGRPCOptions()
 	for _, op := range ops {
@@ -197,12 +197,12 @@ func payloadToAttributes(key string, value interface{}, limit int) ([]trace.Attr
 	return attrs, truncated, nil
 }
 
-//defaultHeaderMatcher is a header matcher which just accept all headers
+// defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultMetadataMatcher(h string) (string, bool) {
 	return h, true
 }
 
-//AlwaysGRPC for each call returns true
+// AlwaysGRPC for each call returns true
 func AlwaysGRPC(_ context.Context, _ stats.RPCStats) bool {
 	return true
 }

@@ -7,7 +7,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-//Exporter creates a new OC Agent exporter and configure for tracing
+// Exporter creates a new OC Agent exporter and configure for tracing
 func Exporter(address string, serviceName string, sampler trace.Sampler) error {
 	// TRACE: Setup OC agent for tracing
 	exporter, err := ocagent.NewExporter(
@@ -25,7 +25,7 @@ func Exporter(address string, serviceName string, sampler trace.Sampler) error {
 	return nil
 }
 
-//SamplerForFraction init sampler for specified fraction
+// SamplerForFraction init sampler for specified fraction
 func SamplerForFraction(fraction float64) trace.Sampler {
 	return trace.ProbabilitySampler(fraction)
 }
