@@ -10,7 +10,8 @@ const (
 )
 
 // BuildString builds string id according to Atlas Reference format:
-//  <application_name>/<resource_type>/<resource_id>
+//
+//	<application_name>/<resource_type>/<resource_id>
 func BuildString(aname, rtype, rid string) string {
 	var l []string
 
@@ -28,7 +29,9 @@ func BuildString(aname, rtype, rid string) string {
 }
 
 // ParseString parses id according to Atlas Reference format:
+//
 //	<application_name>/<resource_type>/<resource_id>
+//
 // All leading and trailing Delimiter are removed.
 // The resource_id is parsed first, then resource type and last application name.
 // The id "/a/b/c/" will be converted to "a/b/c" and returned as (a, b, c).

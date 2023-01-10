@@ -10,7 +10,7 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/auth"
 )
 
 const (
@@ -62,7 +62,7 @@ type httpOptions struct {
 	maxPayloadSize  int
 }
 
-//HTTPOption allows extending handler with additional functionality
+// HTTPOption allows extending handler with additional functionality
 type HTTPOption func(*httpOptions)
 
 func defaultHTTPOptions() *httpOptions {
@@ -75,37 +75,37 @@ func defaultHTTPOptions() *httpOptions {
 	}
 }
 
-//WithHeadersAnnotation annotate span with http headers
+// WithHeadersAnnotation annotate span with http headers
 func WithHeadersAnnotation(f func(*http.Request) bool) HTTPOption {
 	return func(ops *httpOptions) {
 		ops.spanWithHeaders = f
 	}
 }
 
-//WithHeaderMatcher set header matcher to filterout or preprocess headers
+// WithHeaderMatcher set header matcher to filterout or preprocess headers
 func WithHeaderMatcher(f func(string) (string, bool)) HTTPOption {
 	return func(ops *httpOptions) {
 		ops.headerMatcher = f
 	}
 }
 
-//WithPayloadAnnotation add request/response body as an attribute to span if f returns true
+// WithPayloadAnnotation add request/response body as an attribute to span if f returns true
 func WithPayloadAnnotation(f func(*http.Request) bool) HTTPOption {
 	return func(ops *httpOptions) {
 		ops.spanWithPayload = f
 	}
 }
 
-//WithHTTPPayloadSize limit payload size propagated to span
-//in case payload exceeds limit, payload truncated and
-//annotation payload.truncated=true added into span
+// WithHTTPPayloadSize limit payload size propagated to span
+// in case payload exceeds limit, payload truncated and
+// annotation payload.truncated=true added into span
 func WithHTTPPayloadSize(maxSize int) HTTPOption {
 	return func(ops *httpOptions) {
 		ops.maxPayloadSize = maxSize
 	}
 }
 
-//NewMiddleware wrap handler
+// NewMiddleware wrap handler
 func NewMiddleware(ops ...HTTPOption) func(http.Handler) http.Handler {
 	options := defaultHTTPOptions()
 	for _, op := range ops {
@@ -124,10 +124,10 @@ func NewMiddleware(ops ...HTTPOption) func(http.Handler) http.Handler {
 	}
 }
 
-//Check that &Handler comply with http.Handler interface
+// Check that &Handler comply with http.Handler interface
 var _ http.Handler = &Handler{}
 
-//Handler is a opencensus http plugin wrapper which do some useful things to reach traces
+// Handler is a opencensus http plugin wrapper which do some useful things to reach traces
 type Handler struct {
 	child http.Handler
 
@@ -213,7 +213,7 @@ func newResponseWrapper(w http.ResponseWriter) *responseBodyWrapper {
 	}
 }
 
-//responseBodyWrapper duplicate all bytes written to it to buffer
+// responseBodyWrapper duplicate all bytes written to it to buffer
 type responseBodyWrapper struct {
 	http.ResponseWriter
 
@@ -249,12 +249,12 @@ func obfuscate(x string) string {
 	return x[:countChars] + "..."
 }
 
-//defaultHeaderMatcher is a header matcher which just accept all headers
+// defaultHeaderMatcher is a header matcher which just accept all headers
 func defaultHeaderMatcher(h string) (string, bool) {
 	return h, true
 }
 
-//AlwaysHTTP for each request returns true
+// AlwaysHTTP for each request returns true
 func AlwaysHTTP(_ *http.Request) bool {
 	return true
 }

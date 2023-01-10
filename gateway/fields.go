@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 )
 
-//retainFields function extracts the configuration for fields that
-//need to be ratained either from gRPC response or from original testRequest
-//(in case when gRPC side didn't set any preferences) and retains only
-//this fields on outgoing response (dynmap).
+// retainFields function extracts the configuration for fields that
+// need to be ratained either from gRPC response or from original testRequest
+// (in case when gRPC side didn't set any preferences) and retains only
+// this fields on outgoing response (dynmap).
 func retainFields(ctx context.Context, req *http.Request, dynmap map[string]interface{}) {
 	fieldsStr := ""
 	if req != nil {

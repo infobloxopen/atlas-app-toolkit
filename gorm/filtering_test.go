@@ -7,8 +7,8 @@ import (
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/infobloxopen/atlas-app-toolkit/atlas/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/atlas/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 )
 
 type Entity struct {

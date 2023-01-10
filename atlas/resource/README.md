@@ -20,7 +20,7 @@ You could use it to define identifiers in your proto messages, e.g.
 ```proto
 syntax = "proto3";
 
-import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource/resource.proto";
 
 message MyMessage {
     atlas.rpc.Identifier id = 1;
@@ -47,7 +47,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
 )
 
 func main() {

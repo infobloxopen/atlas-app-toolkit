@@ -24,7 +24,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 // TestMain does pre-test set up
@@ -63,7 +63,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 	_ "github.com/lib/pq"
 )
 
@@ -127,7 +127,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMain(m *testing.M) {
@@ -147,7 +147,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMain(m *testing.M) {
@@ -175,7 +175,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMain(m *testing.M) {
@@ -194,7 +194,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMain(m *testing.M) {
@@ -218,7 +218,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMyEndpoint(t *testing.T) {
@@ -246,7 +246,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMyEndpoint(t *testing.T) {
@@ -270,7 +270,7 @@ And the same for gRPC requests.
 import (
 	"testing"
 
-	"github.com/infobloxopen/atlas-app-toolkit/integration"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/integration"
 )
 
 func TestMyGRPCEndpoint(t *testing.T) {

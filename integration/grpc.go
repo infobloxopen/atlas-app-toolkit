@@ -7,7 +7,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/auth"
 )
 
 // AppendTokenToOutgoingContext adds an authorization token to the gRPC

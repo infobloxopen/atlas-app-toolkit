@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/infobloxopen/atlas-app-toolkit/atlas/atlasrpc"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/atlas/atlasrpc"
 )
 
 // Container struct is an entity that servers a purpose of error container and

@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/infobloxopen/atlas-app-toolkit/query"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 )
 
 type LogicalOperatorConverter interface {
@@ -57,7 +57,7 @@ func FilterStringToGorm(ctx context.Context, filter string, obj interface{}, pb 
 	return FilteringToGormEx(ctx, f, obj, c)
 }
 
-//Deprecated: Use FilteringToGormEx instead
+// Deprecated: Use FilteringToGormEx instead
 // FilteringToGorm returns GORM Plain SQL representation of the filtering expression.
 func FilteringToGorm(ctx context.Context, m *query.Filtering, obj interface{}, pb proto.Message) (string, []interface{}, map[string]struct{}, error) {
 	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
