@@ -78,15 +78,16 @@ func (fake *ServerStreamMock) Context() context.Context {
 	ret, specificReturn := fake.contextReturnsOnCall[len(fake.contextArgsForCall)]
 	fake.contextArgsForCall = append(fake.contextArgsForCall, struct {
 	}{})
+	stub := fake.ContextStub
+	fakeReturns := fake.contextReturns
 	fake.recordInvocation("Context", []interface{}{})
 	fake.contextMutex.Unlock()
-	if fake.ContextStub != nil {
-		return fake.ContextStub()
+	if stub != nil {
+		return stub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.contextReturns
 	return fakeReturns.result1
 }
 
@@ -131,15 +132,16 @@ func (fake *ServerStreamMock) RecvMsg(arg1 interface{}) error {
 	fake.recvMsgArgsForCall = append(fake.recvMsgArgsForCall, struct {
 		arg1 interface{}
 	}{arg1})
+	stub := fake.RecvMsgStub
+	fakeReturns := fake.recvMsgReturns
 	fake.recordInvocation("RecvMsg", []interface{}{arg1})
 	fake.recvMsgMutex.Unlock()
-	if fake.RecvMsgStub != nil {
-		return fake.RecvMsgStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.recvMsgReturns
 	return fakeReturns.result1
 }
 
@@ -191,15 +193,16 @@ func (fake *ServerStreamMock) SendHeader(arg1 metadata.MD) error {
 	fake.sendHeaderArgsForCall = append(fake.sendHeaderArgsForCall, struct {
 		arg1 metadata.MD
 	}{arg1})
+	stub := fake.SendHeaderStub
+	fakeReturns := fake.sendHeaderReturns
 	fake.recordInvocation("SendHeader", []interface{}{arg1})
 	fake.sendHeaderMutex.Unlock()
-	if fake.SendHeaderStub != nil {
-		return fake.SendHeaderStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.sendHeaderReturns
 	return fakeReturns.result1
 }
 
@@ -251,15 +254,16 @@ func (fake *ServerStreamMock) SendMsg(arg1 interface{}) error {
 	fake.sendMsgArgsForCall = append(fake.sendMsgArgsForCall, struct {
 		arg1 interface{}
 	}{arg1})
+	stub := fake.SendMsgStub
+	fakeReturns := fake.sendMsgReturns
 	fake.recordInvocation("SendMsg", []interface{}{arg1})
 	fake.sendMsgMutex.Unlock()
-	if fake.SendMsgStub != nil {
-		return fake.SendMsgStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.sendMsgReturns
 	return fakeReturns.result1
 }
 
@@ -311,15 +315,16 @@ func (fake *ServerStreamMock) SetHeader(arg1 metadata.MD) error {
 	fake.setHeaderArgsForCall = append(fake.setHeaderArgsForCall, struct {
 		arg1 metadata.MD
 	}{arg1})
+	stub := fake.SetHeaderStub
+	fakeReturns := fake.setHeaderReturns
 	fake.recordInvocation("SetHeader", []interface{}{arg1})
 	fake.setHeaderMutex.Unlock()
-	if fake.SetHeaderStub != nil {
-		return fake.SetHeaderStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.setHeaderReturns
 	return fakeReturns.result1
 }
 
@@ -370,9 +375,10 @@ func (fake *ServerStreamMock) SetTrailer(arg1 metadata.MD) {
 	fake.setTrailerArgsForCall = append(fake.setTrailerArgsForCall, struct {
 		arg1 metadata.MD
 	}{arg1})
+	stub := fake.SetTrailerStub
 	fake.recordInvocation("SetTrailer", []interface{}{arg1})
 	fake.setTrailerMutex.Unlock()
-	if fake.SetTrailerStub != nil {
+	if stub != nil {
 		fake.SetTrailerStub(arg1)
 	}
 }

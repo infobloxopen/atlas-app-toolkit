@@ -18,8 +18,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/infobloxopen/atlas-app-toolkit/logging/mocks"
-	"github.com/infobloxopen/atlas-app-toolkit/requestid"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/logging/mocks"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/requestid"
 )
 
 const (

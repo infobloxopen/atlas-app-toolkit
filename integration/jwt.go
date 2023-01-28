@@ -2,7 +2,7 @@ package integration
 
 import (
 	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/auth"
 )
 
 const (

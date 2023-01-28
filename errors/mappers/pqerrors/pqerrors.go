@@ -6,7 +6,7 @@ import (
 	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 
-	"github.com/infobloxopen/atlas-app-toolkit/errors"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/errors"
 )
 
 const (
