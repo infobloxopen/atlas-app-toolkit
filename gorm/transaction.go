@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

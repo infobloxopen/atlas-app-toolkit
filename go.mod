@@ -1,6 +1,6 @@
-module github.com/infobloxopen/atlas-app-toolkit
+module github.com/infobloxopen/atlas-app-toolkit/v2
 
-go 1.14
+go 1.19
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
@@ -21,7 +21,20 @@ require (
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
-	google.golang.org/grpc/examples v0.0.0-20210715165331-ce7bdf50abb1 // indirect
 	google.golang.org/protobuf v1.27.1
+)
+
+require (
+	github.com/census-instrumentation/opencensus-proto v0.2.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.14.6 // indirect
+	github.com/magefile/mage v1.10.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
+	golang.org/x/text v0.3.5 // indirect
+	google.golang.org/api v0.30.0 // indirect
+	google.golang.org/grpc/examples v0.0.0-20210715165331-ce7bdf50abb1 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

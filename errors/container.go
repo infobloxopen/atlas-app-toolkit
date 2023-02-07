@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errfields"
 )
 
 // Container struct is an entity that servers a purpose of error container and

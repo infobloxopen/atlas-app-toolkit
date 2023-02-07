@@ -21,8 +21,8 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errfields"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.

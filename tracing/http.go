@@ -10,8 +10,7 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 
-	"github.com/infobloxopen/atlas-app-toolkit/auth"
-	"github.com/infobloxopen/atlas-app-toolkit/tracing/cogs"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/auth"
 )
 
 const (
@@ -47,6 +46,8 @@ const (
 
 	//ObfuscationFactor is a percent of value which will be omitted from obfuscated value
 	ObfuscationFactor = 0.80
+
+	CostOfGoodsAccountID = "cogs.accountID"
 )
 
 var sensitiveHeaders = map[string]struct{}{
@@ -140,7 +141,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Add accountID to span attributes
 	accountID, _ := auth.GetAccountID(r.Context(), nil)
-	span.AddAttributes(trace.StringAttribute(cogs.CostOfGoodsAccountID, accountID))
+	span.AddAttributes(trace.StringAttribute(CostOfGoodsAccountID, accountID))
 
 	withHeaders := h.options.spanWithHeaders != nil && h.options.spanWithHeaders(r)
 	withPayload := h.options.spanWithPayload != nil && h.options.spanWithPayload(r)
