@@ -1,4 +1,4 @@
-FROM golang:1.19.3 AS builder
+FROM golang:1.20.1 AS builder
 
 LABEL stage=server-intermediate
 
