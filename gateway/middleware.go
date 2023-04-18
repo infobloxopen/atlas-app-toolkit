@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/protobuf/proto"
 )
 
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor

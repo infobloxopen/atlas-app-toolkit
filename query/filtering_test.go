@@ -4,8 +4,8 @@ import (
 	"regexp/syntax"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf"
 )
 
 type TestObject struct {
@@ -22,7 +22,7 @@ type TestProtoMessage struct {
 }
 
 func (m *TestProtoMessage) Reset()         { *m = TestProtoMessage{} }
-func (m *TestProtoMessage) String() string { return proto.CompactTextString(m) }
+func (m *TestProtoMessage) String() string { return protobuf.CompactTextString(m) }
 func (*TestProtoMessage) ProtoMessage()    {}
 
 type NestedMessage struct {
@@ -30,7 +30,7 @@ type NestedMessage struct {
 }
 
 func (m *NestedMessage) Reset()         { *m = NestedMessage{} }
-func (m *NestedMessage) String() string { return proto.CompactTextString(m) }
+func (m *NestedMessage) String() string { return protobuf.CompactTextString(m) }
 func (*NestedMessage) ProtoMessage()    {}
 
 func TestFiltering(t *testing.T) {
