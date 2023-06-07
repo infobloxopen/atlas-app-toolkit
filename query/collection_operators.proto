@@ -196,11 +196,11 @@ message Pagination {
     // A null value indicates the first page.
     string page_token = 1;
     // The integer index of the offset into a collection of resources.
-    // If omitted or null the value is assumed to be "0".
+    // If omitted or null, the value is assumed to be "0".
     int32 offset = 2;
     // The integer number of resources to be returned in the response.
     // The service may impose maximum value.
-    // If omitted the service may impose a default value.
+    // If omitted, the service may impose a default value.
     int32 limit = 3;
 }
 

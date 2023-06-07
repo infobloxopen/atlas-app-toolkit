@@ -1295,11 +1295,11 @@ type Pagination struct {
 	// A null value indicates the first page.
 	PageToken string `protobuf:"bytes,1,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// The integer index of the offset into a collection of resources.
-	// If omitted or null the value is assumed to be "0".
+	// If omitted or null, the value is assumed to be "0".
 	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	// The integer number of resources to be returned in the response.
 	// The service may impose maximum value.
-	// If omitted the service may impose a default value.
+	// If omitted, the service may impose a default value.
 	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
