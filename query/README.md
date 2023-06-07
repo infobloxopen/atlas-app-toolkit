@@ -113,15 +113,15 @@ The syntax of REST representation of `infoblox.api.Sorting` is the following.
 
 The syntax of REST representation of `infoblox.api.Pagination` and `infoblox.api.PageInfo` is the following.
 
-| Paging Mode            | Request Parameters | Response Parameters | Description                                                  |
-| ---------------------- |--------------------|---------------------|--------------------------------------------------------------|
-| Client-driven paging   | _offset            |                     | The integer index (zero-origin) of the offset into a collection of resources. If omitted or null the value is assumed to be “0”. |
-|                        | _limit             |                     | The integer number of resources to be returned in the response. The service may impose maximum value. If omitted the service may impose a default value. |
-|                        |                    | _offset             | The service may optionally* include the offset of the next page of resources. A null value indicates no more pages. |
-|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
-| Server-driven paging   | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page. |
-|                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages. |
-|                        |                    | _size               | The service may optionally include the total number of resources being paged. |
+| Paging Mode            | Request Parameters | Response Parameters | Description                                                                                                                                               |
+| ---------------------- |--------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Client-driven paging   | _offset            |                     | The integer index (zero-origin) of the offset into a collection of resources. If omitted or null, the value is assumed to be “0”.                         |
+|                        | _limit             |                     | The integer number of resources to be returned in the response. The service may impose maximum value. If omitted, the service may impose a default value. |
+|                        |                    | _offset             | The service may optionally* include the offset of the next page of resources. A null value indicates no more pages.                                       |
+|                        |                    | _size               | The service may optionally include the total number of resources being paged.                                                                             |
+| Server-driven paging   | _page_token        |                     | The service-defined string used to identify a page of resources. A null value indicates the first page.                                                   |
+|                        |                    | _page_token         | The service response should contain a string to indicate the next page of resources. A null value indicates no more pages.                                |
+|                        |                    | _size               | The service may optionally include the total number of resources being paged.                                                                             |
 
 ## Field Selection
 
