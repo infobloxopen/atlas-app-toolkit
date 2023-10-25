@@ -16,6 +16,7 @@ type Entity struct {
 	Field2       int
 	Field3       int
 	FieldString  string
+	FieldStrings []string
 	NestedEntity NestedEntity
 	Id           string
 	Ref          *string
@@ -243,6 +244,34 @@ func TestGormFiltering(t *testing.T) {
 			"not(id in ['sOmeId', 'egegeg'])",
 			"(entities.id NOT IN (?, ?))",
 			[]interface{}{"convertedid", "convertedid"},
+			nil,
+			nil,
+		},
+		{
+			"field_strings anyof ['sOmeId', 'egegeg']",
+			"(entities.field_strings && array[?, ?])",
+			[]interface{}{"sOmeId", "egegeg"},
+			nil,
+			nil,
+		},
+		{
+			"not(field_strings anyof ['sOmeId', 'egegeg'])",
+			"NOT(entities.field_strings && array[?, ?])",
+			[]interface{}{"sOmeId", "egegeg"},
+			nil,
+			nil,
+		},
+		{
+			"field_strings allof ['sOmeId', 'egegeg']",
+			"(entities.field_strings @> array[?, ?])",
+			[]interface{}{"sOmeId", "egegeg"},
+			nil,
+			nil,
+		},
+		{
+			"not(field_strings allof ['sOmeId', 'egegeg'])",
+			"NOT(entities.field_strings @> array[?, ?])",
+			[]interface{}{"sOmeId", "egegeg"},
 			nil,
 			nil,
 		},

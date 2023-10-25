@@ -159,6 +159,8 @@ message StringArrayCondition {
     repeated string values = 2;
     enum Type {
         IN = 0;
+        ANYOF = 1;
+        ALLOF = 2;
     }
     Type type = 3;
     bool is_negative = 4;

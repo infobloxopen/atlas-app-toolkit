@@ -475,6 +475,48 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
+	case AnyOfToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+
+		switch token := p.curToken.(type) {
+		case StringArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &StringArrayCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       StringArrayCondition_ANYOF,
+				IsNegative: false,
+			}, nil
+
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
+	case AllOfToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+
+		switch token := p.curToken.(type) {
+		case StringArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &StringArrayCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       StringArrayCondition_ALLOF,
+				IsNegative: false,
+			}, nil
+
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
 	default:
 		return nil, &UnexpectedTokenError{p.curToken}
 	}

@@ -330,8 +330,13 @@ func (converter *DefaultFilteringConditionConverter) StringArrayConditionToGorm(
 		assocToJoin = make(map[string]struct{})
 		assocToJoin[assoc] = struct{}{}
 	}
-	o := "IN"
-	var neg string
+
+	var (
+		o     string
+		neg   string
+		value interface{}
+	)
+
 	if c.IsNegative {
 		neg = "NOT"
 	}
@@ -340,15 +345,27 @@ func (converter *DefaultFilteringConditionConverter) StringArrayConditionToGorm(
 	placeholder := ""
 	for _, str := range c.Values {
 		placeholder += "?, "
-		if val, err := converter.Processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
-			values = append(values, val)
+		if value, err = converter.Processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
+			values = append(values, value)
 			continue
 		}
 
 		values = append(values, str)
 	}
 
-	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
+	switch c.Type {
+	case query.StringArrayCondition_IN:
+		o = "IN"
+
+		return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
+
+	case query.StringArrayCondition_ANYOF:
+		o = "&&"
+	case query.StringArrayCondition_ALLOF:
+		o = "@>"
+	}
+
+	return fmt.Sprintf("%s(%s %s array[%s])", neg, dbName, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
 
 func (converter *DefaultSortingCriteriaConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {

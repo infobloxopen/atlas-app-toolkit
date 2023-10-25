@@ -428,6 +428,58 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
+			text: "fields anyof ['Hello' , 'World']",
+			exp: &Filtering{
+				Root: &Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_ANYOF,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (fields anyof ['Hello' , 'World'])",
+			exp: &Filtering{
+				Root: &Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_ANYOF,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "fields allof ['Hello' , 'World']",
+			exp: &Filtering{
+				Root: &Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_ALLOF,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (fields allof ['Hello' , 'World'])",
+			exp: &Filtering{
+				Root: &Filtering_StringArrayCondition{
+					&StringArrayCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       StringArrayCondition_ALLOF,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
 			text: "not (field in ['Hello' , 'World'])",
 			exp: &Filtering{
 				Root: &Filtering_StringArrayCondition{

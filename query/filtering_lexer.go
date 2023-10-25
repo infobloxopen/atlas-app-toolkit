@@ -221,6 +221,24 @@ func (t InToken) String() string {
 	return "in"
 }
 
+// AnyOfToken represents "any" operation for string arrays
+type AnyOfToken struct {
+	TokenBase
+}
+
+func (t AnyOfToken) String() string {
+	return "anyof"
+}
+
+// AllOfToken represents "all" operation for string arrays
+type AllOfToken struct {
+	TokenBase
+}
+
+func (t AllOfToken) String() string {
+	return "allof"
+}
+
 //NumberArrayToken represent number array e.g. [1,2,5]
 type StringArrayToken struct {
 	TokenBase
@@ -432,6 +450,10 @@ func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 		return NmatchToken{}, nil
 	case "in":
 		return InToken{}, nil
+	case "anyof":
+		return AnyOfToken{}, nil
+	case "allof":
+		return AllOfToken{}, nil
 	case "ieq":
 		return InsensitiveEqToken{}, nil
 	default:
