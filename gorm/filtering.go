@@ -33,6 +33,10 @@ type NumberArrayConditionConverter interface {
 	NumberArrayConditionToGorm(ctx context.Context, c *query.NumberArrayCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
 }
 
+type ArrayOfStringsConditionConverter interface {
+	ArrayOfStringsConditionToGorm(ctx context.Context, c *query.ArrayOfStringsCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error)
+}
+
 type FilteringConditionConverter interface {
 	LogicalOperatorConverter
 	NullConditionConverter
@@ -40,6 +44,7 @@ type FilteringConditionConverter interface {
 	StringArrayConditionConverter
 	NumberConditionConverter
 	NumberArrayConditionConverter
+	ArrayOfStringsConditionConverter
 }
 
 type FilteringConditionProcessor interface {
@@ -82,6 +87,8 @@ func FilteringToGormEx(ctx context.Context, m *query.Filtering, obj interface{},
 		return c.NumberArrayConditionToGorm(ctx, r.NumberArrayCondition, obj)
 	case *query.Filtering_StringArrayCondition:
 		return c.StringArrayConditionToGorm(ctx, r.StringArrayCondition, obj)
+	case *query.Filtering_ArrayOfStringsCondition:
+		return c.ArrayOfStringsConditionToGorm(ctx, r.ArrayOfStringsCondition, obj)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}

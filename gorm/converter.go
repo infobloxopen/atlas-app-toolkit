@@ -72,6 +72,8 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 		lres, largs, lAssocToJoin, err = converter.NumberArrayConditionToGorm(ctx, l.LeftNumberArrayCondition, obj)
 	case *query.LogicalOperator_LeftStringArrayCondition:
 		lres, largs, lAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, l.LeftStringArrayCondition, obj)
+	case *query.LogicalOperator_LeftArrayOfStringsCondition:
+		lres, largs, lAssocToJoin, err = converter.ArrayOfStringsConditionToGorm(ctx, l.LeftArrayOfStringsCondition, obj)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", l)
 	}
@@ -95,6 +97,8 @@ func (converter *DefaultFilteringConditionConverter) LogicalOperatorToGorm(ctx c
 		rres, rargs, rAssocToJoin, err = converter.NumberArrayConditionToGorm(ctx, r.RightNumberArrayCondition, obj)
 	case *query.LogicalOperator_RightStringArrayCondition:
 		rres, rargs, rAssocToJoin, err = converter.StringArrayConditionToGorm(ctx, r.RightStringArrayCondition, obj)
+	case *query.LogicalOperator_RightArrayOfStringsCondition:
+		rres, rargs, rAssocToJoin, err = converter.ArrayOfStringsConditionToGorm(ctx, r.RightArrayOfStringsCondition, obj)
 	default:
 		return "", nil, nil, fmt.Errorf("%T type is not supported in Filtering", r)
 	}
@@ -349,6 +353,58 @@ func (converter *DefaultFilteringConditionConverter) StringArrayConditionToGorm(
 	}
 
 	return fmt.Sprintf("(%s %s %s (%s))", dbName, neg, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
+}
+
+func (converter *DefaultFilteringConditionConverter) ArrayOfStringsConditionToGorm(ctx context.Context, c *query.ArrayOfStringsCondition, obj interface{}) (string, []interface{}, map[string]struct{}, error) {
+	var (
+		assocToJoin   map[string]struct{}
+		dbName, assoc string
+		err           error
+	)
+	if IsJSONCondition(ctx, c.FieldPath, obj) {
+		dbName, assoc, err = HandleJSONFieldPath(ctx, c.FieldPath, obj, c.Values...)
+	} else {
+		dbName, assoc, err = HandleFieldPath(ctx, c.FieldPath, obj)
+	}
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	if assoc != "" {
+		assocToJoin = make(map[string]struct{})
+		assocToJoin[assoc] = struct{}{}
+	}
+
+	var (
+		o     string
+		neg   string
+		value interface{}
+	)
+
+	if c.IsNegative {
+		neg = "NOT"
+	}
+
+	values := make([]interface{}, 0, len(c.Values))
+	placeholder := ""
+	for _, str := range c.Values {
+		placeholder += "?, "
+		if value, err = converter.Processor.ProcessStringCondition(ctx, c.FieldPath, str); err == nil {
+			values = append(values, value)
+			continue
+		}
+
+		values = append(values, str)
+	}
+
+	switch c.Type {
+	case query.ArrayOfStringsCondition_OVERLAPS:
+		o = "&&"
+	case query.ArrayOfStringsCondition_CONTAINS:
+		o = "@>"
+	}
+
+	return fmt.Sprintf("%s(%s %s array[%s])", neg, dbName, o, strings.TrimSuffix(placeholder, ", ")), values, assocToJoin, nil
 }
 
 func (converter *DefaultSortingCriteriaConverter) SortingCriteriaToGorm(ctx context.Context, cr *query.SortCriteria, obj interface{}) (string, string, error) {

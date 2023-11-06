@@ -83,6 +83,8 @@ func (p *filteringParser) negateNode(node FilteringExpression) {
 		v.IsNegative = !v.IsNegative
 	case *NumberArrayCondition:
 		v.IsNegative = !v.IsNegative
+	case *ArrayOfStringsCondition:
+		v.IsNegative = !v.IsNegative
 	}
 }
 
@@ -469,6 +471,48 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				FieldPath:  strings.Split(field.Value, "."),
 				Values:     token.Values,
 				Type:       NumberArrayCondition_IN,
+				IsNegative: false,
+			}, nil
+
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
+	case OverlapsToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+
+		switch token := p.curToken.(type) {
+		case StringArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &ArrayOfStringsCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       ArrayOfStringsCondition_OVERLAPS,
+				IsNegative: false,
+			}, nil
+
+		default:
+			return nil, &UnexpectedTokenError{p.curToken}
+		}
+	case ContainsToken:
+		if err := p.eatToken(); err != nil {
+			return nil, err
+		}
+
+		switch token := p.curToken.(type) {
+		case StringArrayToken:
+			if err := p.eatToken(); err != nil {
+				return nil, err
+			}
+
+			return &ArrayOfStringsCondition{
+				FieldPath:  strings.Split(field.Value, "."),
+				Values:     token.Values,
+				Type:       ArrayOfStringsCondition_CONTAINS,
 				IsNegative: false,
 			}, nil
 

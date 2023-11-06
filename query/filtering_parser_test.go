@@ -428,6 +428,58 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
+			text: "fields overlaps ['Hello' , 'World']",
+			exp: &Filtering{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       ArrayOfStringsCondition_OVERLAPS,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (fields overlaps ['Hello' , 'World'])",
+			exp: &Filtering{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       ArrayOfStringsCondition_OVERLAPS,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
+			text: "fields contains ['Hello' , 'World']",
+			exp: &Filtering{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       ArrayOfStringsCondition_CONTAINS,
+						IsNegative: false,
+					},
+				},
+			},
+		},
+		{
+			text: "not (fields contains ['Hello' , 'World'])",
+			exp: &Filtering{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
+						FieldPath:  []string{"fields"},
+						Values:     []string{"Hello", "World"},
+						Type:       ArrayOfStringsCondition_CONTAINS,
+						IsNegative: true,
+					},
+				},
+			},
+		},
+		{
 			text: "not (field in ['Hello' , 'World'])",
 			exp: &Filtering{
 				Root: &Filtering_StringArrayCondition{

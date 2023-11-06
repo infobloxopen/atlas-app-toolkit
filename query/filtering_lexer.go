@@ -221,6 +221,24 @@ func (t InToken) String() string {
 	return "in"
 }
 
+// OverlapsToken represents "overlaps" operation for string arrays
+type OverlapsToken struct {
+	TokenBase
+}
+
+func (t OverlapsToken) String() string {
+	return "overlaps"
+}
+
+// ContainsToken represents "contains" operation for string arrays
+type ContainsToken struct {
+	TokenBase
+}
+
+func (t ContainsToken) String() string {
+	return "contains"
+}
+
 //NumberArrayToken represent number array e.g. [1,2,5]
 type StringArrayToken struct {
 	TokenBase
@@ -432,6 +450,10 @@ func (lexer *filteringLexer) fieldOrReserved() (Token, error) {
 		return NmatchToken{}, nil
 	case "in":
 		return InToken{}, nil
+	case "overlaps":
+		return OverlapsToken{}, nil
+	case "contains":
+		return ContainsToken{}, nil
 	case "ieq":
 		return InsensitiveEqToken{}, nil
 	default:

@@ -13,12 +13,14 @@ type TestObject struct {
 	Float float64 `json:"float"`
 	Uint  uint    `json:"uint"`
 	Ptr   *struct{}
+	Strs  []string `json:"strs"`
 }
 
 type TestProtoMessage struct {
 	Str    string         `protobuf:"bytes,1,opt,name=str"`
 	Int    int32          `protobuf:"varint,2,opt,name=int"`
 	Nested *NestedMessage `protobuf:"bytes,3,opt,name=nested,json=nestedJSON"`
+	Strs   []string       `protobuf:"bytes,4,opt,name=strs"`
 }
 
 func (m *TestProtoMessage) Reset()         { *m = TestProtoMessage{} }
@@ -173,6 +175,46 @@ func TestFiltering(t *testing.T) {
 		{
 			obj:    &TestProtoMessage{},
 			filter: "",
+			res:    true,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "333"}},
+			filter: "strs overlaps ['111', '222']",
+			res:    true,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "333"}},
+			filter: "not(strs overlaps ['111', '222'])",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"333"}},
+			filter: "strs overlaps ['111', '222']",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"333"}},
+			filter: "not(strs overlaps ['111', '222'])",
+			res:    true,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "222", "333"}},
+			filter: "strs contains ['111', '222']",
+			res:    true,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "222", "333"}},
+			filter: "not(strs contains ['111', '222'])",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "333"}},
+			filter: "strs contains ['111', '222']",
+			res:    false,
+		},
+		{
+			obj:    &TestProtoMessage{Strs: []string{"111", "333"}},
+			filter: "not(strs contains ['111', '222'])",
 			res:    true,
 		},
 	}
