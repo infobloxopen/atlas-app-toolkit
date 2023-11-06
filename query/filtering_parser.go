@@ -83,6 +83,8 @@ func (p *filteringParser) negateNode(node FilteringExpression) {
 		v.IsNegative = !v.IsNegative
 	case *NumberArrayCondition:
 		v.IsNegative = !v.IsNegative
+	case *ArrayOfStringsCondition:
+		v.IsNegative = !v.IsNegative
 	}
 }
 
@@ -475,7 +477,7 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
-	case AnyOfToken:
+	case OverlapsToken:
 		if err := p.eatToken(); err != nil {
 			return nil, err
 		}
@@ -486,17 +488,17 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				return nil, err
 			}
 
-			return &StringArrayCondition{
+			return &ArrayOfStringsCondition{
 				FieldPath:  strings.Split(field.Value, "."),
 				Values:     token.Values,
-				Type:       StringArrayCondition_ANYOF,
+				Type:       ArrayOfStringsCondition_OVERLAPS,
 				IsNegative: false,
 			}, nil
 
 		default:
 			return nil, &UnexpectedTokenError{p.curToken}
 		}
-	case AllOfToken:
+	case ContainsToken:
 		if err := p.eatToken(); err != nil {
 			return nil, err
 		}
@@ -507,10 +509,10 @@ func (p *filteringParser) condition() (FilteringExpression, error) {
 				return nil, err
 			}
 
-			return &StringArrayCondition{
+			return &ArrayOfStringsCondition{
 				FieldPath:  strings.Split(field.Value, "."),
 				Values:     token.Values,
-				Type:       StringArrayCondition_ALLOF,
+				Type:       ArrayOfStringsCondition_CONTAINS,
 				IsNegative: false,
 			}, nil
 

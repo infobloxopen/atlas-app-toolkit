@@ -428,52 +428,52 @@ func TestFilteringParser(t *testing.T) {
 			},
 		},
 		{
-			text: "fields anyof ['Hello' , 'World']",
+			text: "fields overlaps ['Hello' , 'World']",
 			exp: &Filtering{
-				Root: &Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
 						FieldPath:  []string{"fields"},
 						Values:     []string{"Hello", "World"},
-						Type:       StringArrayCondition_ANYOF,
+						Type:       ArrayOfStringsCondition_OVERLAPS,
 						IsNegative: false,
 					},
 				},
 			},
 		},
 		{
-			text: "not (fields anyof ['Hello' , 'World'])",
+			text: "not (fields overlaps ['Hello' , 'World'])",
 			exp: &Filtering{
-				Root: &Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
 						FieldPath:  []string{"fields"},
 						Values:     []string{"Hello", "World"},
-						Type:       StringArrayCondition_ANYOF,
+						Type:       ArrayOfStringsCondition_OVERLAPS,
 						IsNegative: true,
 					},
 				},
 			},
 		},
 		{
-			text: "fields allof ['Hello' , 'World']",
+			text: "fields contains ['Hello' , 'World']",
 			exp: &Filtering{
-				Root: &Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
 						FieldPath:  []string{"fields"},
 						Values:     []string{"Hello", "World"},
-						Type:       StringArrayCondition_ALLOF,
+						Type:       ArrayOfStringsCondition_CONTAINS,
 						IsNegative: false,
 					},
 				},
 			},
 		},
 		{
-			text: "not (fields allof ['Hello' , 'World'])",
+			text: "not (fields contains ['Hello' , 'World'])",
 			exp: &Filtering{
-				Root: &Filtering_StringArrayCondition{
-					&StringArrayCondition{
+				Root: &Filtering_ArrayOfStringsCondition{
+					&ArrayOfStringsCondition{
 						FieldPath:  []string{"fields"},
 						Values:     []string{"Hello", "World"},
-						Type:       StringArrayCondition_ALLOF,
+						Type:       ArrayOfStringsCondition_CONTAINS,
 						IsNegative: true,
 					},
 				},

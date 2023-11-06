@@ -200,6 +200,47 @@ func stringInSlice(s string, slice []string) bool {
 	return false
 }
 
+func (c *ArrayOfStringsCondition) Filter(obj interface{}) (bool, error) {
+	fv := fieldByFieldPath(obj, c.FieldPath)
+	fv = dereferenceValue(fv)
+
+	fvInterface := fv.Interface()
+	switch v := fvInterface.(type) {
+	case []string:
+		switch c.Type {
+		case ArrayOfStringsCondition_OVERLAPS:
+			return negateIfNeeded(strSliceOverlapsStrSlice(v, c.Values), c.IsNegative), nil
+		case ArrayOfStringsCondition_CONTAINS:
+			return negateIfNeeded(strSliceContainsStrSlice(v, c.Values), c.IsNegative), nil
+		default:
+			return false, &UnsupportedOperatorError{"[]string", c.Type.String()}
+		}
+	default:
+		return false, &TypeMismatchError{"[]string", c.FieldPath}
+	}
+}
+
+func strSliceOverlapsStrSlice(s1 []string, s2 []string) bool {
+	for _, e := range s2 {
+		if stringInSlice(e, s1) {
+			return true
+		}
+	}
+	return false
+}
+
+func strSliceContainsStrSlice(s1 []string, s2 []string) bool {
+	if len(s2) > len(s1) {
+		return false
+	}
+	for _, e := range s2 {
+		if !stringInSlice(e, s1) {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *NumberArrayCondition) Filter(obj interface{}) (bool, error) {
 	fv := fieldByFieldPath(obj, c.FieldPath)
 	fv = dereferenceValue(fv)
@@ -314,6 +355,10 @@ func (m *Filtering_NumberArrayCondition) Filter(obj interface{}) (bool, error) {
 	return m.NumberArrayCondition.Filter(obj)
 }
 
+func (m *Filtering_ArrayOfStringsCondition) Filter(obj interface{}) (bool, error) {
+	return m.ArrayOfStringsCondition.Filter(obj)
+}
+
 func (m *LogicalOperator_LeftOperator) Filter(obj interface{}) (bool, error) {
 	return m.LeftOperator.Filter(obj)
 }
@@ -377,6 +422,8 @@ func (m *Filtering) SetRoot(r interface{}) error {
 		m.Root = &Filtering_StringArrayCondition{x}
 	case *NumberArrayCondition:
 		m.Root = &Filtering_NumberArrayCondition{x}
+	case *ArrayOfStringsCondition:
+		m.Root = &Filtering_ArrayOfStringsCondition{x}
 	case nil:
 		m.Root = nil
 	default:
@@ -400,6 +447,8 @@ func (m *LogicalOperator) SetLeft(l interface{}) error {
 		m.Left = &LogicalOperator_LeftStringArrayCondition{x}
 	case *NumberArrayCondition:
 		m.Left = &LogicalOperator_LeftNumberArrayCondition{x}
+	case *ArrayOfStringsCondition:
+		m.Left = &LogicalOperator_LeftArrayOfStringsCondition{x}
 	case nil:
 		m.Left = nil
 	default:
@@ -423,6 +472,8 @@ func (m *LogicalOperator) SetRight(r interface{}) error {
 		m.Right = &LogicalOperator_RightStringArrayCondition{x}
 	case *NumberArrayCondition:
 		m.Right = &LogicalOperator_RightNumberArrayCondition{x}
+	case *ArrayOfStringsCondition:
+		m.Right = &LogicalOperator_RightArrayOfStringsCondition{x}
 	case nil:
 		m.Right = nil
 	default:

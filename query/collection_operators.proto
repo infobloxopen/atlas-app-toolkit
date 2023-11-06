@@ -71,6 +71,7 @@ message Filtering {
         NullCondition null_condition = 4;
         StringArrayCondition string_array_condition = 5;
         NumberArrayCondition number_array_condition = 6;
+        ArrayOfStringsCondition array_of_strings_condition = 7;
     }
 }
 
@@ -86,6 +87,7 @@ message LogicalOperator {
         NullCondition left_null_condition = 4;
         StringArrayCondition left_string_array_condition = 11;
         NumberArrayCondition left_number_array_condition = 12;
+        ArrayOfStringsCondition left_array_of_strings_condition = 15;
     }
     oneof right {
         LogicalOperator right_operator = 5;
@@ -94,6 +96,7 @@ message LogicalOperator {
         NullCondition right_null_condition = 8;
         StringArrayCondition right_string_array_condition = 13;
         NumberArrayCondition right_number_array_condition = 14;
+        ArrayOfStringsCondition right_array_of_strings_condition = 16;
     }
     enum Type {
         AND = 0;
@@ -152,15 +155,13 @@ message NullCondition {
 }
 
 // StringArrayCondition represents a condition with string arrays, e.g. field in ['hello','world']
-// field_path is a reference to a value of a resource.
+// field_path is a reference to a value of a resource of string type
 // is_negative is set to true if the condition is negated
 message StringArrayCondition {
     repeated string field_path = 1;
     repeated string values = 2;
     enum Type {
         IN = 0;
-        ANYOF = 1;
-        ALLOF = 2;
     }
     Type type = 3;
     bool is_negative = 4;
@@ -175,6 +176,20 @@ message NumberArrayCondition {
     repeated double values = 2;
     enum Type {
         IN = 0;
+    }
+    Type type = 3;
+    bool is_negative = 4;
+}
+
+// ArrayOfStringsCondition represents a condition with string arrays, e.g. field overlaps ['hello','world']
+// field_path is a reference to a value of a resource of string array type
+// is_negative is set to true if the condition is negated
+message ArrayOfStringsCondition {
+    repeated string field_path = 1;
+    repeated string values = 2;
+    enum Type {
+        OVERLAPS = 0;
+        CONTAINS = 1;
     }
     Type type = 3;
     bool is_negative = 4;
