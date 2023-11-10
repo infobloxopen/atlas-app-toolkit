@@ -235,7 +235,7 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 				// For type values where the codec translates a NULL value in
 				// SQL, we receive a pointer of nil value. E.g. `""`.
 				switch ormId.Kind() {
-				case reflect.Pointer, reflect.UnsafePointer:
+				case reflect.Ptr, reflect.UnsafePointer:
 					if ormId.IsNil() {
 						return nil, nil
 					}
