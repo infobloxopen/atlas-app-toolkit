@@ -9,14 +9,14 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/jinzhu/gorm v1.9.16
 	github.com/jinzhu/inflection v1.0.0
 	github.com/lib/pq v1.3.1-0.20200116171513-9eb3fc897d6f
 	github.com/sirupsen/logrus v1.8.0
 	github.com/speps/go-hashids/v2 v2.0.1
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	go.opencensus.io v0.22.4
 	golang.org/x/net v0.20.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
@@ -35,6 +35,5 @@ require (
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
-	google.golang.org/grpc/examples v0.0.0-20210715165331-ce7bdf50abb1 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
