@@ -14,6 +14,9 @@ const (
 	// MultiTenancyField the field name for a specific tenant
 	MultiTenancyField = "account_id"
 
+	// MultiCompartmentField the field name for a specific compartment
+	MultiCompartmentField = "compartment_id"
+
 	// AuthorizationHeader contains information about the header value for the token
 	AuthorizationHeader = "Authorization"
 
@@ -31,6 +34,12 @@ var (
 	multiTenancyVariants = []string{
 		MultiTenancyField,
 		"AccountID",
+	}
+
+	// multiCompartmentVariants all possible multi-compartment names
+	multiCompartmentVariants = []string{
+		MultiCompartmentField,
+		"CompartmentID",
 	}
 )
 
@@ -72,6 +81,22 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 		}
 	}
 	return "", errMissingField
+}
+
+// GetCompartmentID gets the JWT from a context and returns the CompartmentID field
+func GetCompartmentID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
+	var err error
+	val := ""
+	for _, compartmentField := range multiCompartmentVariants {
+		val, err = GetJWTField(ctx, compartmentField, keyfunc)
+		if err == nil {
+			return val, nil
+		}
+	}
+	if err == errMissingField {
+		return val, nil
+	}
+	return val, err
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.
