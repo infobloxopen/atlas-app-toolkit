@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 )
 
 const (
@@ -34,12 +34,6 @@ var (
 	multiTenancyVariants = []string{
 		MultiTenancyField,
 		"AccountID",
-	}
-
-	// multiCompartmentVariants all possible multi-compartment names
-	multiCompartmentVariants = []string{
-		MultiCompartmentField,
-		"CompartmentID",
 	}
 )
 
@@ -85,18 +79,14 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 
 // GetCompartmentID gets the JWT from a context and returns the CompartmentID field
 func GetCompartmentID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
+	var val string
 	var err error
-	val := ""
-	for _, compartmentField := range multiCompartmentVariants {
-		val, err = GetJWTField(ctx, compartmentField, keyfunc)
-		if err == nil {
-			return val, nil
-		}
-	}
-	if err == errMissingField {
+	val, err = GetJWTField(ctx, MultiCompartmentField, keyfunc)
+	if err == nil || err == errMissingField {
 		return val, nil
+	} else {
+		return val, err
 	}
-	return val, err
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.
