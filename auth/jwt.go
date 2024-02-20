@@ -79,14 +79,11 @@ func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 
 // GetCompartmentID gets the JWT from a context and returns the CompartmentID field
 func GetCompartmentID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
-	var val string
-	var err error
-	val, err = GetJWTField(ctx, MultiCompartmentField, keyfunc)
-	if err == nil || err == errMissingField {
-		return val, nil
-	} else {
-		return val, err
+	val, err := GetJWTField(ctx, MultiCompartmentField, keyfunc)
+	if err == errMissingField {
+		return "", nil
 	}
+	return val, err
 }
 
 // getToken parses the token into a jwt.Token type from the grpc metadata.
