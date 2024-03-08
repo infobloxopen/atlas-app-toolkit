@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jinzhu/inflection"
+	"google.golang.org/protobuf/proto"
 
 	"time"
 
