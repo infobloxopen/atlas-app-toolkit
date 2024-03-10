@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func TestVersionFromPath(t *testing.T) {

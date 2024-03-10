@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"gorm.io/gorm"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
