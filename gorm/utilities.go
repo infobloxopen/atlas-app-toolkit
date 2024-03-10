@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	jgorm "github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jinzhu/inflection"
+	"gorm.io/gorm/schema"
 
 	"time"
 
@@ -136,7 +136,7 @@ func tableName(t reflect.Type) string {
 	if tn, ok := table.(tableNamer); ok {
 		return tn.TableName()
 	}
-	return inflection.Plural(jgorm.ToDBName(t.Name()))
+	return inflection.Plural(schema.NamingStrategy{}.TableName(t.Name()))
 }
 
 func columnName(sf *reflect.StructField) string {
@@ -144,7 +144,7 @@ func columnName(sf *reflect.StructField) string {
 	if ex {
 		return tagCol
 	}
-	return jgorm.ToDBName(sf.Name)
+	return schema.NamingStrategy{}.TableName(sf.Name)
 }
 
 func gormTag(sf *reflect.StructField, tag string) (bool, string) {

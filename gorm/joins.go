@@ -3,9 +3,10 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"reflect"
 	"strings"
+
+	"gorm.io/gorm/schema"
 )
 
 // JoinInfo extracts the following information for assoc association of obj:
@@ -49,7 +50,7 @@ of foreign keys in %s association`, objType, assoc)
 func parseParentChildAssoc(assoc string, assocChild bool, parent reflect.Type, child reflect.Type, assocKeys []string, fKeys []string) (string, string, []string, []string, error) {
 	parentTableName := tableName(parent)
 	childTableName := tableName(child)
-	alias := gorm.ToDBName(assoc)
+	alias := schema.NamingStrategy{}.TableName(assoc)
 	var dbAssocKeys, dbFKeys []string
 	for _, k := range assocKeys {
 		sf, ok := parent.FieldByName(k)

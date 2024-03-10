@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // buildDB creates a new test Postgres database and halts the test if anything
@@ -107,7 +108,7 @@ func TestReset(t *testing.T) {
 		t.Errorf("expected to receive an error when migrating database")
 	}
 	db.migrateUpFunction = func(*sql.DB) error {
-		orm, err := gorm.Open("postgres", db.GetDSN())
+		orm, err := gorm.Open(postgres.Open(db.GetDSN()), &gorm.Config{})
 		if err != nil {
 			t.Errorf("unable to connect to database: %v", err)
 		}
