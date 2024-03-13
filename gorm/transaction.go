@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
 	errorspkg "github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

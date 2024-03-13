@@ -21,8 +21,8 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/errfields"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errfields"
 )
 
 // ProtoStreamErrorHandlerFunc handles the error as a gRPC error generated via status package and replies to the testRequest.
@@ -75,7 +75,7 @@ func (h *ProtoErrorHandler) MessageHandler(ctx context.Context, mux *runtime.Ser
 	handleForwardResponseServerMetadata(h.OutgoingHeaderMatcher, rw, md)
 	handleForwardResponseTrailerHeader(rw, md)
 
-	h.writeError(ctx, false, marshaler, rw, err)
+	h.writeError(ctx, false, marshaler, rw, req, err)
 
 	handleForwardResponseTrailer(rw, md)
 }
@@ -84,10 +84,10 @@ func (h *ProtoErrorHandler) MessageHandler(ctx context.Context, mux *runtime.Ser
 // in accordance with REST API Syntax Specification.
 // See RestError for the JSON format of an error
 func (h *ProtoErrorHandler) StreamHandler(ctx context.Context, headerWritten bool, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, err error) {
-	h.writeError(ctx, headerWritten, marshaler, rw, err)
+	h.writeError(ctx, headerWritten, marshaler, rw, req, err)
 }
 
-func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, marshaler runtime.Marshaler, rw http.ResponseWriter, err error) {
+func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, err error) {
 	var fallback = `{"error":[{"message":"%s"}]}`
 	if setStatusDetails {
 		fallback = `{"error":[{"message":"%s", "code":500, "status": "INTERNAL"}]}`
@@ -97,7 +97,11 @@ func (h *ProtoErrorHandler) writeError(ctx context.Context, headerWritten bool, 
 	if !ok {
 		st = status.New(codes.Unknown, err.Error())
 	}
-	statusCode, statusStr := HTTPStatus(ctx, st)
+	method := ""
+	if req != nil {
+		method = req.Method
+	}
+	statusCode, statusStr := HTTPStatusWithMethod(ctx, method, st)
 
 	details := []interface{}{}
 	var fields interface{}

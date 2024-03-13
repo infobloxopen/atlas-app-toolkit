@@ -9,9 +9,9 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 
-	"github.com/infobloxopen/atlas-app-toolkit/query"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/util"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/util"
 )
 
 // DefaultFilteringConditionProcessor processes filter operator conversion
@@ -175,6 +175,12 @@ func (converter *DefaultFilteringConditionConverter) StringConditionToGorm(ctx c
 		return converter.insensitiveCaseStringConditionToGorm(neg, dbName, o), []interface{}{value}, assocToJoin, nil
 	}
 
+	// N.B. if the user specifies a value that the codec translates to NULL
+	// (e.g. `field1 == ""` for string columns) instead of using the explicit
+	// support for identity (`field1 == null`), the results of this syntax may
+	// not match user expectations - `(col_name = NULL)` will match no rows,
+	// not even rows with NULL values. Did the user intend to match rows with
+	// NULL values (`field1 IS NULL`)?
 	return fmt.Sprintf("%s(%s %s ?)", neg, dbName, o), []interface{}{value}, assocToJoin, nil
 }
 
@@ -225,6 +231,14 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 				ormId := orm.FieldByName(util.Camel(part))
 				if !ormId.IsValid() {
 					return nil, fmt.Errorf("Cannot find field %s in %s", part, objType)
+				}
+				// For type values where the codec translates a NULL value in
+				// SQL, we receive a pointer of nil value. E.g. `""`.
+				switch ormId.Kind() {
+				case reflect.Ptr, reflect.UnsafePointer:
+					if ormId.IsNil() {
+						return nil, nil
+					}
 				}
 				return reflect.Indirect(ormId).Interface(), nil
 

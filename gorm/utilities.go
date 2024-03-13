@@ -14,8 +14,8 @@ import (
 	"github.com/jinzhu/inflection"
 	"gorm.io/gorm/schema"
 
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
-	"github.com/infobloxopen/atlas-app-toolkit/util"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/util"
 )
 
 // HandleFieldPath converts fieldPath to appropriate db string for use in where/order by clauses

@@ -301,5 +301,5 @@ var _Hello_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "github.com/infobloxopen/atlas-app-toolkit/server/testdata/test.proto",
+	Metadata: "github.com/infobloxopen/atlas-app-toolkit/v2/server/testdata/test.proto",
 }

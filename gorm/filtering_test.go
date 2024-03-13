@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/datatypes"
 
-	"github.com/infobloxopen/atlas-app-toolkit/query"
-	"github.com/infobloxopen/atlas-app-toolkit/rpc/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
+	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
 )
 
 type Entity struct {
