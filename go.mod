@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/stretchr/testify v1.8.4
-	go.opencensus.io v0.22.4
+	go.opencensus.io v0.24.0
 	golang.org/x/net v0.20.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
