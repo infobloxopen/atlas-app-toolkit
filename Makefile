@@ -31,18 +31,20 @@ check-fmt:
 .gen-errdetails:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/rpc/errdetails/error_details.proto
-	mv $(PROJECT_ROOT)/rpc/errdetails/error_details.pb.go $(PROJECT_ROOT)/rpc/errdetails/error_details.pb.go
+	mv $(PROJECT_ROOT)/v2/rpc/errdetails/error_details.pb.go $(PROJECT_ROOT)/v2/rpc/errdetails/error_details.pb.go
 	rm -rf $(PROJECT_ROOT)/v2
 
 .gen-errfields:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/rpc/errfields/error_fields.proto
-	mv $(PROJECT_ROOT)/rpc/errfields/error_fields.pb.go $(PROJECT_ROOT)/rpc/errfields/error_fields.pb.go
+	mv $(PROJECT_ROOT)/v2/rpc/errfields/error_fields.pb.go $(PROJECT_ROOT)/v2/rpc/errfields/error_fields.pb.go
 	rm -rf $(PROJECT_ROOT)/v2
 
 .gen-servertestdata:
 	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
+	--go_out=. --go-grpc_out=. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
+	mv $(PROJECT_ROOT)/v2/server/testdata/* $(PROJECT_ROOT)/server/testdata/
+	rm -rf $(PROJECT_ROOT)/v2
 
 .PHONY: gen
 gen: .gen-query .gen-errdetails .gen-errfields
