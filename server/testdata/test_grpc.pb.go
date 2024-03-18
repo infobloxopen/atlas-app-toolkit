@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.18.1
-// source: github.com/infobloxopen/atlas-app-toolkit/server/testdata/test.proto
+// source: github.com/infobloxopen/atlas-app-toolkit/v2/server/testdata/test.proto
 
 package server_test
 
@@ -101,5 +101,5 @@ var Hello_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "github.com/infobloxopen/atlas-app-toolkit/server/testdata/test.proto",
+	Metadata: "github.com/infobloxopen/atlas-app-toolkit/v2/server/testdata/test.proto",
 }

@@ -23,31 +23,23 @@ check-fmt:
 	test -z `go fmt ./...`
 
 .gen-query:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
+	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO)/v2 $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/query/collection_operators.proto
-	mv $(PROJECT_ROOT)/v2/query/collection_operators.pb.go $(PROJECT_ROOT)/query/collection_operators.pb.go
-	rm -rf $(PROJECT_ROOT)/v2
 
 .gen-errdetails:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
+	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO)/v2 $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/rpc/errdetails/error_details.proto
-	mv $(PROJECT_ROOT)/v2/rpc/errdetails/error_details.pb.go $(PROJECT_ROOT)/v2/rpc/errdetails/error_details.pb.go
-	rm -rf $(PROJECT_ROOT)/v2
 
 .gen-errfields:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
+	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO)/v2 $(GENTOOL_IMAGE) \
 	--go_out=:. $(REPO)/rpc/errfields/error_fields.proto
-	mv $(PROJECT_ROOT)/v2/rpc/errfields/error_fields.pb.go $(PROJECT_ROOT)/v2/rpc/errfields/error_fields.pb.go
-	rm -rf $(PROJECT_ROOT)/v2
 
 .gen-servertestdata:
-	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO) $(GENTOOL_IMAGE) \
-	--go_out=. --go-grpc_out=. --grpc-gateway_out=logtostderr=true:. $(REPO)/server/testdata/test.proto
-	mv $(PROJECT_ROOT)/v2/server/testdata/* $(PROJECT_ROOT)/server/testdata/
-	rm -rf $(PROJECT_ROOT)/v2
+	docker run --rm -v $(PROJECT_ROOT):/go/src/$(REPO)/v2 $(GENTOOL_IMAGE) \
+	--go_out=. --go-grpc_out=. --grpc-gateway_out=logtostderr=true:. $(REPO)/v2/server/testdata/test.proto
 
 .PHONY: gen
-gen: .gen-query .gen-errdetails .gen-errfields
+gen: .gen-query .gen-errdetails .gen-errfields .gen-servertestdata
 
 .PHONY: mocks
 mocks:
