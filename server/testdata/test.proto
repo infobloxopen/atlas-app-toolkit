@@ -1,6 +1,6 @@
 syntax = "proto3";
 package server;
-option go_package = "github.com/infobloxopen/atlas-app-toolkit/server/testdata;server_test";
+option go_package = "github.com/infobloxopen/atlas-app-toolkit/v2/server/testdata;server_test";
 
 import "google/api/annotations.proto";
 

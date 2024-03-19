@@ -6,7 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -23,7 +23,7 @@ require (
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.33.0
 	gorm.io/datatypes v1.0.6
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.2
