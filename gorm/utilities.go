@@ -41,7 +41,7 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 	return dbPath, "", nil
 }
 
-//HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
+// HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
 func HandleJSONFieldPath(ctx context.Context, fieldPath []string, obj interface{}, values ...string) (string, string, error) {
 	operator := "#>>"
 	if isRawJSON(values...) {
@@ -82,7 +82,7 @@ func isRawJSON(values ...string) bool {
 	return true
 }
 
-//TODO: add supprt for embeded objects
+// TODO: add supprt for embeded objects
 func IsJSONCondition(ctx context.Context, fieldPath []string, obj interface{}) bool {
 	fieldName := generator.CamelCase(fieldPath[0])
 	objType := indirectType(reflect.TypeOf(obj))
