@@ -202,6 +202,9 @@ message Pagination {
     // The service may impose maximum value.
     // If omitted the service may impose a default value.
     int32 limit = 3;
+    // The bool value enables/disables the record count.
+    // The default setting disables the record count.
+    bool is_total_size_needed = 4;
 }
 
 // PageInfo represents both server-driven and client-driven pagination response.
@@ -220,6 +223,8 @@ message PageInfo {
     // The service may optionally include the offset of the next page of resources.
     // A null value indicates no more pages.
     int32 offset = 3;
+    // total_size indicates the total records present.
+    int64 total_size = 4;
 }
 
 // Searching represents search by.
