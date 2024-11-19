@@ -112,7 +112,7 @@ func TestParsePagination(t *testing.T) {
 	assert.Equal(t, false, p.GetIsTotalSizeNeeded())
 
 	// valid pagination with isTotalSizeNeeded=null
-	p, err = ParsePagination("1000", "100", "ptoken", "null")
+	_, err = ParsePagination("1000", "100", "ptoken", "null")
 	if err == nil {
 		t.Error("unexpected nil error - expected: pagination: is_total_size_needed - invalid syntax")
 	}
