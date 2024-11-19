@@ -88,8 +88,9 @@ func ClientUnaryInterceptor(parentCtx context.Context, method string, req, reply
 		l := vals.Get(limitQueryKey)
 		o := vals.Get(offsetQueryKey)
 		pt := vals.Get(pageTokenQueryKey)
+		t := vals.Get(isTotalSizeNeededQueryKey)
 
-		p, err = query.ParsePagination(l, o, pt)
+		p, err = query.ParsePagination(l, o, pt, t)
 		if err != nil {
 			return status.Error(codes.InvalidArgument, err.Error())
 		}
