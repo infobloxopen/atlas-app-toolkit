@@ -1303,7 +1303,7 @@ type Pagination struct {
 	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	// The bool value enables/disables the record count.
 	// The default setting disables the record count.
-	IsTotalSizeNeeded    bool     `protobuf:"varint,4,opt,name=is_total_size_needed,json=isTotalSizeNeeded,proto3" json:"is_total_size_needed,omitempty"`
+	IsTotalSizeNeeded bool `protobuf:"varint,4,opt,name=is_total_size_needed,json=isTotalSizeNeeded,proto3" json:"is_total_size_needed,omitempty"`
 }
 
 func (x *Pagination) Reset() {
@@ -1387,7 +1387,7 @@ type PageInfo struct {
 	// A null value indicates no more pages.
 	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	// total_size indicates the total records present.
-	TotalSize            int64    `protobuf:"varint,4,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
+	TotalSize int64 `protobuf:"varint,4,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 }
 
 func (x *PageInfo) Reset() {
