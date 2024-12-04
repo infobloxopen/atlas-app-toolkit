@@ -1301,6 +1301,9 @@ type Pagination struct {
 	// The service may impose maximum value.
 	// If omitted, the service may impose a default value.
 	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// The bool value enables/disables the record count.
+	// The default setting disables the record count.
+	IsTotalSizeNeeded bool `protobuf:"varint,4,opt,name=is_total_size_needed,json=isTotalSizeNeeded,proto3" json:"is_total_size_needed,omitempty"`
 }
 
 func (x *Pagination) Reset() {
@@ -1356,6 +1359,13 @@ func (x *Pagination) GetLimit() int32 {
 	return 0
 }
 
+func (m *Pagination) GetIsTotalSizeNeeded() bool {
+	if m != nil {
+		return m.IsTotalSizeNeeded
+	}
+	return false
+}
+
 // PageInfo represents both server-driven and client-driven pagination response.
 // Server-driven pagination is a model in which the server returns some
 // amount of data along with an token indicating there is more data
@@ -1376,6 +1386,8 @@ type PageInfo struct {
 	// The service may optionally include the offset of the next page of resources.
 	// A null value indicates no more pages.
 	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	// total_size indicates the total records present.
+	TotalSize int64 `protobuf:"varint,4,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 }
 
 func (x *PageInfo) Reset() {
@@ -1427,6 +1439,13 @@ func (x *PageInfo) GetSize() int32 {
 func (x *PageInfo) GetOffset() int32 {
 	if x != nil {
 		return x.Offset
+	}
+	return 0
+}
+
+func (m *PageInfo) GetTotalSize() int64 {
+	if m != nil {
+		return m.TotalSize
 	}
 	return 0
 }

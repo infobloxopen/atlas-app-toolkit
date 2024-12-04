@@ -14,7 +14,7 @@ const (
 
 // Pagination parses string representation of pagination limit, offset.
 // Returns error if limit or offset has invalid syntax or out of range.
-func ParsePagination(limit, offset, ptoken string) (*Pagination, error) {
+func ParsePagination(limit, offset, ptoken, isTotalSizeNeeded string) (*Pagination, error) {
 	p := new(Pagination)
 
 	if limit != "" {
@@ -41,6 +41,14 @@ func ParsePagination(limit, offset, ptoken string) (*Pagination, error) {
 
 	if ptoken != "" {
 		p.PageToken = ptoken
+	}
+
+	if isTotalSizeNeeded != "" {
+		u, err := strconv.ParseBool(isTotalSizeNeeded)
+		if err != nil {
+			return nil, fmt.Errorf("pagination: is_total_size_needed - %s", err.(*strconv.NumError).Err)
+		}
+		p.IsTotalSizeNeeded = u
 	}
 
 	return p, nil

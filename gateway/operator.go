@@ -11,16 +11,18 @@ import (
 )
 
 const (
-	filterQueryKey           = "_filter"
-	sortQueryKey             = "_order_by"
-	fieldsQueryKey           = "_fields"
-	limitQueryKey            = "_limit"
-	offsetQueryKey           = "_offset"
-	pageTokenQueryKey        = "_page_token"
-	searchQueryKey           = "_fts"
-	pageInfoSizeMetaKey      = "status-page-info-size"
-	pageInfoOffsetMetaKey    = "status-page-info-offset"
-	pageInfoPageTokenMetaKey = "status-page-info-page_token"
+	filterQueryKey               = "_filter"
+	sortQueryKey                 = "_order_by"
+	fieldsQueryKey               = "_fields"
+	limitQueryKey                = "_limit"
+	offsetQueryKey               = "_offset"
+	pageTokenQueryKey            = "_page_token"
+	searchQueryKey               = "_fts"
+	isTotalSizeNeededQueryKey    = "_is_total_size_needed"
+	pageInfoSizeMetaKey          = "status-page-info-size"
+	pageInfoOffsetMetaKey        = "status-page-info-offset"
+	pageInfoPageTokenMetaKey     = "status-page-info-page_token"
+	pageInfoPageTotalSizeMetaKey = "status-page-info-total_size"
 
 	query_url = "query_url"
 )
@@ -53,6 +55,10 @@ func SetPageInfo(ctx context.Context, p *query.PageInfo) error {
 
 	if s := p.GetSize(); s != 0 {
 		m[pageInfoSizeMetaKey] = strconv.FormatUint(uint64(s), 10)
+	}
+
+	if t := p.GetTotalSize(); t != 0 {
+		m[pageInfoPageTotalSizeMetaKey] = strconv.FormatUint(uint64(t), 10)
 	}
 
 	return grpc.SetHeader(ctx, metadata.New(m))
