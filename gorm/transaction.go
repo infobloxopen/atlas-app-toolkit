@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
 	"google.golang.org/grpc"
@@ -17,15 +18,18 @@ import (
 // ctxKey is an unexported type for keys defined in this package.
 // This prevents collisions with keys defined in other packages.
 type ctxKey int
+type readOnlyDBKey int
 
 // txnKey is the key for `*Transaction` values in `context.Context`.
 // It is unexported; clients use NewContext and FromContext
 // instead of using this key directly.
 var txnKey ctxKey
+var roDBKey readOnlyDBKey
 
 var (
 	ErrCtxTxnMissing = errors.New("Database transaction for request missing in context")
 	ErrCtxTxnNoDB    = errors.New("Transaction in context, but DB is nil")
+	ErrNoReadOnlyDB  = errors.New("No read-only DB")
 )
 
 // NewContext returns a new Context that carries value txn.
@@ -39,6 +43,25 @@ func FromContext(ctx context.Context) (txn *Transaction, ok bool) {
 	return
 }
 
+// GetReadOnlyDB returns the read only db instance stored in the ctx if there is no txn in use with read/write database
+func GetReadOnlyDB(ctx context.Context) (*gorm.DB, error) {
+	logger := ctxlogrus.Extract(ctx)
+	txn, ok := FromContext(ctx)
+	if !ok {
+		return nil, ErrCtxTxnMissing
+	}
+	if txn.current != nil {
+		logger.Warnf("GetReadOnlyDB: Txn already initialized with read/write DB")
+		return txn.current, nil
+	}
+	dbRO, ok := ctx.Value(roDBKey).(*gorm.DB)
+	if !ok {
+		return nil, ErrNoReadOnlyDB
+	}
+	txn.readOnly = true
+	return dbRO, nil
+}
+
 // Transaction serves as a wrapper around `*gorm.DB` instance.
 // It works as a singleton to prevent an application of creating more than one
 // transaction instance per incoming request.
@@ -46,6 +69,7 @@ type Transaction struct {
 	mu              sync.Mutex
 	parent          *gorm.DB
 	current         *gorm.DB
+	readOnly        bool
 	afterCommitHook []func(context.Context)
 }
 
@@ -57,14 +81,28 @@ func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
-// BeginFromContext will extract transaction wrapper from context and start new transaction.
+// GetReadOnlyDBInstance returns the read only database instance stored in the ctx
+func GetReadOnlyDBInstance(ctx context.Context) (*gorm.DB, error) {
+	dbRO, ok := ctx.Value(roDBKey).(*gorm.DB)
+	if !ok {
+		return nil, ErrNoReadOnlyDB
+	}
+	return dbRO, nil
+}
+
+// BeginFromContext will extract transaction wrapper from context and start new transaction if transaction is not set to read only otherwise it will return read only database instance
 // As result new instance of `*gorm.DB` will be returned.
 // Error will be returned in case either transaction or db connection info is missing in context.
 // Gorm specific error can be checked by `*gorm.DB.Error`.
 func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
+	logger := ctxlogrus.Extract(ctx)
 	txn, ok := FromContext(ctx)
 	if !ok {
 		return nil, ErrCtxTxnMissing
+	}
+	if txn.readOnly == true {
+		logger.Warnf("BeginFromContext: Read Only DB instance already in use!")
+		return GetReadOnlyDBInstance(ctx)
 	}
 	if txn.parent == nil {
 		return nil, ErrCtxTxnNoDB
@@ -173,12 +211,12 @@ func (t *Transaction) Commit(ctx context.Context) error {
 // Client is responsible to call `txn.Begin()` to open transaction.
 // If call of grpc.UnaryHandler returns with an error the transaction
 // is aborted, otherwise committed.
-func UnaryServerInterceptor(db *gorm.DB) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor(db *gorm.DB, readOnlyDB ...*gorm.DB) grpc.UnaryServerInterceptor {
 	txn := &Transaction{parent: db}
-	return UnaryServerInterceptorTxn(txn)
+	return UnaryServerInterceptorTxn(txn, readOnlyDB...)
 }
 
-func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptorTxn(txn *Transaction, readOnlyDB ...*gorm.DB) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// Deep copy is necessary as a tansaction should be created per request.
 		txn := &Transaction{parent: txn.parent, afterCommitHook: txn.afterCommitHook}
@@ -220,6 +258,12 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 		}()
 
 		ctx = NewContext(ctx, txn)
+		if len(readOnlyDB) > 0 {
+			dbRO := readOnlyDB[0]
+			if dbRO != nil {
+				ctx = context.WithValue(ctx, roDBKey, dbRO)
+			}
+		}
 		resp, err = handler(ctx, req)
 
 		return resp, err
