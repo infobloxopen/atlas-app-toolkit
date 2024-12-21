@@ -329,6 +329,75 @@ func TestContext(t *testing.T) {
 	}
 }
 
+func beginFromContextWithOptions(ctx context.Context, withOpts bool) (*gorm.DB, error) {
+	switch withOpts {
+	case true:
+		return BeginFromContext(ctx, WithRODB(true))
+	case false:
+		return BeginFromContext(ctx)
+	}
+	return nil, nil
+}
+
+func TestBeginFromContextWithOptions(t *testing.T) {
+	tests := []struct {
+		desc     string
+		withOpts bool
+	}{
+		{
+			desc:     "begin without options",
+			withOpts: false,
+		},
+		{
+			desc:     "begin with options",
+			withOpts: true,
+		},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			gdb, err := gorm.Open("postgres", db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+			dbReadOnly, dbROMock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			dbRO, err := gorm.Open("postgres", dbReadOnly)
+			if err != nil {
+				t.Fatalf("failed to open gorm read only db - %s", err)
+			}
+			mock.ExpectBegin()
+			dbROMock.ExpectBegin()
+			ctxtxn := &Transaction{parent: gdb}
+			ctx = NewContext(ctx, ctxtxn)
+			ctx = context.WithValue(ctx, roDBKey, dbRO)
+			txn1, err := beginFromContextWithOptions(ctx, test.withOpts)
+			if txn1 == nil {
+				t.Error("Did not receive a transaction from context")
+			}
+			if err != nil {
+				t.Error("Received an error beginning transaction")
+			}
+			// Case: Transaction begin is idempotent
+			txn2, err := beginFromContextWithOptions(ctx, !test.withOpts)
+			if txn2 != txn1 {
+				t.Error("Got a different txn than was opened before")
+			}
+			if err != nil {
+				t.Error("Received an error opening transaction")
+			}
+		})
+	}
+}
+
 func beginFromContext(ctx context.Context, withOpts bool) (*gorm.DB, error) {
 	switch withOpts {
 	case true:

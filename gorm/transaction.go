@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/infobloxopen/atlas-app-toolkit/rpc/errdetails"
 	"github.com/jinzhu/gorm"
+	logger "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,12 +18,19 @@ import (
 // ctxKey is an unexported type for keys defined in this package.
 // This prevents collisions with keys defined in other packages.
 type ctxKey int
+
+// readOnlyDBKey is an unexported type and used to define a key for storing read only db instance in the context.
+// This prevents collisions with keys defined in other package
 type readOnlyDBKey int
 
 // txnKey is the key for `*Transaction` values in `context.Context`.
 // It is unexported; clients use NewContext and FromContext
 // instead of using this key directly.
 var txnKey ctxKey
+
+// roDBKey is the key used for storing read-only db instance in the context.
+// It is unexported; clients use BeginFromContext with options to get the read only db instance
+// instead of using this key directly.
 var roDBKey readOnlyDBKey
 
 var (
@@ -43,25 +50,6 @@ func FromContext(ctx context.Context) (txn *Transaction, ok bool) {
 	return
 }
 
-// GetReadOnlyDB returns the read only db instance stored in the ctx if there is no txn in use with read/write database
-func GetReadOnlyDB(ctx context.Context) (*gorm.DB, error) {
-	logger := ctxlogrus.Extract(ctx)
-	txn, ok := FromContext(ctx)
-	if !ok {
-		return nil, ErrCtxTxnMissing
-	}
-	if txn.current != nil {
-		logger.Warnf("GetReadOnlyDB: Txn already initialized with read/write DB")
-		return txn.current, nil
-	}
-	dbRO, ok := ctx.Value(roDBKey).(*gorm.DB)
-	if !ok {
-		return nil, ErrNoReadOnlyDB
-	}
-	txn.readOnly = true
-	return dbRO, nil
-}
-
 // Transaction serves as a wrapper around `*gorm.DB` instance.
 // It works as a singleton to prevent an application of creating more than one
 // transaction instance per incoming request.
@@ -73,6 +61,27 @@ type Transaction struct {
 	afterCommitHook []func(context.Context)
 }
 
+type databaseOptions struct {
+	readOnlyReplica bool
+}
+
+type DatabaseOption func(*databaseOptions)
+
+// WithRODB returns clouser to set the readOnlyReplica flag
+func WithRODB(readOnlyReplica bool) DatabaseOption {
+	return func(ops *databaseOptions) {
+		ops.readOnlyReplica = readOnlyReplica
+	}
+}
+
+func toDatabaseOptions(options ...DatabaseOption) *databaseOptions {
+	opts := &databaseOptions{}
+	for _, op := range options {
+		op(opts)
+	}
+	return opts
+}
+
 func NewTransaction(db *gorm.DB) Transaction {
 	return Transaction{parent: db}
 }
@@ -81,28 +90,49 @@ func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
 }
 
-// GetReadOnlyDBInstance returns the read only database instance stored in the ctx
-func GetReadOnlyDBInstance(ctx context.Context) (*gorm.DB, error) {
-	dbRO, ok := ctx.Value(roDBKey).(*gorm.DB)
-	if !ok {
-		return nil, ErrNoReadOnlyDB
-	}
-	return dbRO, nil
-}
-
-// BeginFromContext will extract transaction wrapper from context and start new transaction if transaction is not set to read only otherwise it will return read only database instance
-// As result new instance of `*gorm.DB` will be returned.
-// Error will be returned in case either transaction or db connection info is missing in context.
-// Gorm specific error can be checked by `*gorm.DB.Error`.
-func BeginFromContext(ctx context.Context) (*gorm.DB, error) {
-	logger := ctxlogrus.Extract(ctx)
+// getReadOnlyDBInstance returns the read only database instance stored in the ctx
+func getReadOnlyDBInstance(ctx context.Context) (*gorm.DB, error) {
 	txn, ok := FromContext(ctx)
 	if !ok {
 		return nil, ErrCtxTxnMissing
 	}
-	if txn.readOnly == true {
-		logger.Warnf("BeginFromContext: Read Only DB instance already in use!")
-		return GetReadOnlyDBInstance(ctx)
+	dbRO, ok := ctx.Value(roDBKey).(*gorm.DB)
+	if !ok {
+		logger.Warnf("BeginFromContext: requested: read-only DB, returns: read-write DB, reason: read-only DB not available")
+		if txn.parent == nil {
+			return nil, ErrCtxTxnNoDB
+		}
+		db := txn.beginWithContext(ctx)
+		if db.Error != nil {
+			return nil, db.Error
+		}
+		return db, nil
+	}
+	txn.readOnly = true
+	return dbRO, nil
+}
+
+// BeginFromContext will return read only db instance if readOnlyReplica flag is set otherwise it will extract transaction wrapper from context and start new transaction
+// If readOnlyReplica flag is set and a txn with read-write db is already in use then it will return a txn from ctx rather than providing a read-only db instance.
+// As result new instance of `*gorm.DB` will be returned.
+// Error will be returned in case either transaction or db connection info is missing in context.
+// Gorm specific error can be checked by `*gorm.DB.Error`.
+func BeginFromContext(ctx context.Context, options ...DatabaseOption) (*gorm.DB, error) {
+	txn, ok := FromContext(ctx)
+	if !ok {
+		return nil, ErrCtxTxnMissing
+	}
+	opts := toDatabaseOptions(options...)
+	if opts.readOnlyReplica == true {
+		if txn.current == nil {
+			return getReadOnlyDBInstance(ctx)
+		} else {
+			logger.Warnf("BeginFromContext: requested: read-only DB, returns: read-write DB, reason: read-write DB txn in use")
+			return txn.current, nil
+		}
+	} else if txn.readOnly == true {
+		logger.Warnf("BeginFromContext: requested: read-write DB, returns: read-only DB, reason: txn set to read only")
+		return getReadOnlyDBInstance(ctx)
 	}
 	if txn.parent == nil {
 		return nil, ErrCtxTxnNoDB
