@@ -45,6 +45,98 @@ func TestUnaryServerInterceptor_success(t *testing.T) {
 	}
 }
 
+func TestUnaryServerInterceptor_with_readonlydb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	dbReadOnly, dbROMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+	dbROMock.ExpectBegin()
+
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	dbRO, err := gorm.Open("postgres", dbReadOnly)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+
+	interceptor := UnaryServerInterceptor(gdb, dbRO)
+	_, err = interceptor(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		txn, ok := FromContext(ctx)
+		if !ok {
+			t.Error("failed to extract transaction from context")
+		}
+		readOnlyDB, err := BeginFromContext(ctx, WithRODB(true))
+		if err != nil {
+			t.Errorf("failed to get read only db instance - %s", err)
+		}
+		if dbRO != readOnlyDB {
+			t.Errorf("failed to set read only db instance")
+		}
+		return nil, txn.Begin().Error
+	})
+	if err != nil {
+		t.Errorf("unexpected error - %s", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to manage transaction on success response - %s", err)
+	}
+}
+
+func TestUnaryServerInterceptorTxn_with_readonlydb(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	dbReadOnly, dbROMock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+	dbROMock.ExpectBegin()
+
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	dbRO, err := gorm.Open("postgres", dbReadOnly)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+	txn := NewTransaction(gdb)
+	interceptor := UnaryServerInterceptorTxn(&txn, dbRO)
+	_, err = interceptor(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		txn, ok := FromContext(ctx)
+		if !ok {
+			t.Error("failed to extract transaction from context")
+		}
+		readOnlyDB, err := BeginFromContext(ctx, WithRODB(true))
+		if err != nil {
+			t.Errorf("failed to get read only db instance - %s", err)
+		}
+		if dbRO != readOnlyDB {
+			t.Errorf("failed to set read only db instance")
+		}
+		return nil, txn.Begin().Error
+	})
+	if err != nil {
+		t.Errorf("unexpected error - %s", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to manage transaction on success response - %s", err)
+	}
+}
+
 func TestUnaryServerInterceptorTxn_success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
