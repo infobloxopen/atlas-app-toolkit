@@ -11,7 +11,6 @@ import (
 // that should be used as a middleware to generate/include Request-Id in headers and context
 // for tracing and tracking user's request.
 //
-//
 // Returned middleware populates Request-Id from gRPC metadata if
 // they defined in a testRequest message else creates a new one.
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
