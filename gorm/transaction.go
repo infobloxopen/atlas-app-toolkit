@@ -18,9 +18,6 @@ import (
 // This prevents collisions with keys defined in other packages.
 type ctxKey int
 
-// This is used to define various options to set/get the current database setup in the context
-type dbType int
-
 // txnKey is the key for `*Transaction` values in `context.Context`.
 // It is unexported; clients use NewContext and FromContext
 // instead of using this key directly.
@@ -32,6 +29,9 @@ var (
 	ErrCtxTxnOptMismatch = errors.New("Transaction in context, but Txn opts are mismatched")
 	ErrCtxDBOptMismatch  = errors.New("Transaction in context, but DB opts are mismatched")
 )
+
+// This is used to define various options to set/get the current database setup in the context
+type dbType int
 
 const (
 	dbNotSet dbType = iota
@@ -58,14 +58,13 @@ type Transaction struct {
 	parent          *gorm.DB
 	parentRO        *gorm.DB
 	current         *gorm.DB
-	txOpts          *sql.TxOptions
-	currentDB       dbType
+	currentOpts     databaseOptions
 	afterCommitHook []func(context.Context)
 }
 
 type databaseOptions struct {
-	readOnlyReplica bool
-	txOpts          *sql.TxOptions
+	database dbType
+	txOpts   *sql.TxOptions
 }
 
 type DatabaseOption func(*databaseOptions)
@@ -73,7 +72,11 @@ type DatabaseOption func(*databaseOptions)
 // WithRODB returns closure to set the readOnlyReplica flag
 func WithRODB(readOnlyReplica bool) DatabaseOption {
 	return func(ops *databaseOptions) {
-		ops.readOnlyReplica = readOnlyReplica
+		if readOnlyReplica == false {
+			ops.database = dbReadWrite
+		} else {
+			ops.database = dbReadOnly
+		}
 	}
 }
 
@@ -102,77 +105,66 @@ func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 // getReadOnlyDBInstance returns the read only db txn if RO DB available otherwise it returns read/write db txn
 func getReadOnlyDBTxn(ctx context.Context, opts *databaseOptions, txn *Transaction) (*gorm.DB, error) {
 	var db *gorm.DB
-	if txn.parentRO == nil {
+	switch {
+	case txn.parentRO == nil:
 		return getReadWriteDBTxn(ctx, opts, txn)
-	} else {
-		if opts.txOpts != nil || txn.txOpts != nil {
-			if opts.txOpts == nil {
+	case opts.txOpts != nil && txn.currentOpts.txOpts != nil:
+		if opts.txOpts.ReadOnly != txn.currentOpts.txOpts.ReadOnly || opts.txOpts.Isolation != txn.currentOpts.txOpts.Isolation {
+			return nil, ErrCtxTxnOptMismatch
+		}
+	default:
+		// We should error in two cases 1. We should error if read-only DB requested with read-write txn
+		// 2. If no txn options provided in previous call but provided in subsequent call
+		if opts.txOpts != nil {
+			if opts.txOpts.ReadOnly == false || txn.currentOpts.database != dbNotSet {
 				return nil, ErrCtxTxnOptMismatch
-			} else if txn.txOpts == nil {
-				if opts.txOpts.ReadOnly == false { // For Read Only DB, the Txn should be set as read only before calling this method
-					return nil, ErrCtxTxnOptMismatch
-				}
-				txn.txOpts = &sql.TxOptions{}
-				txn.txOpts.ReadOnly = opts.txOpts.ReadOnly
-				txn.txOpts.Isolation = opts.txOpts.Isolation
-			} else {
-				if opts.txOpts.Isolation != txn.txOpts.Isolation || opts.txOpts.ReadOnly != txn.txOpts.ReadOnly {
-					return nil, ErrCtxTxnOptMismatch
-				}
 			}
-			if txn.current != nil {
-				return txn.current, nil
-			}
-			db = txn.beginReadOnlyWithContextAndOptions(ctx, txn.txOpts)
-		} else {
-			if txn.current != nil {
-				return txn.current, nil
-			}
-			db = txn.beginReadOnlyWithContext(ctx)
+			txnOpts := *opts.txOpts
+			txn.currentOpts.txOpts = &txnOpts
 		}
-		if db.Error != nil {
-			return nil, db.Error
-		}
-		if txn.currentDB == dbNotSet {
-			txn.currentDB = dbReadOnly
-		}
-		return db, nil
 	}
+	if txn.current != nil {
+		return txn.current, nil
+	}
+	db = txn.beginReadOnlyWithContextAndOptions(ctx, txn.currentOpts.txOpts)
+	if db.Error != nil {
+		return nil, db.Error
+	}
+	if txn.currentOpts.database == dbNotSet {
+		txn.currentOpts.database = dbReadOnly
+	}
+	return db, nil
 }
 
 // getReadWriteDBTxn returns the read/write db txn
 func getReadWriteDBTxn(ctx context.Context, opts *databaseOptions, txn *Transaction) (*gorm.DB, error) {
 	var db *gorm.DB
-	if txn.parent == nil {
+	switch {
+	case txn.parent == nil:
 		return nil, ErrCtxTxnNoDB
-	}
-	if opts.txOpts != nil || txn.txOpts != nil {
-		if opts.txOpts == nil {
+	case opts.txOpts != nil && txn.currentOpts.txOpts != nil:
+		if opts.txOpts.ReadOnly != txn.currentOpts.txOpts.ReadOnly || opts.txOpts.Isolation != txn.currentOpts.txOpts.Isolation {
 			return nil, ErrCtxTxnOptMismatch
-		} else if txn.txOpts == nil {
-			txn.txOpts = &sql.TxOptions{}
-			txn.txOpts.Isolation = opts.txOpts.Isolation
-			txn.txOpts.ReadOnly = opts.txOpts.ReadOnly
-		} else {
-			if opts.txOpts.Isolation != txn.txOpts.Isolation || opts.txOpts.ReadOnly != txn.txOpts.ReadOnly {
+		}
+	default:
+		if opts.txOpts != nil {
+			// We should return error If no txn options provided in previous call but provided in subsequent call
+			if txn.currentOpts.database != dbNotSet {
 				return nil, ErrCtxTxnOptMismatch
 			}
+			txnOpts := *opts.txOpts
+			txn.currentOpts.txOpts = &txnOpts
 		}
-		if txn.current != nil {
-			return txn.current, nil
-		}
-		db = txn.beginWithContextAndOptions(ctx, txn.txOpts)
-	} else {
-		if txn.current != nil {
-			return txn.current, nil
-		}
-		db = txn.beginWithContext(ctx)
 	}
+	if txn.current != nil {
+		return txn.current, nil
+	}
+	db = txn.beginWithContextAndOptions(ctx, txn.currentOpts.txOpts)
 	if db.Error != nil {
 		return nil, db.Error
 	}
-	if txn.currentDB == dbNotSet {
-		txn.currentDB = dbReadWrite
+	if txn.currentOpts.database == dbNotSet {
+		txn.currentOpts.database = dbReadWrite
 	}
 	return db, nil
 }
@@ -188,16 +180,24 @@ func BeginFromContext(ctx context.Context, options ...DatabaseOption) (*gorm.DB,
 		return nil, ErrCtxTxnMissing
 	}
 	opts := toDatabaseOptions(options...)
-	if opts.readOnlyReplica == true {
-		if txn.currentDB == dbReadWrite && txn.parentRO != nil { //check if currentDB is set to read/write DB in case the RO DB is not available
+	switch opts.database {
+	case dbReadOnly:
+		if txn.currentOpts.database == dbReadWrite && txn.parentRO != nil {
 			return nil, ErrCtxDBOptMismatch
-		} else {
+		}
+		return getReadOnlyDBTxn(ctx, opts, txn)
+	case dbReadWrite:
+		if txn.currentOpts.database == dbReadOnly {
+			return nil, ErrCtxDBOptMismatch
+		}
+		return getReadWriteDBTxn(ctx, opts, txn)
+	default:
+		// This is the case to handle when no database options provided
+		if txn.currentOpts.database == dbReadOnly {
 			return getReadOnlyDBTxn(ctx, opts, txn)
 		}
-	} else if txn.currentDB == dbReadOnly {
-		return nil, ErrCtxDBOptMismatch
+		return getReadWriteDBTxn(ctx, opts, txn)
 	}
-	return getReadWriteDBTxn(ctx, opts, txn)
 }
 
 // BeginWithOptionsFromContext will extract transaction wrapper from context and start new transaction,
@@ -237,23 +237,13 @@ func (t *Transaction) beginWithContext(ctx context.Context) *gorm.DB {
 	return t.current
 }
 
-func (t *Transaction) beginReadOnlyWithContext(ctx context.Context) *gorm.DB {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.current == nil {
-		t.current = t.parentRO.BeginTx(ctx, nil)
-	}
-
-	return t.current
-}
-
 // BeginWithOptions starts new transaction by calling `*gorm.DB.BeginTx()`
 // Returns new instance of `*gorm.DB` (error can be checked by `*gorm.DB.Error`)
 func (t *Transaction) BeginWithOptions(opts *sql.TxOptions) *gorm.DB {
 	return t.beginWithContextAndOptions(context.Background(), opts)
 }
 
+// beginReadOnlyWithContextAndOptions will start a new transaction by calling `*gorm.DB.BeginTx() if no current transaction exist
 func (t *Transaction) beginReadOnlyWithContextAndOptions(ctx context.Context, opts *sql.TxOptions) *gorm.DB {
 	t.mu.Lock()
 	defer t.mu.Unlock()

@@ -60,11 +60,10 @@ func TestUnaryServerInterceptor_with_readonlydb(t *testing.T) {
 	}
 	readOnlyDB, dbROMock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("failed to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock for read-only db - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectCommit()
-	dbROMock.ExpectBegin()
 
 	gdb, err := gorm.Open("postgres", db)
 	if err != nil {
@@ -72,7 +71,7 @@ func TestUnaryServerInterceptor_with_readonlydb(t *testing.T) {
 	}
 	dbRO, err := gorm.Open("postgres", readOnlyDB)
 	if err != nil {
-		t.Fatalf("failed to open gorm db - %s", err)
+		t.Fatalf("failed to open read-only gorm db - %s", err)
 	}
 
 	interceptor := UnaryServerInterceptor(gdb, dbRO)
@@ -82,7 +81,7 @@ func TestUnaryServerInterceptor_with_readonlydb(t *testing.T) {
 			t.Error("failed to extract transaction from context")
 		}
 		if dbRO != txn.parentRO {
-			t.Errorf("failed to set read only db instance")
+			t.Errorf("failed to set read-only db")
 		}
 		return nil, txn.Begin().Error
 	})
@@ -92,6 +91,9 @@ func TestUnaryServerInterceptor_with_readonlydb(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("failed to manage transaction on success response - %s", err)
+	}
+	if err := dbROMock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to manage transaction on success response for read-only db - %s", err)
 	}
 }
 
@@ -102,11 +104,10 @@ func TestUnaryServerInterceptorTxn_with_readonlydb(t *testing.T) {
 	}
 	readOnlyDB, dbROMock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("failed to create sqlmock - %s", err)
+		t.Fatalf("failed to create sqlmock for read-only db - %s", err)
 	}
 	mock.ExpectBegin()
 	mock.ExpectCommit()
-	dbROMock.ExpectBegin()
 
 	gdb, err := gorm.Open("postgres", db)
 	if err != nil {
@@ -114,7 +115,7 @@ func TestUnaryServerInterceptorTxn_with_readonlydb(t *testing.T) {
 	}
 	dbRO, err := gorm.Open("postgres", readOnlyDB)
 	if err != nil {
-		t.Fatalf("failed to open gorm db - %s", err)
+		t.Fatalf("failed to open read-only gorm db - %s", err)
 	}
 	txn := NewTransaction(gdb)
 	txn.parentRO = dbRO
@@ -125,7 +126,7 @@ func TestUnaryServerInterceptorTxn_with_readonlydb(t *testing.T) {
 			t.Error("failed to extract transaction from context")
 		}
 		if dbRO != txn.parentRO {
-			t.Errorf("failed to set read only db instance")
+			t.Errorf("failed to set read only db")
 		}
 		return nil, txn.Begin().Error
 	})
@@ -135,6 +136,9 @@ func TestUnaryServerInterceptorTxn_with_readonlydb(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("failed to manage transaction on success response - %s", err)
+	}
+	if err := dbROMock.ExpectationsWereMet(); err != nil {
+		t.Errorf("failed to manage transaction on success response for read-only db - %s", err)
 	}
 }
 
@@ -472,13 +476,13 @@ func TestBeginFromContextStartWithNoOptions(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}
-			dbReadOnly, dbROMock, err := sqlmock.New()
+			readOnlyDB, dbROMock, err := sqlmock.New()
 			if err != nil {
-				t.Fatalf("failed to create sqlmock - %s", err)
+				t.Fatalf("failed to create sqlmock for read-only db - %s", err)
 			}
-			dbRO, err := gorm.Open("postgres", dbReadOnly)
+			dbRO, err := gorm.Open("postgres", readOnlyDB)
 			if err != nil {
-				t.Fatalf("failed to open gorm read only db - %s", err)
+				t.Fatalf("failed to open gorm read-only db - %s", err)
 			}
 			mock.ExpectBegin()
 			dbROMock.ExpectBegin()
@@ -508,6 +512,11 @@ func TestBeginFromContextStartWithNoOptions(t *testing.T) {
 				// Case: Transaction begin is idempotent
 				if txn1 != txn3 {
 					t.Error("Got a different txn than was opened before")
+				}
+				test.txOpts = &sql.TxOptions{}
+				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				if err == nil {
+					t.Error("begin transaction should fail with an error TxnOptionsMismatch")
 				}
 			} else {
 				txn1, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -556,6 +565,13 @@ func TestBeginFromContextStartWithNoOptions(t *testing.T) {
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err == nil {
 					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				}
+				txn4, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if txn4 == nil {
+					t.Error("Did not receive a transaction from context")
 				}
 			}
 		})
@@ -591,13 +607,13 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to open gorm db - %s", err)
 			}
-			dbReadOnly, dbROMock, err := sqlmock.New()
+			readOnlyDB, dbROMock, err := sqlmock.New()
 			if err != nil {
-				t.Fatalf("failed to create sqlmock - %s", err)
+				t.Fatalf("failed to create sqlmock for read-only db - %s", err)
 			}
-			dbRO, err := gorm.Open("postgres", dbReadOnly)
+			dbRO, err := gorm.Open("postgres", readOnlyDB)
 			if err != nil {
-				t.Fatalf("failed to open gorm read only db - %s", err)
+				t.Fatalf("failed to open read-only gorm db - %s", err)
 			}
 			mock.ExpectBegin()
 			dbROMock.ExpectBegin()
@@ -612,14 +628,27 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 					t.Error("Did not receive a transaction from context")
 				}
 				test.withOpts = noOptions
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err == nil {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if txn2 == nil {
+					t.Error("Did not receive a transaction from context")
+				}
+				// Case: Transaction begin is idempotent
+				if txn1 != txn2 {
+					t.Error("Got a different txn than was opened before")
 				}
 				test.withOpts = readWrite
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err == nil {
 					t.Error("begin transaction should fail with an error DBOptionsMismatch")
+				}
+				test.withOpts = noOptions
+				test.txOpts = &sql.TxOptions{}
+				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				if err == nil {
+					t.Error("begin transaction should fail with an error TxnOptionsMismatch")
 				}
 			} else {
 				_, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -647,9 +676,22 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 				}
 				test.txOpts.Isolation = sql.LevelDefault
 				test.withOpts = noOptions
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err == nil {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if txn2 == nil {
+					t.Error("Did not receive a transaction from context")
+				}
+				if txn1 != txn2 {
+					t.Error("Got a different txn than was opened before")
+				}
+				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if txn3 == nil {
+					t.Error("Did not receive a transaction from context")
 				}
 				test.withOpts = readWrite
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -692,11 +734,11 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 			}
 			dbReadOnly, dbROMock, err := sqlmock.New()
 			if err != nil {
-				t.Fatalf("failed to create sqlmock - %s", err)
+				t.Fatalf("failed to create sqlmock for read-only db - %s", err)
 			}
 			dbRO, err := gorm.Open("postgres", dbReadOnly)
 			if err != nil {
-				t.Fatalf("failed to open gorm read only db - %s", err)
+				t.Fatalf("failed to open read-only gorm db - %s", err)
 			}
 			mock.ExpectBegin()
 			dbROMock.ExpectBegin()
@@ -727,6 +769,11 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				if txn1 != txn3 {
 					t.Error("Got a different txn than was opened before")
 				}
+				test.txOpts = &sql.TxOptions{}
+				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				if err == nil {
+					t.Error("begin transaction should fail with an error DBOptionsMismatch")
+				}
 			} else {
 				txn1, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
@@ -753,15 +800,15 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 					t.Error("begin transaction should fail with an error DBOptionsMismatch")
 				}
 				test.withOpts = noOptions
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
 				}
-				if txn3 == nil {
+				if txn2 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
 				// Case: Transaction begin is idempotent
-				if txn1 != txn3 {
+				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
 				}
 				test.txOpts.ReadOnly = true
@@ -775,6 +822,14 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				if err == nil {
 					t.Error("begin transaction should fail with an error TxOptionsMismatch")
 				}
+				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if txn3 == nil {
+					t.Error("Did not receive a transaction from context")
+				}
+
 			}
 		})
 	}
