@@ -72,7 +72,7 @@ type DatabaseOption func(*databaseOptions)
 // WithRODB returns closure to set the readOnlyReplica flag
 func WithRODB(readOnlyReplica bool) DatabaseOption {
 	return func(ops *databaseOptions) {
-		if readOnlyReplica == false {
+		if !readOnlyReplica {
 			ops.database = dbReadWrite
 		} else {
 			ops.database = dbReadOnly
@@ -115,7 +115,7 @@ func getReadOnlyDBTxn(ctx context.Context, opts *databaseOptions, txn *Transacti
 	case opts.txOpts != nil:
 		// We should error in two cases 1. We should error if read-only DB requested with read-write txn
 		// 2. If no txn options provided in previous call but provided in subsequent call
-		if opts.txOpts.ReadOnly == false || txn.currentOpts.database != dbNotSet {
+		if !opts.txOpts.ReadOnly || txn.currentOpts.database != dbNotSet {
 			return nil, ErrCtxTxnOptMismatch
 		}
 		txnOpts := *opts.txOpts
