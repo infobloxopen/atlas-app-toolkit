@@ -109,19 +109,17 @@ func getReadOnlyDBTxn(ctx context.Context, opts *databaseOptions, txn *Transacti
 	case txn.parentRO == nil:
 		return getReadWriteDBTxn(ctx, opts, txn)
 	case opts.txOpts != nil && txn.currentOpts.txOpts != nil:
-		if opts.txOpts.ReadOnly != txn.currentOpts.txOpts.ReadOnly || opts.txOpts.Isolation != txn.currentOpts.txOpts.Isolation {
+		if *opts.txOpts != *txn.currentOpts.txOpts {
 			return nil, ErrCtxTxnOptMismatch
 		}
-	default:
+	case opts.txOpts != nil:
 		// We should error in two cases 1. We should error if read-only DB requested with read-write txn
 		// 2. If no txn options provided in previous call but provided in subsequent call
-		if opts.txOpts != nil {
-			if opts.txOpts.ReadOnly == false || txn.currentOpts.database != dbNotSet {
-				return nil, ErrCtxTxnOptMismatch
-			}
-			txnOpts := *opts.txOpts
-			txn.currentOpts.txOpts = &txnOpts
+		if opts.txOpts.ReadOnly == false || txn.currentOpts.database != dbNotSet {
+			return nil, ErrCtxTxnOptMismatch
 		}
+		txnOpts := *opts.txOpts
+		txn.currentOpts.txOpts = &txnOpts
 	}
 	if txn.current != nil {
 		return txn.current, nil
@@ -143,18 +141,16 @@ func getReadWriteDBTxn(ctx context.Context, opts *databaseOptions, txn *Transact
 	case txn.parent == nil:
 		return nil, ErrCtxTxnNoDB
 	case opts.txOpts != nil && txn.currentOpts.txOpts != nil:
-		if opts.txOpts.ReadOnly != txn.currentOpts.txOpts.ReadOnly || opts.txOpts.Isolation != txn.currentOpts.txOpts.Isolation {
+		if *opts.txOpts != *txn.currentOpts.txOpts {
 			return nil, ErrCtxTxnOptMismatch
 		}
-	default:
-		if opts.txOpts != nil {
-			// We should return error If no txn options provided in previous call but provided in subsequent call
-			if txn.currentOpts.database != dbNotSet {
-				return nil, ErrCtxTxnOptMismatch
-			}
-			txnOpts := *opts.txOpts
-			txn.currentOpts.txOpts = &txnOpts
+	case opts.txOpts != nil:
+		// We should return error If no txn options provided in previous call but provided in subsequent call
+		if txn.currentOpts.database != dbNotSet {
+			return nil, ErrCtxTxnOptMismatch
 		}
+		txnOpts := *opts.txOpts
+		txn.currentOpts.txOpts = &txnOpts
 	}
 	if txn.current != nil {
 		return txn.current, nil
