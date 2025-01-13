@@ -791,8 +791,8 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				}
 				test.txOpts = &sql.TxOptions{}
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 			} else {
 				txn1, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -807,14 +807,14 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				}
 				test.txOpts.ReadOnly = true
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 				test.txOpts.ReadOnly = false
 				test.txOpts.Isolation = sql.LevelSerializable
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 				test.txOpts.Isolation = sql.LevelDefault
 				test.withOpts = readOnly
@@ -836,14 +836,14 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				}
 				test.txOpts.ReadOnly = true
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 				test.txOpts.ReadOnly = false
 				test.txOpts.Isolation = sql.LevelSerializable
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
 				if err != nil {
