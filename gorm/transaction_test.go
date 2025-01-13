@@ -499,26 +499,16 @@ func TestBeginFromContextStartWithNoOptions(t *testing.T) {
 					t.Errorf("failed to begin transaction for read-write db - %s", err)
 				}
 				test.withOpts = readOnly
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
-				}
-				test.withOpts = readWrite
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
 				}
-				if txn3 == nil {
+				if txn2 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
-				// Case: Transaction begin is idempotent
-				if txn1 != txn3 {
+				// Case: withOpts are ignored if txn is already open, current txn is returned
+				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
-				}
-				test.txOpts = &sql.TxOptions{}
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxnOptionsMismatch")
 				}
 			} else {
 				txn1, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -532,54 +522,16 @@ func TestBeginFromContextStartWithNoOptions(t *testing.T) {
 					t.Errorf("failed to begin transaction for read-write db - %s", err)
 				}
 				test.txOpts.ReadOnly = true
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.ReadOnly = false
-				test.txOpts.Isolation = sql.LevelSerializable
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.Isolation = sql.LevelDefault
-				test.withOpts = readOnly
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
-				}
-				test.withOpts = readWrite
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				test.txOpts.Isolation = sql.LevelRepeatableRead
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
 				}
-				if txn3 == nil {
+				if txn2 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
-				// Case: Transaction begin is idempotent
-				if txn1 != txn3 {
-					t.Error("Got a different txn than was opened before")
-				}
-				test.txOpts.ReadOnly = true
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.ReadOnly = false
-				test.txOpts.Isolation = sql.LevelSerializable
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				txn4, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
-				if err != nil {
-					t.Error("Received an error beginning transaction")
-				}
-				if txn4 == nil {
-					t.Error("Did not receive a transaction from context")
-				}
-				// Case: Transaction begin is idempotent
-				if txn1 != txn4 {
+				// Case: txOpts are ignored if txn is already open, current txn is returned
+				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
 				}
 			}
@@ -647,20 +599,9 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 				if txn2 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
-				// Case: Transaction begin is idempotent
+				// Case: withOpts are ignored if txn is already open, current txn is returned
 				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
-				}
-				test.withOpts = readWrite
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
-				}
-				test.withOpts = noOptions
-				test.txOpts = &sql.TxOptions{}
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxnOptionsMismatch")
 				}
 			} else {
 				_, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -678,19 +619,9 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 				if err := dbROMock.ExpectationsWereMet(); err != nil {
 					t.Errorf("failed to begin transaction for read-only db - %s", err)
 				}
+				// Case: txOpts are ignored if txn is already open, current txn is returned
 				test.txOpts.ReadOnly = false
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.ReadOnly = true
 				test.txOpts.Isolation = sql.LevelSerializable
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.Isolation = sql.LevelDefault
-				test.withOpts = noOptions
 				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
@@ -701,7 +632,13 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
 				}
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
+
+				test.txOpts.Isolation = sql.LevelDefault
+				test.withOpts = noOptions
+
+				// Case: withOpts are ignored if txn is already open, current txn is returned
+				test.withOpts = readWrite
+				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
 				}
@@ -710,11 +647,6 @@ func TestBeginFromContextStartWithReadOnlyOptions(t *testing.T) {
 				}
 				if txn1 != txn3 {
 					t.Error("Got a different txn than was opened before")
-				}
-				test.withOpts = readWrite
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
 				}
 			}
 		})
@@ -773,26 +705,21 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 					t.Errorf("failed to begin transaction for read-write db - %s", err)
 				}
 				test.withOpts = readOnly
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
-				}
-				test.withOpts = noOptions
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
+				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
 				}
-				if txn3 == nil {
+				if txn1 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
-				// Case: Transaction begin is idempotent
-				if txn1 != txn3 {
+				// Case: withOpts are ignored if txn is already open, current txn is returned
+				if txn1 != txn2 {
 					t.Error("Got a different txn than was opened before")
 				}
 				test.txOpts = &sql.TxOptions{}
 				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
+				if err != nil {
+					t.Error("Received an error beginning transaction")
 				}
 			} else {
 				txn1, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
@@ -806,23 +733,7 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 					t.Errorf("failed to begin transaction for read-write db - %s", err)
 				}
 				test.txOpts.ReadOnly = true
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.ReadOnly = false
 				test.txOpts.Isolation = sql.LevelSerializable
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.Isolation = sql.LevelDefault
-				test.withOpts = readOnly
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxDBOptMismatch {
-					t.Error("begin transaction should fail with an error DBOptionsMismatch")
-				}
-				test.withOpts = noOptions
 				txn2, err := beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
 				if err != nil {
 					t.Error("Received an error beginning transaction")
@@ -830,29 +741,8 @@ func TestBeginFromContextStartWithReadWriteOptions(t *testing.T) {
 				if txn2 == nil {
 					t.Error("Did not receive a transaction from context")
 				}
-				// Case: Transaction begin is idempotent
+				// Case: txOpts are ignored if txn is already open, current txn is returned
 				if txn1 != txn2 {
-					t.Error("Got a different txn than was opened before")
-				}
-				test.txOpts.ReadOnly = true
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				test.txOpts.ReadOnly = false
-				test.txOpts.Isolation = sql.LevelSerializable
-				_, err = beginFromContextWithOptions(ctx, test.withOpts, test.txOpts)
-				if err != ErrCtxTxnOptMismatch {
-					t.Error("begin transaction should fail with an error TxOptionsMismatch")
-				}
-				txn3, err := beginFromContextWithOptions(ctx, test.withOpts, nil)
-				if err != nil {
-					t.Error("Received an error beginning transaction")
-				}
-				if txn3 == nil {
-					t.Error("Did not receive a transaction from context")
-				}
-				if txn1 != txn3 {
 					t.Error("Got a different txn than was opened before")
 				}
 			}
