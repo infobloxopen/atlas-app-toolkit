@@ -392,10 +392,12 @@ func TestTransaction_AfterFailedCommitHook(t *testing.T) {
 	txn.AddAfterFailedCommitHook(hook)
 	ctx := context.Background()
 
-	if err := txn.Commit(ctx); err != nil {
-		if !called {
-			t.Errorf("did not fire the hook")
-		}
+	if err = txn.Commit(ctx); err == nil {
+		t.Errorf("error is expected on this transaction commit.")
+	}
+
+	if !called {
+		t.Errorf("did not fire the hook")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
