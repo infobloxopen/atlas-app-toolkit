@@ -60,6 +60,9 @@ type Transaction struct {
 	current         *gorm.DB
 	currentOpts     databaseOptions
 	afterCommitHook []func(context.Context)
+	// failedCommitHooks will run when error is occurred on transaction commit.
+	// One of the use case of these hooks is to catch the error on transaction commit and convert it into a user-friendly message.
+	failedCommitHooks []func(context.Context, error) error
 }
 
 type databaseOptions struct {
@@ -100,6 +103,10 @@ func NewTransaction(db *gorm.DB) Transaction {
 
 func (t *Transaction) AddAfterCommitHook(hooks ...func(context.Context)) {
 	t.afterCommitHook = append(t.afterCommitHook, hooks...)
+}
+
+func (t *Transaction) AddFailedCommitHook(hooks ...func(context.Context, error) error) {
+	t.failedCommitHooks = append(t.failedCommitHooks, hooks...)
 }
 
 // getReadOnlyDBInstance returns current db txn if exists or the read only db txn if RO DB available otherwise it returns read/write db txn
@@ -290,6 +297,10 @@ func (t *Transaction) Commit(ctx context.Context) error {
 		for i := range t.afterCommitHook {
 			t.afterCommitHook[i](ctx)
 		}
+	} else {
+		for i := range t.failedCommitHooks {
+			err = t.failedCommitHooks[i](ctx, err)
+		}
 	}
 	t.current = nil
 	return err
@@ -315,7 +326,7 @@ func UnaryServerInterceptor(db *gorm.DB, readOnlyDB ...*gorm.DB) grpc.UnaryServe
 func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// Deep copy is necessary as a tansaction should be created per request.
-		txn := &Transaction{parent: txn.parent, parentRO: txn.parentRO, afterCommitHook: txn.afterCommitHook}
+		txn := &Transaction{parent: txn.parent, parentRO: txn.parentRO, afterCommitHook: txn.afterCommitHook, failedCommitHooks: txn.failedCommitHooks}
 		defer func() {
 			// simple panic handler
 			if perr := recover(); perr != nil {
