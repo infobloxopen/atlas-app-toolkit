@@ -1,6 +1,7 @@
 package query
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -57,5 +58,37 @@ func TestParseSorting(t *testing.T) {
 	}
 	if err.Error() != "invalid sort order - \"dask\" in \"name dask\"" {
 		t.Errorf("invalid error message: %s - expected: %s", err, "invalid sort order - \"dask\" in \"name dask\"")
+	}
+}
+
+func TestParseSortingInjection(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Sorting
+		wantErr bool
+	}{
+		{
+			name: "subquery",
+			args: args{
+				s: "(SELECT/**/1)::int",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseSorting(tt.args.s)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseSorting() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseSorting() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
