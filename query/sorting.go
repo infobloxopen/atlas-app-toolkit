@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -21,6 +22,11 @@ func (c SortCriteria) IsDesc() bool {
 func (c SortCriteria) GoString() string {
 	return fmt.Sprintf("%s %s", c.Tag, c.Order)
 }
+
+// FieldIdentifierRegex is a regular expression that matches valid field
+// identifiers. It is used to validate field names in sorting criteria. This can be
+// overridden at init() time to allow for custom field name formats.
+var FieldIdentifierRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_\.]*$`)
 
 // ParseSorting parses raw string that represent sort criteria into a Sorting
 // data structure.
@@ -45,6 +51,15 @@ func ParseSorting(s string) (*Sorting, error) {
 			}
 		default:
 			return nil, fmt.Errorf("invalid sort criteria: %s", craw)
+		}
+
+		// check if tag is not valid
+		if !FieldIdentifierRegex.MatchString(c.Tag) {
+			return nil, fmt.Errorf("invalid field name: %s", c.Tag)
+		}
+		// check if tag is not empty
+		if c.Tag == "" {
+			return nil, fmt.Errorf("empty field name")
 		}
 
 		sorting.Criterias = append(sorting.Criterias, &c)
