@@ -268,15 +268,15 @@ func (t *Transaction) beginWithContextAndOptions(ctx context.Context, opts *sql.
 // Rollback terminates transaction by calling `*gorm.DB.Rollback()`
 // Reset current transaction and returns an error if any.
 func (t *Transaction) Rollback() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.current == nil {
 		return nil
 	}
 	if reflect.ValueOf(t.current.CommonDB()).IsNil() {
 		return status.Error(codes.Unavailable, "Database connection not available")
 	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	t.current.Rollback()
 	err := t.current.Error
 	t.current = nil
@@ -286,11 +286,12 @@ func (t *Transaction) Rollback() error {
 // Commit finishes transaction by calling `*gorm.DB.Commit()`
 // Reset current transaction and returns an error if any.
 func (t *Transaction) Commit(ctx context.Context) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.current == nil || reflect.ValueOf(t.current.CommonDB()).IsNil() {
 		return nil
 	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	t.current.Commit()
 	err := t.current.Error
 	if err == nil {
