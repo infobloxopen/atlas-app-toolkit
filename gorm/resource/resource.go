@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	resourcepb "github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/util"

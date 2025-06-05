@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	jsonpb "google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/resource"
