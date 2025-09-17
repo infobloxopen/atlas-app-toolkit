@@ -10,6 +10,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/gateway"
@@ -66,7 +67,7 @@ func setUp(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 		t.Fatal(err)
 	}
 	var gormDB *gorm.DB
-	gormDB, err = gorm.Open("postgres", db)
+	gormDB, err = gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
