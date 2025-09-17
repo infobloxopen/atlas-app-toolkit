@@ -108,7 +108,7 @@ func (t *Transaction) beginWithContext(ctx context.Context) *gorm.DB {
 	defer t.mu.Unlock()
 
 	if t.current == nil {
-		t.current = t.parent.BeginTx(ctx, nil)
+		t.current = t.parent.WithContext(ctx).Begin()
 	}
 
 	return t.current
@@ -125,7 +125,7 @@ func (t *Transaction) beginWithContextAndOptions(ctx context.Context, opts *sql.
 	defer t.mu.Unlock()
 
 	if t.current == nil {
-		t.current = t.parent.BeginTx(ctx, opts)
+		t.current = t.parent.WithContext(ctx).Begin(opts)
 	}
 
 	return t.current
@@ -140,11 +140,12 @@ func (t *Transaction) Rollback() error {
 	if t.current == nil {
 		return nil
 	}
-	if reflect.ValueOf(t.current.CommonDB()).IsNil() {
+	db, err := t.current.DB()
+	if err != nil || reflect.ValueOf(db).IsNil() {
 		return status.Error(codes.Unavailable, "Database connection not available")
 	}
 	t.current.Rollback()
-	err := t.current.Error
+	err = t.current.Error
 	t.current = nil
 	return err
 }
@@ -155,11 +156,17 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if t.current == nil || reflect.ValueOf(t.current.CommonDB()).IsNil() {
+	if t.current == nil {
 		return nil
 	}
+
+	db, err := t.current.DB()
+	if err != nil || reflect.ValueOf(db).IsNil() {
+		return nil
+	}
+
 	t.current.Commit()
-	err := t.current.Error
+	err = t.current.Error
 	if err == nil {
 		for i := range t.afterCommitHook {
 			t.afterCommitHook[i](ctx)

@@ -185,11 +185,11 @@ func ApplyPaginationEx(ctx context.Context, db *gorm.DB, p *query.Pagination, c 
 	offset, limit := c.PaginationToGorm(ctx, p)
 
 	if offset > 0 {
-		db = db.Offset(offset)
+		db = db.Offset(int(offset))
 	}
 
 	if limit > 0 {
-		db = db.Limit(limit)
+		db = db.Limit(int(limit))
 	}
 
 	return db
