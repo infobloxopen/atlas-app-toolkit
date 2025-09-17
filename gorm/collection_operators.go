@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 )
@@ -172,7 +173,7 @@ func JoinAssociations(ctx context.Context, db *gorm.DB, assoc map[string]struct{
 		for i, k := range sourceKeys {
 			keyPairs = append(keyPairs, k+" = "+targetKeys[i])
 		}
-		alias := gorm.ToDBName(k)
+		alias := schema.NamingStrategy{}.TableName(k)
 		join := fmt.Sprintf("LEFT JOIN %s %s ON %s", tableName, alias, strings.Join(keyPairs, " AND "))
 		db = db.Joins(join)
 	}
@@ -184,11 +185,11 @@ func ApplyPaginationEx(ctx context.Context, db *gorm.DB, p *query.Pagination, c 
 	offset, limit := c.PaginationToGorm(ctx, p)
 
 	if offset > 0 {
-		db = db.Offset(offset)
+		db = db.Offset(int(offset))
 	}
 
 	if limit > 0 {
-		db = db.Limit(limit)
+		db = db.Limit(int(limit))
 	}
 
 	return db
