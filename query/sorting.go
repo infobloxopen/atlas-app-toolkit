@@ -61,6 +61,15 @@ func ParseSorting(s string) (*Sorting, error) {
 			return nil, fmt.Errorf("empty field name")
 		}
 
+		// check if tag is not valid
+		if !FieldIdentifierRegex.MatchString(c.Tag) {
+			return nil, fmt.Errorf("invalid field name: %s", c.Tag)
+		}
+		// check if tag is not empty
+		if c.Tag == "" {
+			return nil, fmt.Errorf("empty field name")
+		}
+
 		sorting.Criterias = append(sorting.Criterias, &c)
 	}
 
