@@ -1,6 +1,6 @@
 module github.com/infobloxopen/atlas-app-toolkit/v2
 
-go 1.19
+go 1.24.0
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
@@ -18,7 +18,7 @@ require (
 	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.22.4
-	golang.org/x/net v0.20.0
+	golang.org/x/net v0.45.0
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.33.0
@@ -32,9 +32,9 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/api v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
