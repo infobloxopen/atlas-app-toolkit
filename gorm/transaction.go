@@ -314,7 +314,6 @@ func (t *Transaction) Dialect() (dl string) {
 		dl = t.parentRO.Dialect().GetName()
 	case dbReadWrite:
 		dl = t.parent.Dialect().GetName()
-	default:
 	}
 	return
 }
