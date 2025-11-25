@@ -307,6 +307,18 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
+// Dialect returns the name of SQL dialect in the underlying transaction/database.
+func (t *Transaction) Dialect() (dl string) {
+	switch t.currentOpts.database {
+	case dbReadOnly:
+		dl = t.parentRO.Dialect().GetName()
+	case dbReadWrite:
+		dl = t.parent.Dialect().GetName()
+	default:
+	}
+	return
+}
+
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor that manages
 // a `*Transaction` instance.
 // New *Transaction instance is created before grpc.UnaryHandler call.

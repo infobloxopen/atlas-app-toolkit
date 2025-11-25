@@ -978,3 +978,60 @@ func TestBeginFromContext_Bad(t *testing.T) {
 		})
 	}
 }
+
+func TestDialect(t *testing.T) {
+
+	const dialectPostgres = "postgres"
+
+	tests := []struct {
+		desc string
+		opts []DatabaseOption
+	}{
+		{
+			desc: "WithRO",
+			opts: []DatabaseOption{WithRODB(true)},
+		},
+		{
+			desc: "WithRW",
+			opts: []DatabaseOption{WithRODB(false)},
+		},
+		{
+			desc: "unspecified",
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			gdb, err := gorm.Open(dialectPostgres, db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+
+			mock.ExpectBegin()
+
+			ctxtxn := NewTransaction(gdb)
+			ctx = NewContext(ctx, &ctxtxn)
+
+			txn1, err := BeginFromContext(ctx, tc.opts...)
+			if txn1 == nil {
+				t.Error("Did not receive a transaction from context")
+			}
+			if err != nil {
+				t.Error("Received an error beginning transaction")
+			}
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("failed to begin transaction - %s", err)
+			}
+
+			if dl := ctxtxn.Dialect(); dl != dialectPostgres {
+				t.Errorf("unexpected dialect returned - %s", dl)
+			}
+		})
+	}
+}
