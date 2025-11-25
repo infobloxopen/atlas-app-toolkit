@@ -984,8 +984,9 @@ func TestDialect(t *testing.T) {
 	const dialectPostgres = "postgres"
 
 	tests := []struct {
-		desc string
-		opts []DatabaseOption
+		desc    string
+		nobegin bool
+		opts    []DatabaseOption
 	}{
 		{
 			desc: "WithRO",
@@ -997,6 +998,10 @@ func TestDialect(t *testing.T) {
 		},
 		{
 			desc: "unspecified",
+		},
+		{
+			desc:    "no begin",
+			nobegin: true,
 		},
 	}
 	for _, tc := range tests {
@@ -1018,15 +1023,17 @@ func TestDialect(t *testing.T) {
 			ctxtxn := NewTransaction(gdb)
 			ctx = NewContext(ctx, &ctxtxn)
 
-			txn1, err := BeginFromContext(ctx, tc.opts...)
-			if txn1 == nil {
-				t.Error("Did not receive a transaction from context")
-			}
-			if err != nil {
-				t.Error("Received an error beginning transaction")
-			}
-			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("failed to begin transaction - %s", err)
+			if !tc.nobegin {
+				txn1, err := BeginFromContext(ctx, tc.opts...)
+				if txn1 == nil {
+					t.Error("Did not receive a transaction from context")
+				}
+				if err != nil {
+					t.Error("Received an error beginning transaction")
+				}
+				if err = mock.ExpectationsWereMet(); err != nil {
+					t.Errorf("failed to begin transaction - %s", err)
+				}
 			}
 
 			if dl := ctxtxn.Dialect(); dl != dialectPostgres {
