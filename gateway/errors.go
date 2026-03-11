@@ -209,7 +209,7 @@ var counter *uint32
 
 func init() {
 	counter = new(uint32)
-	*counter = uint32(time.Now().Nanosecond() % math.MaxUint32)
+	*counter = uint32(time.Now().Nanosecond()) % math.MaxUint32
 }
 
 // WithError will save an error message into the grpc trailer metadata, if it
