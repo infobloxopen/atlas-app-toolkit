@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf"
 )
 
 // Filter is a shortcut to parse a filter string using default FilteringParser implementation
@@ -234,7 +234,7 @@ func floatInSlice(digit float64, slice []float64) bool {
 
 func fieldByFieldPath(obj interface{}, fieldPath []string) reflect.Value {
 	switch obj.(type) {
-	case proto.Message:
+	case protobuf.Message:
 		return fieldByProtoPath(obj, fieldPath)
 	default:
 		return fieldByJSONPath(obj, fieldPath)
@@ -243,7 +243,7 @@ func fieldByFieldPath(obj interface{}, fieldPath []string) reflect.Value {
 
 func fieldByProtoPath(obj interface{}, protoPath []string) reflect.Value {
 	v := dereferenceValue(reflect.ValueOf(obj))
-	props := proto.GetProperties(v.Type())
+	props := protobuf.GetProperties(v.Type())
 	for _, p := range props.Prop {
 		if p.OrigName == protoPath[0] {
 			return v.FieldByName(p.Name)

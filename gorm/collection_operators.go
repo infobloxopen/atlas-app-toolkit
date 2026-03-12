@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/gorm"
+	"google.golang.org/protobuf"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/query"
 )
@@ -144,13 +144,13 @@ func ApplySortingEx(ctx context.Context, db *gorm.DB, s *query.Sorting, obj inte
 
 // Deprecated: use ApplyCollectionOperatorsEx instead
 // ApplyCollectionOperators applies collection operators to gorm instance db.
-func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb proto.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
+func ApplyCollectionOperators(ctx context.Context, db *gorm.DB, obj interface{}, pb protobuf.Message, f *query.Filtering, s *query.Sorting, p *query.Pagination, fs *query.FieldSelection) (*gorm.DB, error) {
 	return ApplyCollectionOperatorsEx(ctx, db, obj, NewDefaultPbToOrmConverter(pb), f, s, p, fs)
 }
 
 // Deprecated: use ApplyFilteringEx instead
 // ApplyFiltering applies filtering operator f to gorm instance db.
-func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb proto.Message) (*gorm.DB, map[string]struct{}, error) {
+func ApplyFiltering(ctx context.Context, db *gorm.DB, f *query.Filtering, obj interface{}, pb protobuf.Message) (*gorm.DB, map[string]struct{}, error) {
 	c := &DefaultFilteringConditionConverter{&DefaultFilteringConditionProcessor{pb}}
 	return ApplyFilteringEx(ctx, db, f, obj, c)
 }

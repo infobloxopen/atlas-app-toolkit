@@ -5,7 +5,7 @@ import (
 
 	"bytes"
 
-	"github.com/golang/protobuf/jsonpb"
+	jsonpb "google.golang.org/protobuf/encoding/protojson"
 )
 
 func TestIdentifier_MarshalJSONPB(t *testing.T) {

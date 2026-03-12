@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
+	jsonpb "google.golang.org/protobuf/encoding/protojson"
 )
 
 // MarshalJSONPB implements jsonpb.JSONPBMarshaler interface by marshal

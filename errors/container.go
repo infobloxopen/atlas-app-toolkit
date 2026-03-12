@@ -10,8 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errfields"
