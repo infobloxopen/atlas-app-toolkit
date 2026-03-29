@@ -425,5 +425,49 @@ func testErrFunc() error {
 }
 
 func TestGRPCStatus(t *testing.T) {
-	// FIXME
+	t.Run("with details and fields", func(t *testing.T) {
+		c := NewContainer(codes.InvalidArgument, "bad request").
+			WithDetail(codes.InvalidArgument, "name", "name is required").
+			WithField("email", "invalid format")
+		s := c.GRPCStatus()
+		if s == nil {
+			t.Fatal("expected non-nil status")
+		}
+		if s.Code() != codes.InvalidArgument {
+			t.Errorf("expected code %v, got %v", codes.InvalidArgument, s.Code())
+		}
+		if s.Message() != "bad request" {
+			t.Errorf("expected message %q, got %q", "bad request", s.Message())
+		}
+		// Should have 2 details: FieldInfo + TargetInfo
+		if len(s.Details()) != 2 {
+			t.Errorf("expected 2 details, got %d", len(s.Details()))
+		}
+	})
+
+	t.Run("with details only", func(t *testing.T) {
+		c := NewContainer(codes.NotFound, "not found").
+			WithDetail(codes.NotFound, "id", "resource not found")
+		s := c.GRPCStatus()
+		if s == nil {
+			t.Fatal("expected non-nil status")
+		}
+		if len(s.Details()) != 1 {
+			t.Errorf("expected 1 detail, got %d", len(s.Details()))
+		}
+	})
+
+	t.Run("empty container", func(t *testing.T) {
+		c := InitContainer()
+		s := c.GRPCStatus()
+		if s == nil {
+			t.Fatal("expected non-nil status")
+		}
+		if s.Code() != codes.Unknown {
+			t.Errorf("expected code %v, got %v", codes.Unknown, s.Code())
+		}
+		if len(s.Details()) != 0 {
+			t.Errorf("expected 0 details, got %d", len(s.Details()))
+		}
+	})
 }

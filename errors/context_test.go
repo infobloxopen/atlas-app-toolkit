@@ -267,6 +267,67 @@ func TestContextNew(t *testing.T) {
 	)
 }
 
+func TestContextHelpersWithoutContainer(t *testing.T) {
+	// All context helpers must not panic when called with a context
+	// that has no error container.
+	ctx := context.Background()
+
+	t.Run("Detail", func(t *testing.T) {
+		result := Detail(ctx, codes.InvalidArgument, "target", "msg")
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Details", func(t *testing.T) {
+		result := Details(ctx)
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Field", func(t *testing.T) {
+		result := Field(ctx, "field", "msg")
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Fields", func(t *testing.T) {
+		result := Fields(ctx, map[string][]string{"f": {"v"}})
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("New", func(t *testing.T) {
+		result := New(ctx, codes.Internal, "msg")
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Set", func(t *testing.T) {
+		result := Set(ctx, "target", codes.Internal, "msg")
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("IfSet", func(t *testing.T) {
+		result := IfSet(ctx, codes.Internal, "msg")
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Error", func(t *testing.T) {
+		result := Error(ctx)
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+	t.Run("Map", func(t *testing.T) {
+		result := Map(ctx, fmt.Errorf("some error"))
+		if result != nil {
+			t.Error("expected nil")
+		}
+	})
+}
+
 func TestMap(t *testing.T) {
 	c := InitContainer()
 	c.AddMapping(
