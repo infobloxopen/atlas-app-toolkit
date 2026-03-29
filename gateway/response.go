@@ -64,6 +64,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	if !ok {
 		grpclog.Infof("forward response message: failed to extract ServerMetadata from context")
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, fmt.Errorf("forward response message: internal error"))
+		return
 	}
 
 	handleForwardResponseServerMetadata(fw.OutgoingHeaderMatcher, rw, md)
@@ -89,12 +90,14 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	if err != nil {
 		grpclog.Infof("forward response: failed to marshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
+		return
 	}
 
 	var dynmap map[string]interface{}
 	if err := json.Unmarshal(data, &dynmap); err != nil {
 		grpclog.Infof("forward response: failed to unmarshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
+		return
 	}
 
 	method := ""
@@ -127,6 +130,7 @@ func (fw *ResponseForwarder) ForwardMessage(ctx context.Context, mux *runtime.Se
 	if err != nil {
 		grpclog.Infof("forward response: failed to marshal response: %v", err)
 		fw.MessageErrHandler(ctx, mux, marshaler, rw, req, err)
+		return
 	}
 	rw.WriteHeader(httpStatus)
 

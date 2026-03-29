@@ -129,7 +129,11 @@ func getInt64FromHashID(id, salt string) (int64, error) {
 		return -1, err
 	}
 
-	return dID[0], err
+	if len(dID) == 0 {
+		return -1, ErrInvalidID
+	}
+
+	return dID[0], nil
 }
 
 func WithHashIDSalt(salt string) func(o *V0Options) {

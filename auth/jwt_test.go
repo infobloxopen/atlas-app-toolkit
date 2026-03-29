@@ -159,6 +159,23 @@ func TestGetAccountID(t *testing.T) {
 	}
 }
 
+func TestGetAccountIDPropagatesTokenError(t *testing.T) {
+	// When there is no token in context, GetAccountID should return
+	// errMissingToken, not errMissingField.
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs())
+	_, err := GetAccountID(ctx, nil)
+	if err != errMissingToken {
+		t.Errorf("expected errMissingToken, got %v", err)
+	}
+}
+
+func TestGetAccountIDEmptyContext(t *testing.T) {
+	_, err := GetAccountID(context.TODO(), nil)
+	if err != errMissingToken {
+		t.Errorf("expected errMissingToken, got %v", err)
+	}
+}
+
 // creates a context with a jwt
 func contextWithToken(token, tokenType string) context.Context {
 	md := metadata.Pairs(

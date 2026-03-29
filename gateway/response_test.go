@@ -272,6 +272,47 @@ func TestForwardResponseMessageWithSuccessField(t *testing.T) {
 	}
 }
 
+func TestForwardResponseMessageNoMetadata(t *testing.T) {
+	// context without ServerMetadata should trigger the error handler and return,
+	// not panic or proceed with a zero-valued metadata.
+	var errHandlerCalled bool
+	msgErrHandler := func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, err error) {
+		errHandlerCalled = true
+		rw.WriteHeader(http.StatusInternalServerError)
+	}
+	fw := NewForwardResponseMessage(PrefixOutgoingHeaderMatcher, msgErrHandler, ProtoStreamErrorHandler)
+	rw := httptest.NewRecorder()
+	// use context.Background() — no ServerMetadata
+	fw(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, &gateway_test.Result{})
+	if !errHandlerCalled {
+		t.Error("expected error handler to be called when ServerMetadata is missing")
+	}
+	if rw.Code != http.StatusInternalServerError {
+		t.Errorf("expected status 500, got %d", rw.Code)
+	}
+	// Body should be empty since ForwardMessage returns after the error handler
+	if rw.Body.Len() != 0 {
+		t.Errorf("expected empty body after error, got %q", rw.Body.String())
+	}
+}
+
+func TestForwardResponseStreamNoMetadata(t *testing.T) {
+	var errHandlerCalled bool
+	streamErrHandler := func(ctx context.Context, headerWritten bool, mux *runtime.ServeMux, marshaler runtime.Marshaler, rw http.ResponseWriter, req *http.Request, err error) {
+		errHandlerCalled = true
+		rw.WriteHeader(http.StatusInternalServerError)
+	}
+	fw := NewForwardResponseStream(PrefixOutgoingHeaderMatcher, ProtoMessageErrorHandler, streamErrHandler)
+	rw := httptest.NewRecorder()
+	recv := func() (protoreflect.ProtoMessage, error) {
+		return nil, io.EOF
+	}
+	fw(context.Background(), nil, &runtime.JSONBuiltin{}, rw, nil, recv)
+	if !errHandlerCalled {
+		t.Error("expected stream error handler to be called when ServerMetadata is missing")
+	}
+}
+
 func TestForwardResponseStream(t *testing.T) {
 	md := runtime.ServerMetadata{
 		HeaderMD: metadata.Pairs(

@@ -248,6 +248,17 @@ func TestGetIntFromHashID(t *testing.T) {
 	}
 }
 
+func TestGetInt64FromHashIDNoPanic(t *testing.T) {
+	// getInt64FromHashID must not panic even with unexpected inputs.
+	// Passing a correctly-sized but garbled hash should return error, not panic.
+	garbled := strings.Repeat("a", maxHashIDLen)
+	assert.NotPanics(t, func() {
+		_, err := getInt64FromHashID(garbled, "test")
+		// Either returns a valid int or an error — must not panic
+		_ = err
+	})
+}
+
 func TestGenerateNewV0Deprecated(t *testing.T) {
 	var testmap = []struct {
 		realm        string
