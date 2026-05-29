@@ -2,6 +2,7 @@ package resource
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -35,12 +36,28 @@ var _ json.Marshaler = &Identifier{}
 //
 // Support "null" value.
 func (m *Identifier) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+	// Identifier must be represented as a JSON string (quoted) or literal null.
+	// Reject arrays, objects, numbers, and booleans.
+	if data[0] != '"' && string(data) != "null" {
+		return fmt.Errorf("invalid value for resource identifier: expected a string, got: %s", truncateBytes(data, 64))
+	}
 	v := strings.Trim(string(data), "\"")
 	if v == "null" {
 		v = ""
 	}
 	m.ApplicationName, m.ResourceType, m.ResourceId = ParseString(v)
 	return nil
+}
+
+// truncateBytes returns the string representation of data, truncated to maxLen bytes.
+func truncateBytes(data []byte, maxLen int) string {
+	if len(data) <= maxLen {
+		return string(data)
+	}
+	return string(data[:maxLen]) + "..."
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface
