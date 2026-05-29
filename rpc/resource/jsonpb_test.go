@@ -91,3 +91,87 @@ func TestIdentifier_UnmarhsalJSONPB(t *testing.T) {
 		}
 	}
 }
+
+func TestIdentifier_UnmarshalJSONPB_InvalidTypes(t *testing.T) {
+	tcases := []struct {
+		Name     string
+		JSONData string
+	}{
+		{"array", `["app/resource/id1","app/resource/id2"]`},
+		{"empty_array", `[]`},
+		{"number", `12345`},
+		{"negative_number", `-1`},
+		{"float_number", `1.5`},
+		{"object", `{"application_name":"app","resource_type":"res","resource_id":"id1"}`},
+		{"empty_object", `{}`},
+		{"boolean_true", `true`},
+		{"boolean_false", `false`},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			id := &Identifier{}
+			err := id.UnmarshalJSONPB(nil, []byte(tc.JSONData))
+			if err == nil {
+				t.Errorf("expected error for input %s, got nil", tc.JSONData)
+			}
+		})
+	}
+}
+
+func TestIdentifier_UnmarshalJSONPB_ValidInputs(t *testing.T) {
+	tcases := []struct {
+		Name               string
+		JSONData           string
+		ExpectedIdentifier *Identifier
+	}{
+		{
+			"valid resource identifier",
+			`"app/resource/res1"`,
+			&Identifier{ApplicationName: "app", ResourceType: "resource", ResourceId: "res1"},
+		},
+		{
+			"partial identifier with only resource id",
+			`"res1"`,
+			&Identifier{ApplicationName: "", ResourceType: "", ResourceId: "res1"},
+		},
+		{
+			"partial identifier with type and id",
+			`"resource/res1"`,
+			&Identifier{ApplicationName: "", ResourceType: "resource", ResourceId: "res1"},
+		},
+		{
+			"null literal",
+			`null`,
+			&Identifier{ApplicationName: "", ResourceType: "", ResourceId: ""},
+		},
+		{
+			"quoted null",
+			`"null"`,
+			&Identifier{ApplicationName: "", ResourceType: "", ResourceId: ""},
+		},
+		{
+			"empty string",
+			`""`,
+			&Identifier{ApplicationName: "", ResourceType: "", ResourceId: ""},
+		},
+		{
+			"empty data",
+			``,
+			&Identifier{ApplicationName: "", ResourceType: "", ResourceId: ""},
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			id := &Identifier{}
+			err := id.UnmarshalJSONPB(nil, []byte(tc.JSONData))
+			if err != nil {
+				t.Errorf("unexpected error for input %s: %s", tc.JSONData, err)
+			}
+			if id.String() != tc.ExpectedIdentifier.String() {
+				t.Errorf("got %s, expected %s", id, tc.ExpectedIdentifier)
+			}
+		})
+	}
+}
