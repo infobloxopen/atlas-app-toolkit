@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/golang/protobuf/jsonpb"
 )
@@ -39,12 +40,16 @@ func (m *Identifier) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
 	if len(data) == 0 {
 		return nil
 	}
-	// Identifier must be represented as a JSON string (quoted) or literal null.
-	// Reject arrays, objects, numbers, and booleans.
-	if data[0] != '"' && string(data) != "null" {
+	// Decoding into *string rejects arrays, objects, numbers and booleans,
+	// accepts a JSON null (leaving s nil) and resolves JSON escapes.
+	var s *string
+	if err := json.Unmarshal(data, &s); err != nil {
 		return fmt.Errorf("invalid value for resource identifier: expected a string, got: %s", truncateBytes(data, 64))
 	}
-	v := strings.Trim(string(data), "\"")
+	v := ""
+	if s != nil {
+		v = *s
+	}
 	if v == "null" {
 		v = ""
 	}
@@ -52,12 +57,17 @@ func (m *Identifier) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
 	return nil
 }
 
-// truncateBytes returns the string representation of data, truncated to maxLen bytes.
+// truncateBytes returns data as a valid UTF-8 string cut at a rune boundary near
+// maxLen bytes, with an ellipsis when cut. The error text ends up in gRPC status messages,
+// which protojson refuses to marshal when they contain invalid UTF-8.
 func truncateBytes(data []byte, maxLen int) string {
 	if len(data) <= maxLen {
-		return string(data)
+		return strings.ToValidUTF8(string(data), "\uFFFD")
 	}
-	return string(data[:maxLen]) + "..."
+	for maxLen > 0 && !utf8.RuneStart(data[maxLen]) {
+		maxLen--
+	}
+	return strings.ToValidUTF8(string(data[:maxLen]), "\uFFFD") + "..."
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface
