@@ -44,7 +44,7 @@ func (m *Identifier) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
 	// accepts a JSON null (leaving s nil) and resolves JSON escapes.
 	var s *string
 	if err := json.Unmarshal(data, &s); err != nil {
-		return fmt.Errorf("invalid value for resource identifier: expected a string, got: %s", truncateBytes(data, 64))
+		return fmt.Errorf("invalid value for resource identifier: expected a string, got: %s: %w", truncateBytes(data, 64), err)
 	}
 	v := ""
 	if s != nil {

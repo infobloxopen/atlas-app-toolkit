@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -193,6 +194,18 @@ func TestIdentifier_UnmarshalJSONPB_InvalidSyntax(t *testing.T) {
 		if err := (&Identifier{}).UnmarshalJSONPB(nil, []byte(in)); err == nil {
 			t.Errorf("expected error for input %s, got nil", in)
 		}
+	}
+}
+
+func TestIdentifier_UnmarshalJSONPB_WrapsDecoderError(t *testing.T) {
+	var typeErr *json.UnmarshalTypeError
+	if err := (&Identifier{}).UnmarshalJSONPB(nil, []byte(`123`)); !errors.As(err, &typeErr) {
+		t.Errorf("expected *json.UnmarshalTypeError, got %v", err)
+	}
+
+	var syntaxErr *json.SyntaxError
+	if err := (&Identifier{}).UnmarshalJSONPB(nil, []byte(`"app/res/id1`)); !errors.As(err, &syntaxErr) {
+		t.Errorf("expected *json.SyntaxError, got %v", err)
 	}
 }
 
