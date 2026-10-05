@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -20,7 +21,19 @@ func (m Identifier) MarshalJSONPB(*jsonpb.Marshaler) ([]byte, error) {
 	if v == "" {
 		v = "null"
 	}
-	return []byte(`"` + v + `"`), nil
+	return marshalString(v)
+}
+
+// marshalString encodes v as a JSON string. HTML escaping is disabled so that
+// ids containing &, < or > keep the bytes they were written with before.
+func marshalString(v string) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(v); err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(buf.Bytes(), []byte("\n")), nil
 }
 
 // MarshalJSON implements json.Marshaler interface
