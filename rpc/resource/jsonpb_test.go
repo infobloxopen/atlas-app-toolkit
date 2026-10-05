@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -145,7 +146,8 @@ func TestIdentifier_UnmarshalJSONPB(t *testing.T) {
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("direct", func(t *testing.T) {
-				var id Identifier
+				// A pre-filled receiver proves null/empty rows clear it.
+				id := Identifier{ApplicationName: "stale", ResourceType: "stale", ResourceId: "stale"}
 				err := id.UnmarshalJSONPB(nil, []byte(tc.data))
 				check(t, id, err, tc.err, tc.want)
 			})
@@ -181,6 +183,7 @@ func TestIdentifier_UnmarshalJSONPB_ErrorMessage(t *testing.T) {
 	}{
 		{"multi-byte characters across the cut", []byte(`["` + strings.Repeat("é", 100) + `"]`)},
 		{"invalid UTF-8 input", []byte("[\xff\xfe]")},
+		{"control characters", []byte("[\"a\nb\x00c\r\"]")},
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -188,11 +191,17 @@ func TestIdentifier_UnmarshalJSONPB_ErrorMessage(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
-			if !utf8.ValidString(err.Error()) {
-				t.Errorf("error text is not valid UTF-8: %q", err.Error())
+			msg := err.Error()
+			if !utf8.ValidString(msg) {
+				t.Errorf("error text is not valid UTF-8: %q", msg)
 			}
-			if !strings.Contains(err.Error(), "expected a string") {
-				t.Errorf("unexpected error text: %q", err.Error())
+			for _, r := range msg {
+				if unicode.IsControl(r) {
+					t.Errorf("error text contains control character %q: %q", r, msg)
+				}
+			}
+			if !strings.Contains(msg, "expected a string") {
+				t.Errorf("unexpected error text: %q", msg)
 			}
 		})
 	}
@@ -253,27 +262,42 @@ func TestIdentifier_JSONRoundTrip(t *testing.T) {
 	}
 }
 
-func TestTruncateBytes(t *testing.T) {
+func TestIdentifier_MarshalJSONPB_InvalidUTF8(t *testing.T) {
+	id := &Identifier{ApplicationName: "app", ResourceType: "res", ResourceId: "a\xffb"}
+	out, err := id.MarshalJSONPB(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if want := `"app/res/a\ufffdb"`; string(out) != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+	if !json.Valid(out) {
+		t.Errorf("output %q is not valid JSON", out)
+	}
+}
+
+func TestQuoteTruncated(t *testing.T) {
 	tcases := []struct {
 		name   string
 		data   []byte
 		maxLen int
 		want   string
 	}{
-		{"empty", nil, 4, ""},
-		{"shorter than limit", []byte("abc"), 5, "abc"},
-		{"exactly the limit", []byte("abc"), 3, "abc"},
-		{"ascii cut", []byte("abcdef"), 3, "abc..."},
-		{"cut on a rune boundary", []byte("éé"), 2, "é..."},
-		{"cut inside a rune backs off", []byte("éé"), 3, "é..."},
-		{"only continuation bytes back off to zero", []byte{0x80, 0x80, 0x80, 0x80}, 2, "..."},
-		{"invalid bytes replaced when not cut", []byte("a\xffb"), 10, "a\uFFFDb"},
-		{"invalid bytes replaced when cut", []byte("a\xffbcd"), 4, "a\uFFFDbc..."},
+		{"empty", nil, 4, `""`},
+		{"shorter than limit", []byte("abc"), 5, `"abc"`},
+		{"exactly the limit", []byte("abc"), 3, `"abc"`},
+		{"cut", []byte("abcdef"), 3, `"abc"...`},
+		{"quotes are escaped", []byte(`["a"]`), 10, `"[\"a\"]"`},
+		{"printable unicode kept", []byte("éé"), 4, `"éé"`},
+		{"cut inside a rune is escaped", []byte("éé"), 3, `"é\xc3"...`},
+		{"control characters escaped", []byte("a\nb\x00c"), 10, `"a\nb\x00c"`},
+		{"invalid bytes escaped", []byte("a\xffb"), 10, `"a\xffb"`},
+		{"zero limit", []byte("abc"), 0, `""...`},
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := truncateBytes(tc.data, tc.maxLen); got != tc.want {
-				t.Errorf("truncateBytes(%q, %d) = %q, want %q", tc.data, tc.maxLen, got, tc.want)
+			if got := quoteTruncated(tc.data, tc.maxLen); got != tc.want {
+				t.Errorf("quoteTruncated(%q, %d) = %s, want %s", tc.data, tc.maxLen, got, tc.want)
 			}
 		})
 	}
