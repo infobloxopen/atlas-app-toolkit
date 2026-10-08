@@ -165,3 +165,34 @@ func TestWriteErrorContainer(t *testing.T) {
 	}
 
 }
+
+func TestErrorsAndSuccessFromContextLargeCounter(t *testing.T) {
+	// Counter values above MaxInt32 must not be silently dropped.
+	// This tests the fix for using ParseUint instead of ParseInt.
+	md := runtime.ServerMetadata{
+		TrailerMD: metadata.Pairs(
+			"success-3000000000", "message:large counter success",
+			"success-100", "message:small counter success",
+		),
+	}
+	ctx := runtime.NewServerMetadataContext(context.Background(), md)
+	_, suc, _ := errorsAndSuccessFromContext(ctx)
+	if suc == nil {
+		t.Fatal("expected success to be non-nil")
+	}
+	// The one with the higher counter (3000000000) should win
+	if suc["message"] != "large counter success" {
+		t.Errorf("expected large counter success to win, got %v", suc["message"])
+	}
+}
+
+func TestErrorsAndSuccessFromContextNoMetadata(t *testing.T) {
+	// Context without server metadata should return nil for all.
+	_, suc, override := errorsAndSuccessFromContext(context.Background())
+	if suc != nil {
+		t.Error("expected nil success")
+	}
+	if override {
+		t.Error("expected no error override")
+	}
+}

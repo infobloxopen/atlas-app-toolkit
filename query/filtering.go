@@ -233,6 +233,9 @@ func floatInSlice(digit float64, slice []float64) bool {
 }
 
 func fieldByFieldPath(obj interface{}, fieldPath []string) reflect.Value {
+	if obj == nil || len(fieldPath) == 0 {
+		return reflect.Value{}
+	}
 	switch obj.(type) {
 	case proto.Message:
 		return fieldByProtoPath(obj, fieldPath)
@@ -243,6 +246,9 @@ func fieldByFieldPath(obj interface{}, fieldPath []string) reflect.Value {
 
 func fieldByProtoPath(obj interface{}, protoPath []string) reflect.Value {
 	v := dereferenceValue(reflect.ValueOf(obj))
+	if !v.IsValid() || v.Kind() != reflect.Struct {
+		return reflect.Value{}
+	}
 	props := proto.GetProperties(v.Type())
 	for _, p := range props.Prop {
 		if p.OrigName == protoPath[0] {
@@ -257,6 +263,9 @@ func fieldByProtoPath(obj interface{}, protoPath []string) reflect.Value {
 
 func fieldByJSONPath(obj interface{}, jsonPath []string) reflect.Value {
 	v := dereferenceValue(reflect.ValueOf(obj))
+	if !v.IsValid() || v.Kind() != reflect.Struct {
+		return reflect.Value{}
+	}
 	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)

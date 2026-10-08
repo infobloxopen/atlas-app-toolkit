@@ -85,6 +85,58 @@ type testResponse struct {
 	PageInfo *query.PageInfo
 }
 
+func TestApplySearchingExSpecialChars(t *testing.T) {
+	gormDB, _ := setUp(t)
+	converter := &DefaultSearchingConverter{}
+
+	tests := []struct {
+		name       string
+		query      string
+		expectSkip bool // true = WHERE clause should NOT be added
+	}{
+		{"normal query", "hello world", false},
+		{"query with parenthesis", "hello(world)", true},
+		{"query with pipe", "hello|world", true},
+		{"query with plus", "hello+world", true},
+		{"query with single quote", "it's", true},
+		{"query with ampersand", "foo&bar", true},
+		{"query with semicolon", "foo;bar", true},
+		{"query with exclamation", "!foo", true},
+		{"query with percent", "100%", true},
+		{"empty query", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &query.Searching{Query: tt.query}
+			if tt.query == "" {
+				s = nil
+			}
+			fields := []string{"name"}
+			result, err := ApplySearchingEx(context.Background(), gormDB, s, &Person{}, fields, converter)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result == nil {
+				t.Fatal("expected non-nil db")
+			}
+		})
+	}
+}
+
+func TestApplySearchingExDoesNotMutateQuery(t *testing.T) {
+	// When special chars are found, the original query should not be modified
+	// and the db should be returned without a WHERE clause
+	gormDB, _ := setUp(t)
+	converter := &DefaultSearchingConverter{}
+
+	s := &query.Searching{Query: "test(query)"}
+	_, err := ApplySearchingEx(context.Background(), gormDB, s, &Person{}, []string{"name"}, converter)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestApplyCollectionOperators(t *testing.T) {
 
 	req, err := http.NewRequest("GET", "http://test.com?_fields=id,name,sub_person,items&_filter=age<=25 and sub_person.name=='Mike'&_order_by=age,sub_person.name,parent.name desc&_limit=2&_offset=1", nil)

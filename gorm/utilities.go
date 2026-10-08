@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -41,8 +42,16 @@ func HandleFieldPath(ctx context.Context, fieldPath []string, obj interface{}) (
 	return dbPath, "", nil
 }
 
+// safeFieldPathSegment matches identifiers that are safe for inclusion in SQL.
+var safeFieldPathSegment = regexp.MustCompile(`^[a-zA-Z0-9_\-]+$`)
+
 // HandleJSONFiledPath translate field path to JSONB path for postgres jsonb
 func HandleJSONFieldPath(ctx context.Context, fieldPath []string, obj interface{}, values ...string) (string, string, error) {
+	for _, seg := range fieldPath {
+		if !safeFieldPathSegment.MatchString(seg) {
+			return "", "", fmt.Errorf("invalid field path segment: %q", seg)
+		}
+	}
 	operator := "#>>"
 	if isRawJSON(values...) {
 		operator = "#>"
@@ -228,9 +237,12 @@ func (e *EmptyFieldPathError) Error() string {
 
 func camelCase(v string) string {
 	sp := strings.Split(v, "_")
-	r := make([]string, len(sp))
-	for i, v := range sp {
-		r[i] = strings.ToUpper(v[:1]) + v[1:]
+	r := make([]string, 0, len(sp))
+	for _, v := range sp {
+		if v == "" {
+			continue
+		}
+		r = append(r, strings.ToUpper(v[:1])+v[1:])
 	}
 
 	return strings.Join(r, "")

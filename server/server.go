@@ -232,7 +232,7 @@ func (s *Server) GracefulShutdown(ctx context.Context) error {
 	return s.shutdown(ctx, true)
 }
 
-func (s Server) shutdown(ctx context.Context, isGraceful bool) error {
+func (s *Server) shutdown(ctx context.Context, isGraceful bool) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	doneC := make(chan bool)
@@ -274,7 +274,7 @@ func (s Server) shutdown(ctx context.Context, isGraceful bool) error {
 	}
 }
 
-func (s Server) initialize() error {
+func (s *Server) initialize() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.initializeTimeout)
 	defer cancel()
 	errC := make(chan error)

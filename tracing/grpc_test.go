@@ -155,6 +155,31 @@ func TestServerHandler_HandleRPC(t *testing.T) {
 	assert.Equal(t, expectedAnnotations, resultAnnotations)
 }
 
+func TestServerHandler_HandleRPC_NilSpan(t *testing.T) {
+	// HandleRPC must not panic when context has no span.
+	handler := NewServerHandler(
+		WithMetadataAnnotation(AlwaysGRPC),
+		WithGRPCPayloadAnnotation(AlwaysGRPC),
+	)
+
+	// context.Background() has no span — trace.FromContext returns nil
+	ctx := context.Background()
+
+	rpcStats := []stats.RPCStats{
+		&stats.End{Error: fmt.Errorf("some error")},
+		&stats.InHeader{Header: metadata.MD{"key": {"val"}}},
+		&stats.OutHeader{Header: metadata.MD{"key": {"val"}}},
+		&stats.InPayload{Payload: []byte("data")},
+		&stats.OutPayload{Payload: []byte("data")},
+	}
+
+	for _, rs := range rpcStats {
+		assert.NotPanics(t, func() {
+			handler.HandleRPC(ctx, rs)
+		}, "HandleRPC should not panic with nil span for %T", rs)
+	}
+}
+
 func TestMetadataToAttributes(t *testing.T) {
 	expected := []trace.Attribute{trace.StringAttribute(fmt.Sprint("prefix.", expectedStr), "test value")}
 	result := metadataToAttributes(metadata.MD{expectedStr: {"test value"}}, "prefix.", defaultMetadataMatcher)

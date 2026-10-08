@@ -70,8 +70,12 @@ func GetJWTField(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (s
 // GetAccountID gets the JWT from a context and returns the AccountID field
 func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
 	for _, tenantField := range multiTenancyVariants {
-		if val, err := GetJWTField(ctx, tenantField, keyfunc); err == nil {
+		val, err := GetJWTField(ctx, tenantField, keyfunc)
+		if err == nil {
 			return val, nil
+		}
+		if err != errMissingField {
+			return "", err
 		}
 	}
 	return "", errMissingField

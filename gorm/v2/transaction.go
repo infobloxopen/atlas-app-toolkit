@@ -161,7 +161,7 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	}
 	sqlDB, err := t.current.DB()
 	if err != nil || reflect.ValueOf(sqlDB).IsNil() {
-		return nil
+		return status.Error(codes.Unavailable, "Database connection not available")
 	}
 	t.current.Commit()
 	err = t.current.Error

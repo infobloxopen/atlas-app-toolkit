@@ -100,7 +100,7 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 
 	span := trace.FromContext(ctx)
 
-	if withPayload {
+	if withPayload && span != nil {
 		switch rs := rs.(type) {
 		case *stats.End:
 			if rs.Error != nil {
@@ -114,7 +114,7 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 
 	span = trace.FromContext(ctx)
 
-	if withHeaders {
+	if withHeaders && span != nil {
 		switch rs := rs.(type) {
 		case *stats.InHeader:
 			attrs := metadataToAttributes(rs.Header, RequestHeaderAnnotationPrefix, s.options.metadataMatcher)
@@ -131,7 +131,7 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 		}
 	}
 
-	if withPayload {
+	if withPayload && span != nil {
 		switch rs := rs.(type) {
 		case *stats.InPayload:
 			attrs, truncated, err := payloadToAttributes(RequestPayloadAnnotationKey, rs.Payload, s.options.maxPayloadSize)

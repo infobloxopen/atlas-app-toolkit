@@ -230,3 +230,48 @@ func TestFilteringNegative(t *testing.T) {
 	}
 
 }
+
+func TestFilteringNilObj(t *testing.T) {
+	// nil obj must not panic — should return TypeMismatchError
+	tests := []string{
+		"str == '111'",
+		"int == 111",
+		"str == null",
+		"str in ['a','b']",
+		"int in [1,2]",
+	}
+	for _, filter := range tests {
+		assert.NotPanics(t, func() {
+			res, err := Filter(nil, filter)
+			assert.False(t, res)
+			assert.Error(t, err)
+		}, "filter %q on nil obj should not panic", filter)
+	}
+}
+
+func TestFilteringNonStructObj(t *testing.T) {
+	// non-struct obj (e.g. string, int) must not panic
+	objs := []interface{}{
+		"just a string",
+		42,
+		3.14,
+		true,
+	}
+	for _, obj := range objs {
+		assert.NotPanics(t, func() {
+			res, err := Filter(obj, "field == '1'")
+			assert.False(t, res)
+			assert.Error(t, err)
+		}, "filter on %T should not panic", obj)
+	}
+}
+
+func TestFilteringNilPointerProto(t *testing.T) {
+	// typed nil proto pointer must not panic
+	var msg *TestProtoMessage
+	assert.NotPanics(t, func() {
+		res, err := Filter(msg, "str == '111'")
+		assert.False(t, res)
+		assert.Error(t, err)
+	})
+}

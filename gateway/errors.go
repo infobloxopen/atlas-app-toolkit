@@ -283,7 +283,8 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 	}
 	errors = make([]map[string]interface{}, 0)
 	var primaryError map[string]interface{}
-	latestSuccess := int64(-1)
+	var latestSuccess uint64
+	var hasSuccess bool
 	for k, vs := range md.TrailerMD {
 		if k == "error" {
 			err := make(map[string]interface{})
@@ -313,14 +314,14 @@ func errorsAndSuccessFromContext(ctx context.Context) (errors []map[string]inter
 			errors = append(errors, err)
 		}
 		if num := strings.TrimPrefix(k, "success-"); num != k {
-			// Let the later success messages override previous ones,
-			// also account for the possiblity of wraparound with a generous check
-			if i, err := strconv.ParseInt(num, 10, 32); err == nil {
-				if i > latestSuccess || (i < 1<<12 && latestSuccess > 1<<28) {
-					latestSuccess = i
-				} else {
+			// Let the later success messages override previous ones.
+			// Counter is uint32, so use ParseUint to handle the full range.
+			if i, err := strconv.ParseUint(num, 10, 32); err == nil {
+				if hasSuccess && i <= latestSuccess {
 					continue
 				}
+				latestSuccess = i
+				hasSuccess = true
 			}
 			success = make(map[string]interface{})
 			for _, v := range vs {
