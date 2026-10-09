@@ -268,11 +268,17 @@ func TestIdentifier_MarshalJSONPB_InvalidUTF8(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	if want := `"app/res/a\ufffdb"`; string(out) != want {
-		t.Errorf("got %s, want %s", out, want)
-	}
 	if !json.Valid(out) {
-		t.Errorf("output %q is not valid JSON", out)
+		t.Fatalf("output %q is not valid JSON", out)
+	}
+	// Go 1.27 writes U+FFFD as a raw rune rather than a \ufffd escape, so
+	// compare the decoded value instead of the encoded bytes.
+	var got string
+	if err := json.Unmarshal(out, &got); err != nil {
+		t.Fatalf("unexpected error decoding %q: %s", out, err)
+	}
+	if want := "app/res/a\uFFFDb"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
