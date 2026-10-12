@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -205,7 +206,11 @@ func (p *DefaultFilteringConditionProcessor) ProcessStringCondition(ctx context.
 		} else {
 			if isIdentifier(indirectType(sf.Type)) {
 				id := &resource.Identifier{}
-				if err := jsonpb.UnmarshalString(fmt.Sprintf("\"%s\"", value), id); err != nil {
+				quoted, mErr := json.Marshal(value)
+				if mErr != nil {
+					return nil, mErr
+				}
+				if err := jsonpb.UnmarshalString(string(quoted), id); err != nil {
 					return nil, err
 				}
 				newPb := reflect.New(objType)
