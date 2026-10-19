@@ -3,10 +3,12 @@ package gorm
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/infobloxopen/atlas-app-toolkit/v2/rpc/errdetails"
@@ -473,22 +475,135 @@ func TestBeginFromContext_Bad(t *testing.T) {
 	}
 }
 
-// commitFailureCases pairs a Commit error with the code the interceptors must report for it.
-var commitFailureCases = []struct {
-	name      string
+// newMockGorm returns a gorm DB backed by sqlmock, closed when the test ends.
+func newMockGorm(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
+	t.Helper()
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock - %s", err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	gdb, err := gorm.Open("postgres", db)
+	if err != nil {
+		t.Fatalf("failed to open gorm db - %s", err)
+	}
+
+	return gdb, mock
+}
+
+// mockServerStream is the minimum grpc.ServerStream the stream interceptor needs: it only reads Context.
+type mockServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (m *mockServerStream) Context() context.Context { return m.ctx }
+
+// commitFailureCase describes one way a request can end with a failed commit.
+type commitFailureCase struct {
+	name string
+	// commitErr is what the database returns for COMMIT.  When nil the driver never sees a
+	// commit: the request's own cancellation makes database/sql roll the transaction back first.
 	commitErr error
-	wantCode  codes.Code
-}{
-	{"context canceled", context.Canceled, codes.Canceled},
-	{"context deadline exceeded", context.DeadlineExceeded, codes.DeadlineExceeded},
-	{"wrapped cancellation", fmt.Errorf("commit: %w", context.Canceled), codes.Canceled},
-	{"database fault", errors.New("deadlock detected"), codes.Internal},
+	// useBegin opens the transaction with Begin(), which is not tied to the request context.
+	// Otherwise BeginFromContext is used, which is.
+	useBegin bool
+	// cancelRequest cancels the request context from inside the handler, as a client hanging
+	// up would.
+	cancelRequest bool
+	// timeout gives the request context a deadline.
+	timeout time.Duration
+	// wait keeps the handler running afterwards, long enough for database/sql's background
+	// rollback to finish and for Commit to return sql.ErrTxDone.
+	wait     time.Duration
+	wantCode codes.Code
+}
+
+var commitFailureCases = []commitFailureCase{
+	// The commit error itself says why, and the request context is still live.
+	{name: "commit fails with context canceled", commitErr: context.Canceled, wantCode: codes.Canceled},
+	{name: "commit fails with context deadline exceeded", commitErr: context.DeadlineExceeded, wantCode: codes.DeadlineExceeded},
+	{name: "commit fails with wrapped cancellation", commitErr: fmt.Errorf("commit: %w", context.Canceled), wantCode: codes.Canceled},
+
+	// Controls: a failure that has nothing to do with the caller stays Internal.
+	{name: "database fault", commitErr: errors.New("deadlock detected"), wantCode: codes.Internal},
+	{name: "driver error", commitErr: driver.ErrBadConn, wantCode: codes.Internal},
+
+	// The request ends and the commit error no longer says so, which is what really happens:
+	// database/sql rolls back in the background and Commit may return sql.ErrTxDone.
+	{name: "client hangs up and the commit races the rollback", cancelRequest: true, wantCode: codes.Canceled},
+	{name: "client hangs up and the rollback finished first", cancelRequest: true, wait: 50 * time.Millisecond, wantCode: codes.Canceled},
+	{name: "deadline passes and the rollback finished first", timeout: 20 * time.Millisecond, wait: 60 * time.Millisecond, wantCode: codes.DeadlineExceeded},
+	{name: "client hangs up and the driver reports its own error", commitErr: driver.ErrBadConn, useBegin: true, cancelRequest: true, wantCode: codes.Canceled},
+}
+
+// runCommitFailure runs one case through the unary or the stream interceptor and returns the
+// error the request ends with.
+func runCommitFailure(t *testing.T, tc commitFailureCase, stream bool) error {
+	t.Helper()
+
+	gdb, mock := newMockGorm(t)
+	mock.ExpectBegin()
+	if tc.commitErr != nil {
+		mock.ExpectCommit().WillReturnError(tc.commitErr)
+	} else {
+		mock.ExpectRollback()
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	if tc.timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), tc.timeout)
+	}
+	defer cancel()
+
+	// body is what a handler does: open the transaction, let the request end, and succeed.
+	body := func(c context.Context) error {
+		if tc.useBegin {
+			txn, ok := FromContext(c)
+			if !ok {
+				t.Error("failed to extract transaction from context")
+				return nil
+			}
+			txn.Begin()
+		} else if _, err := BeginFromContext(c); err != nil {
+			return err
+		}
+		if tc.cancelRequest {
+			cancel()
+		}
+		time.Sleep(tc.wait)
+
+		return nil
+	}
+
+	var err error
+	if stream {
+		err = StreamServerInterceptor(gdb)(nil, &mockServerStream{ctx: ctx}, nil, func(srv interface{}, s grpc.ServerStream) error {
+			return body(s.Context())
+		})
+	} else {
+		_, err = UnaryServerInterceptor(gdb)(ctx, nil, nil, func(c context.Context, req interface{}) (interface{}, error) {
+			return nil, body(c)
+		})
+	}
+
+	// When the request's own cancellation drives the outcome, the rollback happens in a
+	// background goroutine, so there is no deterministic point at which to check the mock.
+	if tc.commitErr != nil {
+		if merr := mock.ExpectationsWereMet(); merr != nil {
+			t.Errorf("failed to meet mock expectations - %s", merr)
+		}
+	}
+
+	return err
 }
 
 // checkCommitFailure asserts what a failed commit must look like to the caller: the code follows
 // the cause, the message stays the stable one, and the real error is still attached as the
-// "gorm" detail, still labelled Internal.
-func checkCommitFailure(t *testing.T, err error, wantCode codes.Code, commitErr error) {
+// "gorm" detail, labelled with the same code.
+func checkCommitFailure(t *testing.T, err error, tc commitFailureCase) {
 	t.Helper()
 
 	if err == nil {
@@ -496,8 +611,8 @@ func checkCommitFailure(t *testing.T, err error, wantCode codes.Code, commitErr 
 	}
 
 	st := status.Convert(err)
-	if st.Code() != wantCode {
-		t.Errorf("expected code %v, got %v", wantCode, st.Code())
+	if st.Code() != tc.wantCode {
+		t.Errorf("expected code %v, got %v (%q)", tc.wantCode, st.Code(), st.Message())
 	}
 	if st.Message() != "failed to commit transaction" {
 		t.Errorf("unexpected message %q", st.Message())
@@ -511,79 +626,26 @@ func checkCommitFailure(t *testing.T, err error, wantCode codes.Code, commitErr 
 	if !ok {
 		t.Fatalf("unexpected detail type %T", details[0])
 	}
-	if d.Code != int32(codes.Internal) || d.Target != "gorm" || d.Message != commitErr.Error() {
-		t.Errorf("invalid target info - code=%d, target=%q, message=%q", d.Code, d.Target, d.Message)
+	if d.Code != int32(tc.wantCode) || d.Target != "gorm" {
+		t.Errorf("invalid target info - code=%d, target=%q", d.Code, d.Target)
+	}
+	if tc.commitErr != nil && d.Message != tc.commitErr.Error() {
+		t.Errorf("expected detail message %q, got %q", tc.commitErr.Error(), d.Message)
 	}
 }
 
 func TestUnaryServerInterceptor_commitFailureCode(t *testing.T) {
 	for _, tc := range commitFailureCases {
 		t.Run(tc.name, func(t *testing.T) {
-			db, mock, err := sqlmock.New()
-			if err != nil {
-				t.Fatalf("failed to create sqlmock - %s", err)
-			}
-			mock.ExpectBegin()
-			mock.ExpectCommit().WillReturnError(tc.commitErr)
-
-			gdb, err := gorm.Open("postgres", db)
-			if err != nil {
-				t.Fatalf("failed to open gorm db - %s", err)
-			}
-
-			_, err = UnaryServerInterceptor(gdb)(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
-				txn, ok := FromContext(ctx)
-				if !ok {
-					t.Error("failed to extract transaction from context")
-				}
-				txn.Begin()
-				return nil, nil
-			})
-
-			checkCommitFailure(t, err, tc.wantCode, tc.commitErr)
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("failed to meet mock expectations - %s", err)
-			}
+			checkCommitFailure(t, runCommitFailure(t, tc, false), tc)
 		})
 	}
 }
 
-// ctxStream is the minimum grpc.ServerStream the stream interceptor needs: it only reads Context.
-type ctxStream struct {
-	grpc.ServerStream
-	ctx context.Context
-}
-
-func (s ctxStream) Context() context.Context { return s.ctx }
-
 func TestStreamServerInterceptor_commitFailureCode(t *testing.T) {
 	for _, tc := range commitFailureCases {
 		t.Run(tc.name, func(t *testing.T) {
-			db, mock, err := sqlmock.New()
-			if err != nil {
-				t.Fatalf("failed to create sqlmock - %s", err)
-			}
-			mock.ExpectBegin()
-			mock.ExpectCommit().WillReturnError(tc.commitErr)
-
-			gdb, err := gorm.Open("postgres", db)
-			if err != nil {
-				t.Fatalf("failed to open gorm db - %s", err)
-			}
-
-			err = StreamServerInterceptor(gdb)(nil, ctxStream{ctx: context.Background()}, nil, func(srv interface{}, stream grpc.ServerStream) error {
-				txn, ok := FromContext(stream.Context())
-				if !ok {
-					t.Error("failed to extract transaction from context")
-				}
-				txn.Begin()
-				return nil
-			})
-
-			checkCommitFailure(t, err, tc.wantCode, tc.commitErr)
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("failed to meet mock expectations - %s", err)
-			}
+			checkCommitFailure(t, runCommitFailure(t, tc, true), tc)
 		})
 	}
 }
