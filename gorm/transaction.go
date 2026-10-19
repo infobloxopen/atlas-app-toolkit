@@ -307,6 +307,21 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
+// commitFailureCode picks the gRPC code for a failed Commit.  A cancelled or timed-out context
+// is the caller going away, not a fault in the database, so it is reported as such; anything
+// else stays Internal.  It looks only at the commit error, never at the request context, so a
+// genuine failure that happens to race a cancellation keeps its own code.
+func commitFailureCode(err error) codes.Code {
+	switch {
+	case errors.Is(err, context.Canceled):
+		return codes.Canceled
+	case errors.Is(err, context.DeadlineExceeded):
+		return codes.DeadlineExceeded
+	}
+
+	return codes.Internal
+}
+
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor that manages
 // a `*Transaction` instance.
 // New *Transaction instance is created before grpc.UnaryHandler call.
@@ -343,7 +358,7 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 				terr = txn.Rollback()
 			} else {
 				if terr = txn.Commit(ctx); terr != nil {
-					err = status.Error(codes.Internal, "failed to commit transaction")
+					err = status.Error(commitFailureCode(terr), "failed to commit transaction")
 				}
 			}
 

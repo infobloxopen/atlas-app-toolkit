@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -974,6 +975,81 @@ func TestBeginFromContext_Bad(t *testing.T) {
 			}
 			if err != ErrCtxTxnNoDB {
 				t.Error("Did not receive an error opening a txn with nil DB")
+			}
+		})
+	}
+}
+
+// commitFailureCases pairs a Commit error with the code the interceptor must report for it.
+var commitFailureCases = []struct {
+	name      string
+	commitErr error
+	wantCode  codes.Code
+}{
+	{"context canceled", context.Canceled, codes.Canceled},
+	{"context deadline exceeded", context.DeadlineExceeded, codes.DeadlineExceeded},
+	{"wrapped cancellation", fmt.Errorf("commit: %w", context.Canceled), codes.Canceled},
+	{"database fault", errors.New("deadlock detected"), codes.Internal},
+}
+
+// checkCommitFailure asserts what a failed commit must look like to the caller: the code follows
+// the cause, the message stays the stable one, and the real error is still attached as the
+// "gorm" detail, still labelled Internal.
+func checkCommitFailure(t *testing.T, err error, wantCode codes.Code, commitErr error) {
+	t.Helper()
+
+	if err == nil {
+		t.Fatal("expected an error from the failed commit")
+	}
+
+	st := status.Convert(err)
+	if st.Code() != wantCode {
+		t.Errorf("expected code %v, got %v", wantCode, st.Code())
+	}
+	if st.Message() != "failed to commit transaction" {
+		t.Errorf("unexpected message %q", st.Message())
+	}
+
+	details := st.Details()
+	if len(details) == 0 {
+		t.Fatal("expected the gorm detail to be attached")
+	}
+	d, ok := details[0].(*errdetails.TargetInfo)
+	if !ok {
+		t.Fatalf("unexpected detail type %T", details[0])
+	}
+	if d.Code != int32(codes.Internal) || d.Target != "gorm" || d.Message != commitErr.Error() {
+		t.Errorf("invalid target info - code=%d, target=%q, message=%q", d.Code, d.Target, d.Message)
+	}
+}
+
+func TestUnaryServerInterceptor_commitFailureCode(t *testing.T) {
+	for _, tc := range commitFailureCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock - %s", err)
+			}
+			mock.ExpectBegin()
+			mock.ExpectCommit().WillReturnError(tc.commitErr)
+
+			gdb, err := gorm.Open("postgres", db)
+			if err != nil {
+				t.Fatalf("failed to open gorm db - %s", err)
+			}
+
+			_, err = UnaryServerInterceptor(gdb)(context.Background(), nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+				txn, ok := FromContext(ctx)
+				if !ok {
+					t.Error("failed to extract transaction from context")
+				}
+				txn.Begin()
+				return nil, nil
+			})
+
+			checkCommitFailure(t, err, tc.wantCode, tc.commitErr)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("failed to meet mock expectations - %s", err)
 			}
 		})
 	}
