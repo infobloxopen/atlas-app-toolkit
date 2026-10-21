@@ -174,6 +174,29 @@ func (t *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
+// commitFailureCode picks the gRPC code for a failed Commit.  A cancelled or timed-out request
+// is the caller going away, not a fault in the database, so it is reported as such; anything
+// else stays Internal.
+//
+// Both the commit error and the request context are consulted.  When the context ends,
+// database/sql rolls the transaction back in the background, and a Commit that loses that race
+// returns sql.ErrTxDone instead of the context error, so the commit error alone cannot be relied
+// on.  A genuine database failure that coincides with a cancellation is reported as cancelled:
+// the transaction was rolled back either way, and the real error is still attached as the
+// "gorm" detail.
+func commitFailureCode(ctx context.Context, commitErr error) codes.Code {
+	for _, err := range []error{commitErr, ctx.Err()} {
+		switch {
+		case errors.Is(err, context.Canceled):
+			return codes.Canceled
+		case errors.Is(err, context.DeadlineExceeded):
+			return codes.DeadlineExceeded
+		}
+	}
+
+	return codes.Internal
+}
+
 // UnaryServerInterceptor returns grpc.UnaryServerInterceptor that manages
 // a `*Transaction` instance.
 // New *Transaction instance is created before grpc.UnaryHandler call.
@@ -200,11 +223,15 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 			}
 
 			var terr error
+			// The code of a failed commit, which also labels the "gorm" detail; a failed
+			// rollback keeps the handler's own error and its code.
+			code := codes.Internal
 			if err != nil {
 				terr = txn.Rollback()
 			} else {
 				if terr = txn.Commit(ctx); terr != nil {
-					err = status.Error(codes.Internal, "failed to commit transaction")
+					code = commitFailureCode(ctx, terr)
+					err = status.Error(code, "failed to commit transaction")
 				}
 			}
 
@@ -218,7 +245,7 @@ func UnaryServerInterceptorTxn(txn *Transaction) grpc.UnaryServerInterceptor {
 			}
 
 			st := status.Convert(err)
-			st, serr := st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
+			st, serr := st.WithDetails(errdetails.New(code, "gorm", terr.Error()))
 			// do not override error if failed to attach details
 			if serr == nil {
 				err = st.Err()
@@ -261,11 +288,15 @@ func StreamServerInterceptorTxn(txn *Transaction) grpc.StreamServerInterceptor {
 			}
 
 			var terr error
+			// The code of a failed commit, which also labels the "gorm" detail; a failed
+			// rollback keeps the handler's own error and its code.
+			code := codes.Internal
 			if err != nil {
 				terr = txn.Rollback()
 			} else {
 				if terr = txn.Commit(ctx); terr != nil {
-					err = status.Error(codes.Internal, "failed to commit transaction")
+					code = commitFailureCode(ctx, terr)
+					err = status.Error(code, "failed to commit transaction")
 				}
 			}
 
@@ -279,7 +310,7 @@ func StreamServerInterceptorTxn(txn *Transaction) grpc.StreamServerInterceptor {
 			}
 
 			st := status.Convert(err)
-			st, serr := st.WithDetails(errdetails.New(codes.Internal, "gorm", terr.Error()))
+			st, serr := st.WithDetails(errdetails.New(code, "gorm", terr.Error()))
 			// do not override error if failed to attach details
 			if serr == nil {
 				err = st.Err()
