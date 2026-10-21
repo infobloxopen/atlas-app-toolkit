@@ -483,7 +483,7 @@ func newMockGorm(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("failed to create sqlmock - %s", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 
 	gdb, err := gorm.Open("postgres", db)
 	if err != nil {
